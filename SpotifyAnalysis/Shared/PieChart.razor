@@ -1,0 +1,41 @@
+﻿@using System.Linq
+@using ChartJs.Blazor.PieChart
+@using ChartJs.Blazor.Common
+@using ChartJs.Blazor.Common.Axes
+@using ChartJs.Blazor.Common.Axes.Ticks
+@using ChartJs.Blazor.Common.Enums
+@using ChartJs.Blazor.Common.Handlers
+@using ChartJs.Blazor.Common.Time
+@using ChartJs.Blazor.Util
+@using ChartJs.Blazor.Interop
+@using SpotifyAnalysis.Data
+
+<Chart Config="_config"></Chart>
+
+
+@code {
+	[Parameter]
+	public string Title { get; set; }
+	[Parameter]
+	public Elements Elements { get; set; }
+
+	private PieConfig _config;
+
+	protected override void OnInitialized() {
+		_config = new PieConfig {
+			Options = new PieOptions {
+				Responsive = true,
+				Title = new OptionsTitle {
+					Display = true,
+					Text = Title
+				}
+			}
+		};
+
+		Elements.ForEach(e => _config.Data.Labels.Add(e.Label));
+		PieDataset<int> dataset = new PieDataset<int>(Elements.Select(e => e.Quantity)) {
+			BackgroundColor = Elements.Select(e => e.Color).ToArray()
+		};
+		_config.Data.Datasets.Add(dataset);
+	}
+}
