@@ -1,6 +1,6 @@
 using System;
 
-namespace Spotify_Analysis.Data {
+namespace SpotifyAnalysis.Data {
 	public class WeatherForecast {
 		public DateTime Date { get; set; }
 

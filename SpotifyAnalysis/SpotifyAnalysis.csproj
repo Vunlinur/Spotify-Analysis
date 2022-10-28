@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>Spotify_Analysis</RootNamespace>
+    <RootNamespace>SpotifyAnalysis</RootNamespace>
     <UserSecretsId>35bebd3f-a95a-4399-9fd2-01ad7c3a5a6c</UserSecretsId>
   </PropertyGroup>
 

@@ -7,7 +7,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Spotify_Analysis.Pages {
+namespace SpotifyAnalysis.Pages {
 	[ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 	[IgnoreAntiforgeryToken]
 	public class ErrorModel : PageModel {

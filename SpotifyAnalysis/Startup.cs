@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Spotify_Analysis.Data;
+using SpotifyAnalysis.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Spotify_Analysis {
+namespace SpotifyAnalysis {
 	public class Startup {
 		public Startup(IConfiguration configuration) {
 			Configuration = configuration;

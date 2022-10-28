@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Spotify_Analysis.Data {
+namespace SpotifyAnalysis.Data {
 	public class Spotify {
 
 		public SpotifyClient spotifyClient { get; private set; }

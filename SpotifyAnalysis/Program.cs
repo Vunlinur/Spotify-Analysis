@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Spotify_Analysis {
+namespace SpotifyAnalysis {
 	public class Program {
 		public static Config Config { get; } = new Config();
 
