@@ -3,6 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>Spotify_Analysis</RootNamespace>
+    <UserSecretsId>35bebd3f-a95a-4399-9fd2-01ad7c3a5a6c</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ChartJs.Blazor.Fork" Version="2.0.2" />
+    <PackageReference Include="SpotifyAPI.Web" Version="6.3.0" />
+  </ItemGroup>
 
 </Project>
