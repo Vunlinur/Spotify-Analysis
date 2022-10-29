@@ -12,17 +12,15 @@
 	<button class="btn-primary" @onclick="GetPlaylists">Get playlists</button>
 </p>
 
-<ul>
-	@foreach (var playlist in playlists) {
-		<li>@playlist.Name - @playlist.Type</li>
-	}
-</ul>
+@if (playlists != null) {
+	<PlaylistList Playlists="playlists"></PlaylistList>
+}
 
 <PieChart Title="sample" Elements="elements" />
 
 @code {
 	private string? userID = "11ek5k7fhea9otrb7k2ecizzb";
-	private IEnumerable<SimplePlaylist> playlists = new List<SimplePlaylist>();
+	private IEnumerable<SimplePlaylist> playlists;
 
 
 	Elements elements = new Elements {

@@ -1,0 +1,113 @@
+﻿@using System.IO;
+@using System.Linq;
+@using SpotifyAPI.Web
+
+
+<div class="margins">
+	<h2>Available playlists</h2>
+</div>
+<div>
+	<table class="table-container" style="width:100%">
+		<thead>
+			<tr>
+				<th style="width:70px" @onclick='(e => SortTable(selectedPlaylists.IndexOf, "#"))'>
+					#
+					<span>@GetSortIndicator("#")</span>
+				</th>
+
+				<th @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
+					Name
+					<span>@GetSortIndicator("Name")</span>
+				</th>
+				<th @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
+					Tracks
+					<span>@GetSortIndicator("Tracks")</span>
+				</th>
+				<th @onclick='(e => SortTable(b => b.Data.Owner, "Owner"))'>
+					Owner
+					<span>@GetSortIndicator("Owner")</span>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			@if (playlists != null) {
+				int count = playlists.Count;
+				foreach (var playlist in playlists) {
+					<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
+						<td>@GetPlaylistOrder(playlist)</td>
+						<td>@playlist.Data.Name</td>
+						<td>@playlist.Data.Tracks.Total</td>
+						<td>@playlist.Data.Owner</td>
+					</tr>
+				}
+			}
+		</tbody>
+	</table>
+</div>
+
+@code {
+	private const string Select = "select";
+
+	[Parameter]
+	public IEnumerable<SimplePlaylist> Playlists { get; set; }
+
+	private List<Playlist> playlists;
+
+	internal class Playlist {
+		public string Class;
+		public SimplePlaylist Data;
+
+		public Playlist(SimplePlaylist playlist) {
+			Data = playlist;
+		}
+	}
+
+	protected override async Task OnInitializedAsync() {
+		playlists = Playlists.Select(x => new Playlist(x)).ToList();
+	}
+
+	public IEnumerable<SimplePlaylist> GetSelectedPlaylists() {
+		return selectedPlaylists.Select(p => p.Data);
+	}
+
+	private List<Playlist> selectedPlaylists = new List<Playlist>();
+	internal void ToggleSelect(Playlist build) {
+		if (string.IsNullOrEmpty(build.Class)) {
+			build.Class = Select;
+			selectedPlaylists.Add(build);
+		} else {
+			build.Class = "";
+			selectedPlaylists.Remove(build);
+		}
+	}
+
+	public void DeselectAll() {
+		selectedPlaylists.ForEach(b => b.Class = "");
+		selectedPlaylists.Clear();
+	}
+
+	internal string GetPlaylistOrder(Playlist build) {
+		int index = selectedPlaylists.IndexOf(build);
+		return index == -1 ? string.Empty : (index + 1).ToString();
+	}
+
+	string lastSortColumn;
+	bool sortAscending;
+	internal void SortTable<TKey>(Func<Playlist, TKey> keySelector, string sortColumn) {
+		if (sortColumn == lastSortColumn) {
+			playlists.Reverse();
+			sortAscending = !sortAscending;
+		}
+		else {
+			playlists = playlists.OrderBy(keySelector).ToList();
+			sortAscending = true;
+			lastSortColumn = sortColumn;
+		}
+	}
+
+	internal string GetSortIndicator(string columnName) {
+		if (columnName != lastSortColumn)
+			return string.Empty;
+		return sortAscending ? "▲" : "▼";
+	}
+}
