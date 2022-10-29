@@ -18,7 +18,7 @@
 					Name
 					<span>@GetSortIndicator("Name")</span>
 				</th>
-				<th style="width:50px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
+				<th style="width:80px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
 					Tracks
 					<span>@GetSortIndicator("Tracks")</span>
 				</th>
@@ -44,6 +44,8 @@
 
 	[Parameter]
 	public IEnumerable<SimplePlaylist> Playlists { get; set; }
+	[Parameter]
+	public bool MultiSelect { get; set; }
 
 	private List<Playlist> playlists;
 
@@ -69,8 +71,10 @@
 			.Select(p => p.Data);
 	}
 
-	internal void ToggleSelect(Playlist build) {
-		build.Class = string.IsNullOrEmpty(build.Class) ? Select : "";
+	internal void ToggleSelect(Playlist playlist) {
+		if (!MultiSelect)
+			playlists.ForEach(p => p.Class = "");
+		playlist.Class = string.IsNullOrEmpty(playlist.Class) ? Select : "";
 	}
 
 	public void DeselectAll() {

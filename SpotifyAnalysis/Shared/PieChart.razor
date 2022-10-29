@@ -32,10 +32,20 @@
 			}
 		};
 
+		Random random = new Random();
 		Elements.ForEach(e => _config.Data.Labels.Add(e.Label));
 		PieDataset<int> dataset = new PieDataset<int>(Elements.Select(e => e.Quantity)) {
-			BackgroundColor = Elements.Select(e => e.Color).ToArray()
+			BackgroundColor = Elements.Select(e => e.Color ?? RandomColor()).ToArray()
 		};
 		_config.Data.Datasets.Add(dataset);
+
+		string RandomColor() {
+			return ColorUtil.ColorHexString(
+				(byte)random.Next(0, 255),
+				(byte)random.Next(0, 255),
+				(byte)random.Next(0, 255)
+			);
+		}
 	}
+
 }
