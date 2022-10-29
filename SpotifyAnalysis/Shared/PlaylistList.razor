@@ -7,25 +7,20 @@
 	<h2>Available playlists</h2>
 </div>
 <div>
-	<table class="table-container" style="width:100%">
+	<table class="table-container">
 		<thead>
 			<tr>
-				<th style="width:70px" @onclick='(e => SortTable(selectedPlaylists.IndexOf, "#"))'>
+				<th style="width:40px" @onclick='(e => SortTable(b => b.Index, "#"))'>
 					#
 					<span>@GetSortIndicator("#")</span>
 				</th>
-
-				<th @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
+				<th style="width:400px" @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
 					Name
 					<span>@GetSortIndicator("Name")</span>
 				</th>
-				<th @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
+				<th style="width:50px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
 					Tracks
 					<span>@GetSortIndicator("Tracks")</span>
-				</th>
-				<th @onclick='(e => SortTable(b => b.Data.Owner, "Owner"))'>
-					Owner
-					<span>@GetSortIndicator("Owner")</span>
 				</th>
 			</tr>
 		</thead>
@@ -34,10 +29,9 @@
 				int count = playlists.Count;
 				foreach (var playlist in playlists) {
 					<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
-						<td>@GetPlaylistOrder(playlist)</td>
+						<td>@playlist.Index</td>
 						<td>@playlist.Data.Name</td>
 						<td>@playlist.Data.Tracks.Total</td>
-						<td>@playlist.Data.Owner</td>
 					</tr>
 				}
 			}
@@ -55,40 +49,32 @@
 
 	internal class Playlist {
 		public string Class;
+		public int Index;
 		public SimplePlaylist Data;
 
-		public Playlist(SimplePlaylist playlist) {
+		public Playlist(SimplePlaylist playlist, int index) {
 			Data = playlist;
+			Index = index;
 		}
 	}
 
 	protected override async Task OnInitializedAsync() {
-		playlists = Playlists.Select(x => new Playlist(x)).ToList();
+		int index = 1;
+		playlists = Playlists.Select(x => new Playlist(x, index++)).ToList();
 	}
 
 	public IEnumerable<SimplePlaylist> GetSelectedPlaylists() {
-		return selectedPlaylists.Select(p => p.Data);
+		return playlists
+			.Where(p => p.Class == Select)
+			.Select(p => p.Data);
 	}
 
-	private List<Playlist> selectedPlaylists = new List<Playlist>();
 	internal void ToggleSelect(Playlist build) {
-		if (string.IsNullOrEmpty(build.Class)) {
-			build.Class = Select;
-			selectedPlaylists.Add(build);
-		} else {
-			build.Class = "";
-			selectedPlaylists.Remove(build);
-		}
+		build.Class = string.IsNullOrEmpty(build.Class) ? Select : "";
 	}
 
 	public void DeselectAll() {
-		selectedPlaylists.ForEach(b => b.Class = "");
-		selectedPlaylists.Clear();
-	}
-
-	internal string GetPlaylistOrder(Playlist build) {
-		int index = selectedPlaylists.IndexOf(build);
-		return index == -1 ? string.Empty : (index + 1).ToString();
+		playlists.ForEach(b => b.Class = "");
 	}
 
 	string lastSortColumn;
