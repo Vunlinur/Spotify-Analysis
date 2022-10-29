@@ -1,17 +1,43 @@
 ﻿@page "/counter"
 
 @using SpotifyAnalysis.Data
+@using SpotifyAPI.Web
 @using ChartJs.Blazor.Util
 
 @inject Spotify spotify;
 
-<PieChart Title="sample" Elements="elements"/>
+<p>
+	<label for="userId">User ID:</label>
+	<input id="userId" size="30" @bind="userID" />
+	<button class="btn-primary" @onclick="GetPlaylists">Get playlists</button>
+</p>
+
+<ul>
+	@foreach (var playlist in playlists) {
+		<li>@playlist.Name - @playlist.Type</li>
+	}
+</ul>
+
+<PieChart Title="sample" Elements="elements" />
 
 @code {
+	private string? userID = "11ek5k7fhea9otrb7k2ecizzb";
+	private IEnumerable<SimplePlaylist> playlists = new List<SimplePlaylist>();
+
+
 	Elements elements = new Elements {
 			new Element{ Label = "Red", Quantity = 6, Color = ColorUtil.ColorHexString(255, 99, 132) },
 			new Element{ Label = "Yellow", Quantity = 5, Color = ColorUtil.ColorHexString(255, 205, 86) },
 			new Element{ Label = "Green", Quantity = 3, Color = ColorUtil.ColorHexString(75, 192, 192) },
 			new Element{ Label = "Blue", Quantity = 7, Color = ColorUtil.ColorHexString(54, 162, 235) }
 		};
+
+	public async void GetPlaylists() {
+		//var profile = await spotify.SpotifyClient.UserProfile.Get(user);
+		var playlistsTask = spotify.SpotifyClient.Playlists.GetUsers(userID);
+		playlistsTask.Wait();
+		var playlistsAll = spotify.SpotifyClient.PaginateAll(playlistsTask.Result);
+		playlistsAll.Wait();
+		playlists = playlistsAll.Result;
+	}
 }

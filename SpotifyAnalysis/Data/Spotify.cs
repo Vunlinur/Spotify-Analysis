@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace SpotifyAnalysis.Data {
 	public class Spotify {
 
-		public SpotifyClient spotifyClient { get; private set; }
+		public SpotifyClient SpotifyClient { get; }
 		
 		public Spotify() {
 			var config = SpotifyClientConfig.CreateDefault();
@@ -20,7 +20,7 @@ namespace SpotifyAnalysis.Data {
 			var response = new OAuthClient(config).RequestToken(credentials);
 			response.Wait();
 
-			spotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
+			SpotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
 		}
 	}
 }
