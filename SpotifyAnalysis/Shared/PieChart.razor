@@ -24,13 +24,26 @@
 	protected override void OnInitialized() {
 		_config = new PieConfig {
 			Options = new PieOptions {
+				CutoutPercentage = 30,
 				Responsive = true,
 				Title = new OptionsTitle {
 					Display = true,
 					Text = Title
+				},
+				Legend = new Legend() {
+					Position = Position.Left,
+					Reverse = true
 				}
 			}
 		};
+
+		Elements = Elements.OrderBy(e => e.Quantity);
+		// Any element with arbitrary low Quantity gets merged into one bit "Other"
+		var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
+		var threshold = (int) (allQuantitySum / 220f);
+		var sumQuantityBelowThreshold = Elements.Where(e => e.Quantity <= threshold).Select(e => e.Quantity).Sum();
+		Elements = Elements.Where(e => e.Quantity > threshold);
+		Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
 
 		Random random = new Random();
 		foreach (var element in Elements)

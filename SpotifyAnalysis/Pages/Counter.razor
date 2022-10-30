@@ -52,6 +52,6 @@
 				foreach (var artist in (song.Track as FullTrack).Artists)
 					elements.Increase(new Element { Label = artist.Name, Quantity = 1 });
 		}
-		artistsSongs = elements.OrderBy(e => e.Quantity);
+		artistsSongs = elements;
 	}
 }
