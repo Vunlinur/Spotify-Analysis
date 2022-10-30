@@ -17,7 +17,7 @@
 	[Parameter]
 	public string Title { get; set; }
 	[Parameter]
-	public Elements Elements { get; set; }
+	public IEnumerable<Element> Elements { get; set; }
 
 	private PieConfig _config;
 
@@ -33,7 +33,8 @@
 		};
 
 		Random random = new Random();
-		Elements.ForEach(e => _config.Data.Labels.Add(e.Label));
+		foreach (var element in Elements)
+			_config.Data.Labels.Add(element.Label);
 		PieDataset<int> dataset = new PieDataset<int>(Elements.Select(e => e.Quantity)) {
 			BackgroundColor = Elements.Select(e => e.Color ?? RandomColor()).ToArray()
 		};

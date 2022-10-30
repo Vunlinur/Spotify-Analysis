@@ -10,32 +10,48 @@
 	<label for="userId">User ID:</label>
 	<input id="userId" size="30" @bind="userID" />
 	<button class="btn-primary" @onclick="GetPlaylists">Get playlists</button>
+	<button class='@playlists == null ? "disabled" : "btn-primary"' @onclick="GenerateCharts">Generate charts</button>
 </p>
 
 @if (playlists != null) {
-	<PlaylistList Playlists="playlists"></PlaylistList>
+	<PlaylistList @ref="playlistList" Playlists="playlists"></PlaylistList>
+}
+@if (artistsSongs != null) {
+	<PieChart Title="sample" Elements="artistsSongs" />
 }
 
-<PieChart Title="sample" Elements="elements" />
 
 @code {
+	private PlaylistList playlistList;
+
 	private string? userID = "11ek5k7fhea9otrb7k2ecizzb";
 	private IEnumerable<SimplePlaylist> playlists;
-
-
-	Elements elements = new Elements {
-			new Element{ Label = "Red", Quantity = 6 },
-			new Element{ Label = "Yellow", Quantity = 5 },
-			new Element{ Label = "Green", Quantity = 3 },
-			new Element{ Label = "Blue", Quantity = 7 }
-		};
+	private IEnumerable<Element> artistsSongs;
 
 	public async void GetPlaylists() {
 		//var profile = await spotify.SpotifyClient.UserProfile.Get(user);
 		var playlistsTask = spotify.SpotifyClient.Playlists.GetUsers(userID);
 		playlistsTask.Wait();
-		var playlistsAll = spotify.SpotifyClient.PaginateAll(playlistsTask.Result);
-		playlistsAll.Wait();
-		playlists = playlistsAll.Result;
+		var playlistsAllTask = spotify.SpotifyClient.PaginateAll(playlistsTask.Result);
+		playlistsAllTask.Wait();
+		playlists = playlistsAllTask.Result;
+	}
+
+	public void GenerateCharts() {
+		if (playlists == null)
+			return;
+		var elements = new Elements();
+		Task<IList<PlaylistTrack<IPlayableItem>>> tracks;
+
+		foreach (var playlist in playlistList.GetSelectedPlaylists()) {
+			var tracksTask = spotify.SpotifyClient.Playlists.GetItems(playlist.Id, new PlaylistGetItemsRequest(PlaylistGetItemsRequest.AdditionalTypes.Track));
+			tracksTask.Wait();
+			var tracksAllTask = spotify.SpotifyClient.PaginateAll(tracksTask.Result);
+			tracksAllTask.Wait();
+			foreach (var song in tracksAllTask.Result)
+				foreach (var artist in (song.Track as FullTrack).Artists)
+					elements.Increase(new Element { Label = artist.Name, Quantity = 1 });
+		}
+		artistsSongs = elements.OrderBy(e => e.Quantity);
 	}
 }
