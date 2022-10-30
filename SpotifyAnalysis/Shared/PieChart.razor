@@ -10,7 +10,7 @@
 @using ChartJs.Blazor.Interop
 @using SpotifyAnalysis.Data
 
-<div id="wrapper" style="position: relative; height: 50vh; width: 70vh ">
+<div id="wrapper" style="position: relative; height: 515px; width: 900px ">
 	<Chart Config="_config"></Chart>
 </div>
 
@@ -52,11 +52,11 @@
 		}
 
 		// Limit no. of legend items to 3 columns, otherwise the pie does not fit
-		int leastImportantElementsCount = Math.Max(Elements.Count() - 29 * 3, 0);
+		int leastImportantElementsCount = Math.Max(Elements.Count() - 22 * 3, 0);
 		if (leastImportantElementsCount > 0) {
 			var sumQuantityExceedRows = Elements.Take(leastImportantElementsCount).Select(e => e.Quantity).Sum();
 			Elements = Elements.Skip(leastImportantElementsCount);
-			Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
+			Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
 		}
 
 		Random random = new Random();
