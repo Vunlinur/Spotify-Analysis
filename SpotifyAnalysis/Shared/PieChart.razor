@@ -10,8 +10,9 @@
 @using ChartJs.Blazor.Interop
 @using SpotifyAnalysis.Data
 
-<Chart Config="_config"></Chart>
-
+<div id="wrapper" style="position: relative; height: 50vh; width: 70vh ">
+	<Chart Config="_config"></Chart>
+</div>
 
 @code {
 	[Parameter]
@@ -24,26 +25,39 @@
 	protected override void OnInitialized() {
 		_config = new PieConfig {
 			Options = new PieOptions {
-				CutoutPercentage = 30,
+				CutoutPercentage = 40,
 				Responsive = true,
+				MaintainAspectRatio = false,
 				Title = new OptionsTitle {
 					Display = true,
 					Text = Title
 				},
 				Legend = new Legend() {
 					Position = Position.Left,
+					Labels = new LegendLabels { UsePointStyle = true },
 					Reverse = true
 				}
 			}
 		};
 
 		Elements = Elements.OrderBy(e => e.Quantity);
+
 		// Any element with arbitrary low Quantity gets merged into one bit "Other"
 		var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
 		var threshold = (int) (allQuantitySum / 220f);
 		var sumQuantityBelowThreshold = Elements.Where(e => e.Quantity <= threshold).Select(e => e.Quantity).Sum();
-		Elements = Elements.Where(e => e.Quantity > threshold);
-		Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
+		if (sumQuantityBelowThreshold > 0) {
+			Elements = Elements.Where(e => e.Quantity > threshold);
+			Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
+		}
+
+		// Limit no. of legend items to 3 columns, otherwise the pie does not fit
+		int leastImportantElementsCount = Math.Max(Elements.Count() - 29 * 3, 0);
+		if (leastImportantElementsCount > 0) {
+			var sumQuantityExceedRows = Elements.Take(leastImportantElementsCount).Select(e => e.Quantity).Sum();
+			Elements = Elements.Skip(leastImportantElementsCount);
+			Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
+		}
 
 		Random random = new Random();
 		foreach (var element in Elements)

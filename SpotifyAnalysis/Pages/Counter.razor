@@ -2,7 +2,7 @@
 
 @using SpotifyAnalysis.Data
 @using SpotifyAPI.Web
-@using ChartJs.Blazor.Util
+@using System.Threading
 
 @inject Spotify spotify;
 
@@ -16,9 +16,14 @@
 @if (playlists != null) {
 	<PlaylistList @ref="playlistList" Playlists="playlists"></PlaylistList>
 }
-@if (artistsSongs != null) {
-	<PieChart Title="sample" Elements="artistsSongs" />
-}
+<p>
+	@if (artistsSongs != null) {
+		<PieChart Title="Artists" Elements="artistsSongs" />
+	}
+	@if (genreSongs != null) {
+		<PieChart Title="Genres" Elements="genreSongs" />
+	}
+</p>
 
 
 @code {
@@ -26,7 +31,8 @@
 
 	private string? userID = "11ek5k7fhea9otrb7k2ecizzb";
 	private IEnumerable<SimplePlaylist> playlists;
-	private IEnumerable<Element> artistsSongs;
+	private Elements artistsSongs;
+	private Elements genreSongs;
 
 	public async void GetPlaylists() {
 		//var profile = await spotify.SpotifyClient.UserProfile.Get(user);
@@ -40,18 +46,53 @@
 	public void GenerateCharts() {
 		if (playlists == null)
 			return;
-		var elements = new Elements();
-		Task<IList<PlaylistTrack<IPlayableItem>>> tracks;
 
+		IEnumerable<FullTrack> allTracks = GetAllTracks(playlistList.GetSelectedPlaylists());
+		IEnumerable<FullArtist> allArtists = GetAllArtists(allTracks);
+
+		genreSongs = new Elements();
+		foreach (var track in allTracks)
+			foreach (var artist in track.Artists) {
+				var fullArtist = allArtists.First(a => a.Id == artist.Id);
+				foreach (var genre in fullArtist.Genres)
+					genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
+			}
+
+		var artists = new Elements();
+		foreach (var track in allTracks)
+			foreach (var artist in track.Artists)
+				artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
+
+		artistsSongs = artists;
+	}
+
+	private IEnumerable<FullTrack> GetAllTracks(IEnumerable<SimplePlaylist> playlists) {
+		IList<FullTrack> allTracks = new List<FullTrack>();
 		foreach (var playlist in playlistList.GetSelectedPlaylists()) {
-			var tracksTask = spotify.SpotifyClient.Playlists.GetItems(playlist.Id, new PlaylistGetItemsRequest(PlaylistGetItemsRequest.AdditionalTypes.Track));
+			var tracksTask = spotify.SpotifyClient.Playlists.GetItems(playlist.Id);
 			tracksTask.Wait();
 			var tracksAllTask = spotify.SpotifyClient.PaginateAll(tracksTask.Result);
 			tracksAllTask.Wait();
 			foreach (var song in tracksAllTask.Result)
-				foreach (var artist in (song.Track as FullTrack).Artists)
-					elements.Increase(new Element { Label = artist.Name, Quantity = 1 });
+				allTracks.Add(song.Track as FullTrack);
 		}
-		artistsSongs = elements;
+		return allTracks;
+	}
+
+	private IEnumerable<FullArtist> GetAllArtists(IEnumerable<FullTrack> fullTracks) {
+		var artistsSet = new HashSet<SimpleArtist>();
+		foreach (var track in fullTracks)
+			foreach (var artist in track.Artists)
+				if (!artistsSet.Contains(artist))
+					artistsSet.Add(artist);
+
+		var tasks = new List<Task<FullArtist>>();
+		foreach (var artist in artistsSet) {
+			var task = spotify.SpotifyClient.Artists.Get(artist.Id);
+			tasks.Add(task);
+			Thread.Sleep(100);
+		}
+		Task.WaitAll(tasks.ToArray());
+		return tasks.Select(t => t.Result);
 	}
 }
