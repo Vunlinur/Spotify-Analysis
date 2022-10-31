@@ -52,7 +52,7 @@
 		}
 
 		// Limit no. of legend items to 3 columns, otherwise the pie does not fit
-		int leastImportantElementsCount = Math.Max(Elements.Count() - 22 * 3, 0);
+		int leastImportantElementsCount = Math.Max(Elements.Count() - 22 * 2, 0);
 		if (leastImportantElementsCount > 0) {
 			var sumQuantityExceedRows = Elements.Take(leastImportantElementsCount).Select(e => e.Quantity).Sum();
 			Elements = Elements.Skip(leastImportantElementsCount);

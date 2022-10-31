@@ -23,6 +23,9 @@
 	@if (genreSongs != null) {
 		<PieChart Title="Genres" Elements="genreSongs" />
 	}
+	@if (genres != null) {
+		<PieChart Title="Genres general" Elements="genres" />
+	}
 </p>
 
 
@@ -33,6 +36,7 @@
 	private IEnumerable<SimplePlaylist> playlists;
 	private Elements artistsSongs;
 	private Elements genreSongs;
+	private Elements genres;
 	private bool ChartGenerationEnabled;
 
 
@@ -67,8 +71,19 @@
 		foreach (var track in allTracks)
 			foreach (var artist in track.Artists)
 				artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
-
 		artistsSongs = artists;
+
+		genres = new Elements();
+		foreach (var track in allTracks)
+			foreach (var artist in track.Artists) {
+				var fullArtist = allArtists.First(a => a.Id == artist.Id);
+				foreach (var genre in fullArtist.Genres)
+					foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
+						genres.Increase(new Element { Label = word, Quantity = 1 });
+			}
+		string[] excludes = { "of", "and", "new" };
+		foreach (var exclusion in excludes)
+			genres.Extract(exclusion);
 	}
 
 	private IEnumerable<FullTrack> GetAllTracks(IEnumerable<SimplePlaylist> playlists) {

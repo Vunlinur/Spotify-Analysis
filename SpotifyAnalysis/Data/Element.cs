@@ -17,6 +17,16 @@ namespace SpotifyAnalysis.Data {
 			else
 				Add(item);
 		}
+
+		public Element Extract(string label) {
+			if (Contains(label)) {
+				var element = this[label];
+				Remove(label);
+				return element;
+			}
+			else
+				return null;
+		}
 	}
 
 	public class Element {

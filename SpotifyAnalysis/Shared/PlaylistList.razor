@@ -4,7 +4,7 @@
 
 
 <div class="playlist-selector" style="width: 520px">
-	<label style="width:300px; text-align:center">@playlists.Where(p => p.Class == Select).Count() playlists selected</label>
+	<label style="width:300px; text-align:center">@playlists.Where(p => p.Class == Select).Count()/@playlists.Count() playlists selected</label>
 	@if (MultiSelect) {
 		<button class="btn btn-primary" @onclick="(e => playlists.ForEach(b => b.Class = Select))">All</button>
 		<button class="btn btn-primary" @onclick="DeselectAll">None</button>
