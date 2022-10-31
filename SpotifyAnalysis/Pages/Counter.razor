@@ -56,15 +56,20 @@
 		if (playlists == null)
 			return;
 
+		IEnumerable<FullTrack> allTracks;
+		IEnumerable<FullArtist> allArtists;
 		var getAllTracks = GetAllTracksAsync(playlistList.GetSelectedPlaylists());
-		IEnumerable<FullTrack> allTracks = await getAllTracks;
+		allTracks = await getAllTracks;
 		var getAllArtists = GetAllArtistsAsync(allTracks);
-		artistsSongs = await BuildArtistsAsync(allTracks);
+		var buildArtistsSongs = BuildArtistsAsync(allTracks);
+		artistsSongs = await buildArtistsSongs;
 		StateHasChanged();
-		IEnumerable<FullArtist> allArtists = await getAllArtists;
-		genreSongs = await BuildGenresAsync(allTracks, allArtists);
+		allArtists = await getAllArtists;
+		var buildGenreSongs = BuildGenresAsync(allTracks, allArtists);
+		var buildGenres = BuildGenresGeneralAsync(allTracks, allArtists);
+		genreSongs = await buildGenreSongs;
 		StateHasChanged();
-		genres = await BuildGenresGeneralAsync(allTracks, allArtists);
+		genres = await buildGenres;
 		StateHasChanged();
 	}
 
