@@ -52,12 +52,23 @@
 		StateHasChanged();
 	}
 
-	public void GenerateCharts() {
+	public async void GenerateCharts() {
 		if (playlists == null)
 			return;
 
-		IEnumerable<FullTrack> allTracks = GetAllTracks(playlistList.GetSelectedPlaylists());
-		IEnumerable<FullArtist> allArtists = GetAllArtists(allTracks);
+
+		var getAllTracks = GetAllTracksAsync(playlistList.GetSelectedPlaylists());
+		IEnumerable<FullTrack> allTracks = await getAllTracks;
+		var getAllArtists = GetAllArtistsAsync(allTracks);
+
+		var artists = new Elements();
+		foreach (var track in allTracks)
+			foreach (var artist in track.Artists)
+				artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
+		artistsSongs = artists;
+
+		StateHasChanged();
+		IEnumerable<FullArtist> allArtists = await getAllArtists;
 
 		genreSongs = new Elements();
 		foreach (var track in allTracks)
@@ -67,11 +78,7 @@
 					genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
 			}
 
-		var artists = new Elements();
-		foreach (var track in allTracks)
-			foreach (var artist in track.Artists)
-				artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
-		artistsSongs = artists;
+		StateHasChanged();
 
 		genres = new Elements();
 		foreach (var track in allTracks)
@@ -84,22 +91,22 @@
 		string[] excludes = { "of", "and", "new" };
 		foreach (var exclusion in excludes)
 			genres.Extract(exclusion);
+
+		StateHasChanged();
 	}
 
-	private IEnumerable<FullTrack> GetAllTracks(IEnumerable<SimplePlaylist> playlists) {
+	private async Task<IEnumerable<FullTrack>> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
 		IList<FullTrack> allTracks = new List<FullTrack>();
 		foreach (var playlist in playlistList.GetSelectedPlaylists()) {
-			var tracksTask = spotify.SpotifyClient.Playlists.GetItems(playlist.Id);
-			tracksTask.Wait();
-			var tracksAllTask = spotify.SpotifyClient.PaginateAll(tracksTask.Result);
-			tracksAllTask.Wait();
-			foreach (var song in tracksAllTask.Result)
+			var tracksTask = await spotify.SpotifyClient.Playlists.GetItems(playlist.Id);
+			var tracksAllTask = await spotify.SpotifyClient.PaginateAll(tracksTask);
+			foreach (var song in tracksAllTask)
 				allTracks.Add(song.Track as FullTrack);
 		}
 		return allTracks;
 	}
 
-	private IEnumerable<FullArtist> GetAllArtists(IEnumerable<FullTrack> fullTracks) {
+	private async Task<IEnumerable<FullArtist>> GetAllArtistsAsync(IEnumerable<FullTrack> fullTracks) {
 		var artistsSet = new HashSet<SimpleArtist>();
 		foreach (var track in fullTracks)
 			foreach (var artist in track.Artists)
@@ -110,7 +117,7 @@
 		foreach (var artist in artistsSet) {
 			var task = spotify.SpotifyClient.Artists.Get(artist.Id);
 			tasks.Add(task);
-			Thread.Sleep(100);
+			await Task.Delay(100);
 		}
 		Task.WaitAll(tasks.ToArray());
 		return tasks.Select(t => t.Result);
