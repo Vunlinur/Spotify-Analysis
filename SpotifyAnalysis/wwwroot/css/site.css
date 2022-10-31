@@ -66,6 +66,15 @@ app {
     text-overflow: ellipsis;
 }
 
+.playlist-selector {
+	display: flex;
+	flex-flow: row wrap;
+	padding: 4px;
+	justify-content: space-evenly;
+	border: 1px solid rgb(68 129 255);
+	border-radius: .25rem;
+}
+
 .content {
     padding-top: 1.1rem;
 }
@@ -99,4 +108,14 @@ app {
     position: absolute;
     right: 0.75rem;
     top: 0.5rem;
+}
+
+#table-wrapper {
+	position: absolute;
+	z-index: 20;
+	background-color: white;
+}
+
+#table-scroll {
+	overflow: auto;
 }
