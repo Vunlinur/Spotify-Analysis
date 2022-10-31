@@ -113,13 +113,15 @@
 				if (!artistsSet.Contains(artist))
 					artistsSet.Add(artist);
 
-		var tasks = new List<Task<FullArtist>>();
-		foreach (var artist in artistsSet) {
-			var task = spotify.SpotifyClient.Artists.Get(artist.Id);
+		int size = 8;
+		var tasks = new List<Task<ArtistsResponse>>();
+		var chunks = artistsSet.Select((s, i) => artistsSet.Skip(i * size).Take(size)).Where(a => a.Any());
+		foreach (var chunk in chunks) {
+			var task = spotify.SpotifyClient.Artists.GetSeveral(new ArtistsRequest(chunk.Select(c => c.Id).ToList()));
 			tasks.Add(task);
 			await Task.Delay(100);
 		}
-		Task.WaitAll(tasks.ToArray());
-		return tasks.Select(t => t.Result);
+		await Task.WhenAll(tasks.ToArray());
+		return tasks.SelectMany(t => t.Result.Artists);
 	}
 }
