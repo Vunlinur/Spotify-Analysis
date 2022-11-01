@@ -18,7 +18,8 @@
 }
 <p>
 	@if (artistsSongs != null) {
-		<PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="(l) => Console.WriteLine(l)" />
+		<PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="SelectArtist" />
+		<ArtistPane Artist="@SelectedArtist"></ArtistPane>
 	}
 	@if (genreSongs != null) {
 		<PieChart Title="Genres" Elements="genreSongs" />
@@ -39,6 +40,10 @@
 	private Elements genres;
 	private bool ChartGenerationEnabled;
 
+	FullTracks allTracks;
+	FullArtists allArtists;
+	private FullArtist SelectedArtist;
+
 
 	public async void GetPlaylists() {
 		//var profile = await spotify.SpotifyClient.UserProfile.Get(user);
@@ -55,9 +60,6 @@
 	public async void GenerateCharts() {
 		if (playlists == null)
 			return;
-
-		FullTracks allTracks;
-		FullArtists allArtists;
 		var getAllTracks = GetAllTracksAsync(playlistList.GetSelectedPlaylists());
 		allTracks = await getAllTracks;
 		var getAllArtists = GetAllArtistsAsync(allTracks);
@@ -89,7 +91,7 @@
 		Elements BuildGenres() {
 			genreSongs = new Elements();
 			foreach (var track in allTracks)
-				foreach (var artist in track.Artists) 
+				foreach (var artist in track.Artists)
 					foreach (var genre in allArtists[artist.Id].Genres)
 						genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
 			return genreSongs;
@@ -117,7 +119,7 @@
 
 	private async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
 		IList<FullTrack> allTracks = new List<FullTrack>();
-		foreach (var playlist in playlistList.GetSelectedPlaylists()) {
+		foreach (var playlist in playlists) {
 			var tracksTask = await spotify.SpotifyClient.Playlists.GetItems(playlist.Id);
 			var tracksAllTask = await spotify.SpotifyClient.PaginateAll(tracksTask);
 			foreach (var song in tracksAllTask)
@@ -143,5 +145,10 @@
 		}
 		await Task.WhenAll(tasks.ToArray());
 		return tasks.SelectMany(t => t.Result.Artists).ToKeyedCollection();
+	}
+
+	internal void SelectArtist(string artistName) {
+		SelectedArtist = allArtists.First((a) => a.Name == artistName);
+		StateHasChanged();
 	}
 }

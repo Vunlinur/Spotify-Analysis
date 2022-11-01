@@ -75,6 +75,18 @@ app {
 	border-radius: .25rem;
 }
 
+.artist-pane {
+	display: flex;
+	background-color: white;
+	border: 1px solid rgb(68 129 255);
+	border-radius: .25rem;
+	z-index: 16;
+	position: absolute;
+	left: 1200px;
+	top: 280px;
+	padding: 4px;
+}
+
 .content {
     padding-top: 1.1rem;
 }
