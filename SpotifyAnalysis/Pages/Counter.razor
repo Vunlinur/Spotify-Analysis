@@ -18,7 +18,7 @@
 }
 <p>
 	@if (artistsSongs != null) {
-		<PieChart Title="Artists" Elements="artistsSongs" />
+		<PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="(l) => Console.WriteLine(l)" />
 	}
 	@if (genreSongs != null) {
 		<PieChart Title="Genres" Elements="genreSongs" />

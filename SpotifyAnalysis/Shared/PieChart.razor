@@ -9,6 +9,7 @@
 @using ChartJs.Blazor.Util
 @using ChartJs.Blazor.Interop
 @using SpotifyAnalysis.Data
+@using Newtonsoft.Json.Linq
 
 <div id="wrapper" style="position: relative; height: 515px; width: 900px ">
 	<Chart Config="_config"></Chart>
@@ -19,6 +20,8 @@
 	public string Title { get; set; }
 	[Parameter]
 	public IEnumerable<Element> Elements { get; set; }
+	[Parameter]
+	public Action<string> OnClickCallback { get; set; }
 
 	private PieConfig _config;
 
@@ -36,7 +39,8 @@
 					Position = Position.Left,
 					Labels = new LegendLabels { UsePointStyle = true },
 					Reverse = true
-				}
+				},
+				OnClick = OnClickCallback is null ? null : new DelegateHandler<ChartMouseEvent>(OnClickHandler)
 			}
 		};
 
@@ -76,4 +80,8 @@
 		}
 	}
 
+	public void OnClickHandler(JObject mouseEvent, JArray activeElements) {
+		string clickedLabel = activeElements[0]["_view"]["label"].ToString();
+		OnClickCallback(clickedLabel);
+	}
 }
