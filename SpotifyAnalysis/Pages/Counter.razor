@@ -56,8 +56,8 @@
 		if (playlists == null)
 			return;
 
-		IEnumerable<FullTrack> allTracks;
-		IEnumerable<FullArtist> allArtists;
+		FullTracks allTracks;
+		FullArtists allArtists;
 		var getAllTracks = GetAllTracksAsync(playlistList.GetSelectedPlaylists());
 		allTracks = await getAllTracks;
 		var getAllArtists = GetAllArtistsAsync(allTracks);
@@ -73,7 +73,7 @@
 		StateHasChanged();
 	}
 
-	private async Task<Elements> BuildArtistsAsync(IEnumerable<FullTrack> allTracks) {
+	private async Task<Elements> BuildArtistsAsync(FullTracks allTracks) {
 		Elements BuildArtists() {
 			artistsSongs = new Elements();
 			foreach (var track in allTracks)
@@ -85,31 +85,27 @@
 		return await Task<Elements>.Run(BuildArtists);
 	}
 
-	private async Task<Elements> BuildGenresAsync(IEnumerable<FullTrack> allTracks, IEnumerable<FullArtist> allArtists) {
+	private async Task<Elements> BuildGenresAsync(FullTracks allTracks, FullArtists allArtists) {
 		Elements BuildGenres() {
 			genreSongs = new Elements();
 			foreach (var track in allTracks)
-				foreach (var artist in track.Artists) {
-					var fullArtist = allArtists.First(a => a.Id == artist.Id);
-					foreach (var genre in fullArtist.Genres)
+				foreach (var artist in track.Artists) 
+					foreach (var genre in allArtists[artist.Id].Genres)
 						genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
-				}
 			return genreSongs;
 		}
 
 		return await Task<Elements>.Run(BuildGenres);
 	}
 
-	private async Task<Elements> BuildGenresGeneralAsync(IEnumerable<FullTrack> allTracks, IEnumerable<FullArtist> allArtists) {
+	private async Task<Elements> BuildGenresGeneralAsync(FullTracks allTracks, FullArtists allArtists) {
 		Elements BuildGenresGeneral() {
 			var genres = new Elements();
 			foreach (var track in allTracks)
-				foreach (var artist in track.Artists) {
-					var fullArtist = allArtists.First(a => a.Id == artist.Id);
-					foreach (var genre in fullArtist.Genres)
+				foreach (var artist in track.Artists)
+					foreach (var genre in allArtists[artist.Id].Genres)
 						foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
 							genres.Increase(new Element { Label = word, Quantity = 1 });
-				}
 			string[] excludes = { "of", "and", "new" };
 			foreach (var exclusion in excludes)
 				genres.Extract(exclusion);
@@ -119,7 +115,7 @@
 		return await Task<Elements>.Run(BuildGenresGeneral);
 	}
 
-	private async Task<IEnumerable<FullTrack>> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
+	private async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
 		IList<FullTrack> allTracks = new List<FullTrack>();
 		foreach (var playlist in playlistList.GetSelectedPlaylists()) {
 			var tracksTask = await spotify.SpotifyClient.Playlists.GetItems(playlist.Id);
@@ -127,10 +123,10 @@
 			foreach (var song in tracksAllTask)
 				allTracks.Add(song.Track as FullTrack);
 		}
-		return allTracks;
+		return allTracks.ToKeyedCollection();
 	}
 
-	private async Task<IEnumerable<FullArtist>> GetAllArtistsAsync(IEnumerable<FullTrack> fullTracks) {
+	private async Task<FullArtists> GetAllArtistsAsync(IEnumerable<FullTrack> fullTracks) {
 		var artistsSet = new HashSet<SimpleArtist>();
 		foreach (var track in fullTracks)
 			foreach (var artist in track.Artists)
@@ -146,6 +142,6 @@
 			await Task.Delay(100);
 		}
 		await Task.WhenAll(tasks.ToArray());
-		return tasks.SelectMany(t => t.Result.Artists);
+		return tasks.SelectMany(t => t.Result.Artists).ToKeyedCollection();
 	}
 }
