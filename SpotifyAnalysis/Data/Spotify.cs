@@ -69,9 +69,7 @@ namespace SpotifyAnalysis.Data {
 			}
 			await Task.WhenAll(tasks.ToArray());
 			foreach (var artist in tasks.SelectMany(t => t.Result.Artists))
-				//  Theoretically the first check above !AllArtists.Contains chould suffice, but keys still get duped somehow
-				if (!AllArtists.Contains(artist.Id))
-					AllArtists.Add(artist);
+				AllArtists.Add(artist);
 			return AllArtists;
 		}
 	}

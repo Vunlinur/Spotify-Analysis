@@ -6,15 +6,22 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace SpotifyAnalysis.Data {
-	public class FullTracks : KeyedCollection<string, FullTrack> {
+	public class FullTracks : SpotifyCache<FullTrack> {
 		protected override string GetKeyForItem(FullTrack item) {
 			return item.Id;
 		}
 	}
 
-	public class FullArtists : KeyedCollection<string, FullArtist> {
+	public class FullArtists : SpotifyCache<FullArtist> {
 		protected override string GetKeyForItem(FullArtist item) {
 			return item.Id;
+		}
+	}
+
+	public abstract class SpotifyCache<T> : KeyedCollection<string, T> {
+		new public void Add(T item) {
+			if (!Contains(GetKeyForItem(item)))
+				base.Add(item);
 		}
 	}
 
