@@ -63,21 +63,13 @@
 			Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
 		}
 
-		Random random = new Random();
+		var colorFactory = new RotateHue(1.333, 220);
 		foreach (var element in Elements)
 			_config.Data.Labels.Add(element.Label);
 		PieDataset<int> dataset = new PieDataset<int>(Elements.Select(e => e.Quantity)) {
-			BackgroundColor = Elements.Select(e => e.Color ?? RandomColor()).ToArray()
+			BackgroundColor = Elements.Select(e => e.Color ?? colorFactory.Next()).ToArray()
 		};
 		_config.Data.Datasets.Add(dataset);
-
-		string RandomColor() {
-			return ColorUtil.ColorHexString(
-				(byte)random.Next(0, 255),
-				(byte)random.Next(0, 255),
-				(byte)random.Next(0, 255)
-			);
-		}
 	}
 
 	public void OnClickHandler(JObject mouseEvent, JArray activeElements) {
