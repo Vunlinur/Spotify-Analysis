@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 namespace SpotifyAnalysis.Data {
 	public class Spotify {
 		public FullArtists AllArtists { get; } = new FullArtists();
+		public FullPlaylists AllPlaylists { get; } = new FullPlaylists();
 
 		private SpotifyClient SpotifyClient { get; }
 
@@ -37,14 +38,29 @@ namespace SpotifyAnalysis.Data {
 		 * Since Playlists.GetItems returns Paging<PlaylistTrack<..>>, we have no simple way to cache separate playlist.
 		 */
 		public async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
-			var allTracks  = new FullTracks();
-			foreach (var playlist in playlists) {
-				var tracksTask = await SpotifyClient.Playlists.GetItems(playlist.Id);
-				var tracksAllTask = await SpotifyClient.PaginateAll(tracksTask);
-				foreach (var song in tracksAllTask)
-					allTracks.Add(song.Track as FullTrack);
+			async Task<Playlist> GetAllPlaylistTracksAsync(SimplePlaylist playlist) {
+				var fullPlaylist = new Playlist(playlist);
+				if (AllPlaylists.Contains(playlist.Id))
+					return await Task.Run(() => {
+						foreach (var track in AllPlaylists[playlist.Id].Tracks)
+							fullPlaylist.Tracks.Add(track);
+						return fullPlaylist;
+					});
+				else {
+					var tracksTask = await SpotifyClient.Playlists.GetItems(playlist.Id);
+					var tracksAllTask = await SpotifyClient.PaginateAll(tracksTask);
+					foreach (var song in tracksAllTask)
+						fullPlaylist.Tracks.Add(song.Track as FullTrack);
+					return fullPlaylist;
+				}
 			}
-			return allTracks;
+
+			var getTracksTasks = playlists.Select(p => GetAllPlaylistTracksAsync(p));
+			var fullTracks = new FullTracks();
+			foreach (var playlist in await Task.WhenAll(getTracksTasks))
+				foreach (var track in playlist.Tracks)
+					fullTracks.Add(track);
+			return fullTracks;
 		}
 
 		/**

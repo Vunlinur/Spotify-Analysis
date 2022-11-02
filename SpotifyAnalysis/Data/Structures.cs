@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace SpotifyAnalysis.Data {
 	public class FullTracks : SpotifyCache<FullTrack> {
@@ -18,28 +17,26 @@ namespace SpotifyAnalysis.Data {
 		}
 	}
 
+	public class FullPlaylists : SpotifyCache<Playlist> {
+		protected override string GetKeyForItem(Playlist item) {
+			return item.GetPlaylist.Id;
+		}
+	}
+
+	public class Playlist {
+		public SimplePlaylist GetPlaylist { get; }
+		public FullTracks Tracks { get; }
+
+		public Playlist(SimplePlaylist playlist) {
+			GetPlaylist = playlist;
+			Tracks = new FullTracks();
+		}
+	}
+
 	public abstract class SpotifyCache<T> : KeyedCollection<string, T> {
 		new public void Add(T item) {
 			if (!Contains(GetKeyForItem(item)))
 				base.Add(item);
-		}
-	}
-
-	public static class Extensions {
-		public static FullTracks ToKeyedCollection(this IEnumerable<FullTrack> allTracks) {
-			var fullTracks = new FullTracks();
-			foreach (var track in allTracks)
-				if (!fullTracks.Contains(track.Id))
-					fullTracks.Add(track);
-			return fullTracks;
-		}
-
-		public static FullArtists ToKeyedCollection(this IEnumerable<FullArtist> allArtists) {
-			var fullTracks = new FullArtists();
-			foreach (var track in allArtists)
-				if (!fullTracks.Contains(track.Id))
-					fullTracks.Add(track);
-			return fullTracks;
 		}
 	}
 }
