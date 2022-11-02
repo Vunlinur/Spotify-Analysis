@@ -81,6 +81,7 @@
 	}
 
 	public void OnClickHandler(JObject mouseEvent, JArray activeElements) {
+		// This stops working when charts get more pieces...
 		string clickedLabel = activeElements[0]["_view"]["label"].ToString();
 		OnClickCallback(clickedLabel);
 	}

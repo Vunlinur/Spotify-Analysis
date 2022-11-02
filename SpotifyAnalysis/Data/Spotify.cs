@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace SpotifyAnalysis.Data {
 	public class Spotify {
+		public FullArtists AllArtists { get; } = new FullArtists();
 
-		public SpotifyClient SpotifyClient { get; }
-		
+		private SpotifyClient SpotifyClient { get; }
+
 		public Spotify() {
 			var config = SpotifyClientConfig.CreateDefault();
-
 
 			var credentials = new ClientCredentialsRequest(
 				Program.Config.ClientId,
@@ -21,6 +21,58 @@ namespace SpotifyAnalysis.Data {
 			response.Wait();
 
 			SpotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
+		}
+
+		/**
+		 * Gets all public playlists of the given userID.
+		 */
+		public async Task<IEnumerable<SimplePlaylist>> GetUsersPublicPlaylistsAsync(string userID) {
+			var playlistsTask = await SpotifyClient.Playlists.GetUsers(userID);
+			return await SpotifyClient.PaginateAll(playlistsTask);
+		}
+
+		/**
+		 * Gets all tracks present on the given playlists.
+		 * Raw SimplePlaylist has no info on its tracks.
+		 * Since Playlists.GetItems returns Paging<PlaylistTrack<..>>, we have no simple way to cache separate playlist.
+		 */
+		public async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
+			var allTracks  = new FullTracks();
+			foreach (var playlist in playlists) {
+				var tracksTask = await SpotifyClient.Playlists.GetItems(playlist.Id);
+				var tracksAllTask = await SpotifyClient.PaginateAll(tracksTask);
+				foreach (var song in tracksAllTask)
+					allTracks.Add(song.Track as FullTrack);
+			}
+			return allTracks;
+		}
+
+		/**
+		 * Caches the details of all artists listed under given fullTracks, if not cached already.
+		 * Most common use is for later retrieval from the cache.
+		 */
+		public async Task<FullArtists> GetAllArtistsAsync(IEnumerable<FullTrack> fullTracks) {
+			var artistsSet = new HashSet<SimpleArtist>();
+			foreach (var track in fullTracks)
+				foreach (var artist in track.Artists)
+					if (!artistsSet.Contains(artist) && !AllArtists.Contains(artist.Id))
+						artistsSet.Add(artist);
+
+			int size = 8;
+			var tasks = new List<Task<ArtistsResponse>>();
+			// Divide into chunks of <size> times HashSet<SimpleArtist>
+			var chunks = artistsSet.Select((s, i) => artistsSet.Skip(i * size).Take(size)).Where(a => a.Any());
+			foreach (var chunk in chunks) {
+				var task = SpotifyClient.Artists.GetSeveral(new ArtistsRequest(chunk.Select(c => c.Id).ToList()));
+				tasks.Add(task);
+				await Task.Delay(100);
+			}
+			await Task.WhenAll(tasks.ToArray());
+			foreach (var artist in tasks.SelectMany(t => t.Result.Artists))
+				//  Theoretically the first check above !AllArtists.Contains chould suffice, but keys still get duped somehow
+				if (!AllArtists.Contains(artist.Id))
+					AllArtists.Add(artist);
+			return AllArtists;
 		}
 	}
 }
