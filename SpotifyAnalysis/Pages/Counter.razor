@@ -10,16 +10,16 @@
 	<label for="userId">User ID:</label>
 	<input id="userId" size="30" @bind="userID" />
 	<button class="btn btn-primary" @onclick="GetPlaylists">Get playlists</button>
-	<button class="btn btn-primary" disabled="@(!ChartGenerationEnabled)"  @onclick="GenerateCharts">Generate charts</button>
+	<button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
 </p>
 
 @if (spotify.UserData?.FullPlaylists != null) {
-	<PlaylistList @ref="playlistList" Playlists="spotify.UserData.FullPlaylists" MultiSelect="true"></PlaylistList>
+	<PlaylistList @ref="playlistList" Playlists="spotify.UserData.FullPlaylists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 <p>
 	@if (artistsSongs != null) {
 		<PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="SelectArtist" />
-		<ArtistPane Artist="@SelectedArtist"></ArtistPane>
+		<ArtistPane Artist="@selectedArtist"></ArtistPane>
 	}
 	@if (genreSongs != null) {
 		<PieChart Title="Genres" Elements="genreSongs" />
@@ -33,20 +33,16 @@
 @code {
 	private PlaylistList playlistList;
 
-	private string? userID = "11ek5k7fhea9otrb7k2ecizzb";
+	private string userID = "11ek5k7fhea9otrb7k2ecizzb";
 	private Elements artistsSongs;
 	private Elements genreSongs;
 	private Elements genres;
-	private bool ChartGenerationEnabled;
 
-	private FullArtist SelectedArtist;
-
+	private FullArtist selectedArtist;
 
 	public async void GetPlaylists() {
 		var userData = new UserData(userID);
 		await spotify.GetUsersPublicPlaylistsAsync(userData);
-
-		ChartGenerationEnabled = true;
 		StateHasChanged();
 	}
 
@@ -110,8 +106,16 @@
 		return await Task<Elements>.Run(BuildGenresGeneral);
 	}
 
+	private bool areAnyPlaylistsSelected;
+	internal void UpdateGenerateButton(bool areAnySelected) {
+		if (areAnyPlaylistsSelected != areAnySelected) {
+			areAnyPlaylistsSelected = areAnySelected;
+			StateHasChanged();
+		}
+	}
+
 	internal void SelectArtist(string artistName) {
-		SelectedArtist = spotify.AllArtists.First((a) => a.Name == artistName);
+		selectedArtist = spotify.AllArtists.First((a) => a.Name == artistName);
 		StateHasChanged();
 	}
 }

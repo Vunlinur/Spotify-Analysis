@@ -6,7 +6,7 @@
 <div class="playlist-selector" style="width: 520px">
 	<label style="width:300px; text-align:center">@playlists.Where(p => p.Class == Select).Count()/@playlists.Count() playlists selected</label>
 	@if (MultiSelect) {
-		<button class="btn btn-primary" @onclick="(e => playlists.ForEach(b => b.Class = Select))">All</button>
+		<button class="btn btn-primary" @onclick="SelectAll">All</button>
 		<button class="btn btn-primary" @onclick="DeselectAll">None</button>
 	}
 	<button class="btn btn-primary" @onclick="(e => expanded = !expanded)">Show</button>
@@ -55,6 +55,8 @@
 	public IEnumerable<SimplePlaylist> Playlists { get; set; }
 	[Parameter]
 	public bool MultiSelect { get; set; }
+	[Parameter]
+	public Action<bool> SelectionChanged { get; set; }
 
 	private List<Playlist> playlists;
 	private bool expanded;
@@ -85,10 +87,18 @@
 		if (!MultiSelect)
 			playlists.ForEach(p => p.Class = "");
 		playlist.Class = string.IsNullOrEmpty(playlist.Class) ? Select : "";
+
+		SelectionChanged?.Invoke(playlists.Any(p => p.Class == Select));
+	}
+
+	public void SelectAll() {
+		playlists.ForEach(b => b.Class = Select);
+		SelectionChanged?.Invoke(true);
 	}
 
 	public void DeselectAll() {
 		playlists.ForEach(b => b.Class = "");
+		SelectionChanged?.Invoke(false);
 	}
 
 	string lastSortColumn;
