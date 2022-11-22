@@ -5,6 +5,15 @@ using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace SpotifyAnalysis.Data {
+	public class UserData {
+		public string ID;
+		public FullPlaylists FullPlaylists;
+
+		public UserData(string userID) {
+			ID = userID;
+		}
+	}
+
 	public class FullTracks : SpotifyCache<FullTrack> {
 		protected override string GetKeyForItem(FullTrack item) {
 			return item.Id;

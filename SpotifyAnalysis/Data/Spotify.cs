@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace SpotifyAnalysis.Data {
 	public class Spotify {
 		public FullArtists AllArtists { get; } = new FullArtists();
-		public FullPlaylists AllPlaylists { get; private set; }
+		public UserData UserData { get; set; }
 
 		private SpotifyClient SpotifyClient { get; }
 
@@ -27,9 +27,10 @@ namespace SpotifyAnalysis.Data {
 		/**
 		 * Gets all public playlists of the given userID.
 		 */
-		public async Task GetUsersPublicPlaylistsAsync(string userID) {
-			var playlistsTask = await SpotifyClient.Playlists.GetUsers(userID);
-			AllPlaylists = new FullPlaylists(await SpotifyClient.PaginateAll(playlistsTask));
+		public async Task GetUsersPublicPlaylistsAsync(UserData userData) {
+			UserData = userData;
+			var playlistsTask = await SpotifyClient.Playlists.GetUsers(UserData.ID);
+			UserData.FullPlaylists = new FullPlaylists(await SpotifyClient.PaginateAll(playlistsTask));
 		}
 
 		/**
@@ -40,10 +41,10 @@ namespace SpotifyAnalysis.Data {
 		public async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
 			async Task<Playlist> GetAllPlaylistTracksAsync(SimplePlaylist playlist) {
 				var fullPlaylist = new Playlist(playlist);
-				if (AllPlaylists[playlist.Id].FullTracks.Any())
+				if (UserData.FullPlaylists[playlist.Id].FullTracks.Any())
 					return await Task.Run(() => {
 						playlists = playlists.ToList();
-						foreach (var track in AllPlaylists[playlist.Id].FullTracks)
+						foreach (var track in UserData.FullPlaylists[playlist.Id].FullTracks)
 							fullPlaylist.FullTracks.Add(track);
 						return fullPlaylist;
 					});
