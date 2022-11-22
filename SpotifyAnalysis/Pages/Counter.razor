@@ -13,8 +13,8 @@
 	<button class="btn btn-primary" disabled="@(!ChartGenerationEnabled)"  @onclick="GenerateCharts">Generate charts</button>
 </p>
 
-@if (playlists != null) {
-	<PlaylistList @ref="playlistList" Playlists="playlists" MultiSelect="true"></PlaylistList>
+@if (spotify.AllPlaylists != null) {
+	<PlaylistList @ref="playlistList" Playlists="spotify.AllPlaylists" MultiSelect="true"></PlaylistList>
 }
 <p>
 	@if (artistsSongs != null) {
@@ -34,7 +34,6 @@
 	private PlaylistList playlistList;
 
 	private string? userID = "11ek5k7fhea9otrb7k2ecizzb";
-	private IEnumerable<SimplePlaylist> playlists;
 	private Elements artistsSongs;
 	private Elements genreSongs;
 	private Elements genres;
@@ -44,14 +43,14 @@
 
 
 	public async void GetPlaylists() {
-		playlists = await spotify.GetUsersPublicPlaylistsAsync(userID);
+		await spotify.GetUsersPublicPlaylistsAsync(userID);
 
 		ChartGenerationEnabled = true;
 		StateHasChanged();
 	}
 
 	public async void GenerateCharts() {
-		if (playlists == null)
+		if (spotify.AllPlaylists== null)
 			return;
 		var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists());
 		var allTracks = await getAllTracks;

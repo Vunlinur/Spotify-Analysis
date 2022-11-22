@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace SpotifyAnalysis.Data {
 	public class Spotify {
 		public FullArtists AllArtists { get; } = new FullArtists();
-		public FullPlaylists AllPlaylists { get; } = new FullPlaylists();
+		public FullPlaylists AllPlaylists { get; private set; }
 
 		private SpotifyClient SpotifyClient { get; }
 
@@ -27,9 +27,9 @@ namespace SpotifyAnalysis.Data {
 		/**
 		 * Gets all public playlists of the given userID.
 		 */
-		public async Task<IEnumerable<SimplePlaylist>> GetUsersPublicPlaylistsAsync(string userID) {
+		public async Task GetUsersPublicPlaylistsAsync(string userID) {
 			var playlistsTask = await SpotifyClient.Playlists.GetUsers(userID);
-			return await SpotifyClient.PaginateAll(playlistsTask);
+			AllPlaylists = new FullPlaylists(await SpotifyClient.PaginateAll(playlistsTask));
 		}
 
 		/**
@@ -40,17 +40,18 @@ namespace SpotifyAnalysis.Data {
 		public async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
 			async Task<Playlist> GetAllPlaylistTracksAsync(SimplePlaylist playlist) {
 				var fullPlaylist = new Playlist(playlist);
-				if (AllPlaylists.Contains(playlist.Id))
+				if (AllPlaylists[playlist.Id].FullTracks.Any())
 					return await Task.Run(() => {
-						foreach (var track in AllPlaylists[playlist.Id].Tracks)
-							fullPlaylist.Tracks.Add(track);
+						playlists = playlists.ToList();
+						foreach (var track in AllPlaylists[playlist.Id].FullTracks)
+							fullPlaylist.FullTracks.Add(track);
 						return fullPlaylist;
 					});
 				else {
 					var tracksTask = await SpotifyClient.Playlists.GetItems(playlist.Id);
 					var tracksAllTask = await SpotifyClient.PaginateAll(tracksTask);
 					foreach (var song in tracksAllTask)
-						fullPlaylist.Tracks.Add(song.Track as FullTrack);
+						fullPlaylist.FullTracks.Add(song.Track as FullTrack);
 					return fullPlaylist;
 				}
 			}
@@ -58,7 +59,7 @@ namespace SpotifyAnalysis.Data {
 			var getTracksTasks = playlists.Select(p => GetAllPlaylistTracksAsync(p));
 			var fullTracks = new FullTracks();
 			foreach (var playlist in await Task.WhenAll(getTracksTasks))
-				foreach (var track in playlist.Tracks)
+				foreach (var track in playlist.FullTracks)
 					fullTracks.Add(track);
 			return fullTracks;
 		}

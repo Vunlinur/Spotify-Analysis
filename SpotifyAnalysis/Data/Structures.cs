@@ -18,25 +18,43 @@ namespace SpotifyAnalysis.Data {
 	}
 
 	public class FullPlaylists : SpotifyCache<Playlist> {
+		public FullPlaylists(IEnumerable<SimplePlaylist> simplePlaylists) {
+			foreach (var simplePlaylist in simplePlaylists)
+				Add(new Playlist(simplePlaylist));
+		}
+
 		protected override string GetKeyForItem(Playlist item) {
-			return item.GetPlaylist.Id;
+			return item.Id;
 		}
 	}
 
-	public class Playlist {
-		public SimplePlaylist GetPlaylist { get; }
-		public FullTracks Tracks { get; }
+	public class Playlist : SimplePlaylist {
+		public FullTracks FullTracks { get; }
 
-		public Playlist(SimplePlaylist playlist) {
-			GetPlaylist = playlist;
-			Tracks = new FullTracks();
+		public Playlist(SimplePlaylist copy) {
+			FullTracks = new FullTracks();
+
+			Collaborative = copy.Collaborative;
+			Description = copy.Description;
+			ExternalUrls = copy.ExternalUrls;
+			Href = copy.Href;
+			Id = copy.Id;
+			Images = copy.Images;
+			Name = copy.Name;
+			Owner = copy.Owner;
+			Public = copy.Public;
+			SnapshotId = copy.SnapshotId;
+			Tracks = copy.Tracks;
+			Type = copy.Type;
+			Uri = copy.Uri;
 		}
 	}
 
 	public abstract class SpotifyCache<T> : KeyedCollection<string, T> {
 		new public void Add(T item) {
-			if (!Contains(GetKeyForItem(item)))
-				base.Add(item);
+			lock(this)
+				if (!Contains(GetKeyForItem(item)))
+					base.Add(item);
 		}
 	}
 }
