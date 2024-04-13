@@ -27,7 +27,7 @@ namespace SpotifyAnalysis.Data {
 	}
 
 	public class FullPlaylists : SpotifyCache<Playlist> {
-		public FullPlaylists(IEnumerable<SimplePlaylist> simplePlaylists) {
+		public FullPlaylists(IEnumerable<FullPlaylist> simplePlaylists) {
 			foreach (var simplePlaylist in simplePlaylists)
 				Add(new Playlist(simplePlaylist));
 		}
@@ -37,10 +37,10 @@ namespace SpotifyAnalysis.Data {
 		}
 	}
 
-	public class Playlist : SimplePlaylist {
+	public class Playlist : FullPlaylist {
 		public FullTracks FullTracks { get; }
 
-		public Playlist(SimplePlaylist copy) {
+		public Playlist(FullPlaylist copy) {
 			FullTracks = new FullTracks();
 
 			Collaborative = copy.Collaborative;

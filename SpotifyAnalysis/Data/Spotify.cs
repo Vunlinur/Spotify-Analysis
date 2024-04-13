@@ -35,11 +35,11 @@ namespace SpotifyAnalysis.Data {
 
 		/**
 		 * Gets all tracks present on the given playlists.
-		 * Raw SimplePlaylist has no info on its tracks.
+		 * Raw FullPlaylist has no info on its tracks.
 		 * Since Playlists.GetItems returns Paging<PlaylistTrack<..>>, we have no simple way to cache separate playlist.
 		 */
-		public async Task<FullTracks> GetAllTracksAsync(IEnumerable<SimplePlaylist> playlists) {
-			async Task<Playlist> GetAllPlaylistTracksAsync(SimplePlaylist playlist) {
+		public async Task<FullTracks> GetAllTracksAsync(IEnumerable<FullPlaylist> playlists) {
+			async Task<Playlist> GetAllPlaylistTracksAsync(FullPlaylist playlist) {
 				var fullPlaylist = new Playlist(playlist);
 				if (UserData.FullPlaylists[playlist.Id].FullTracks.Any())
 					return await Task.Run(() => {
