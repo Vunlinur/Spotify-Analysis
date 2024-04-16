@@ -63,7 +63,7 @@
 			Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
 		}
 
-		var colorFactory = new RotateHue(1.333, 220);
+		var colorFactory = new RotateHue(1.333, 150);
 		foreach (var element in Elements)
 			_config.Data.Labels.Add(element.Label);
 		PieDataset<int> dataset = new PieDataset<int>(Elements.Select(e => e.Quantity)) {

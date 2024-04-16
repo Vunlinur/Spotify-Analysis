@@ -3,50 +3,50 @@
 @using SpotifyAPI.Web
 
 
-<div class="playlist-selector" style="width: 520px">
-	<label style="width:300px; text-align:center">@playlists.Where(p => p.Class == Select).Count()/@playlists.Count() playlists selected</label>
-	@if (MultiSelect) {
-		<button class="btn btn-primary" @onclick="SelectAll">All</button>
-		<button class="btn btn-primary" @onclick="DeselectAll">None</button>
-	}
-	<button class="btn btn-primary" @onclick="(e => expanded = !expanded)">Show</button>
-</div>
-@if (!expanded)
-	return;
-<div class="playlist-selector" id="table-wrapper">
-	<div id="table-scroll" style="max-height: 80vh">
-		<table class="table-container">
-			<thead>
-				<tr>
-					<th style="width:40px" @onclick='(e => SortTable(b => b.Index, "#"))'>
-						#
-						<span>@GetSortIndicator("#")</span>
-					</th>
-					<th style="width:400px" @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
-						Name
-						<span>@GetSortIndicator("Name")</span>
-					</th>
-					<th style="width:80px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
-						Tracks
-						<span>@GetSortIndicator("Tracks")</span>
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				@if (playlists != null) {
-					int count = playlists.Count;
-					foreach (var playlist in playlists) {
-						<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
-							<td>@playlist.Index</td>
-							<td>@playlist.Data.Name</td>
-							<td>@playlist.Data.Tracks.Total</td>
-						</tr>
-					}
-				}
-			</tbody>
-		</table>
+<div class="pane" style="width: 520px">
+	<div class="playlist-selector">
+		<label style="width:300px; text-align:center">@playlists.Where(p => p.Class == Select).Count() / @playlists.Count() playlists selected</label>
+		@if (MultiSelect) {
+			<button class="btn btn-primary" @onclick="SelectAll">All</button>
+			<button class="btn btn-primary" @onclick="DeselectAll">None</button>
+		}
+		<button class="btn btn-primary" @onclick="(e => expanded = !expanded)">Show</button>
 	</div>
+	@if (expanded) {
+		<div class="scrollable playlist-list">
+			<table>
+				<thead>
+					<tr>
+						<th style="width:70px" @onclick='(e => SortTable(b => b.Index, "#"))'>
+							#
+							<span>@GetSortIndicator("#")</span>
+						</th>
+						<th style="width:400px" @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
+							Name
+							<span>@GetSortIndicator("Name")</span>
+						</th>
+						<th style="width:100px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
+							Tracks
+							<span>@GetSortIndicator("Tracks")</span>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					@if (playlists != null) {
+						foreach (var playlist in playlists) {
+							<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
+								<td>@playlist.Index</td>
+								<td class="bright">@playlist.Data.Name</td>
+								<td>@playlist.Data.Tracks.Total</td>
+							</tr>
+						}
+					}
+				</tbody>
+			</table>
+		</div>
+	}
 </div>
+
 
 @code {
 	private const string Select = "select";

@@ -6,8 +6,8 @@
 	<p style="width: 350px;">
 		<button class="btn btn-primary" style="position:relative; right: 1px; top: -4px" @onclick="Close">x</button>
 		<a style="font-size:1.8em;" href="@Artist.Uri">@Artist.Name</a>
-		<div style="font-size:1.2em;">Genres:</div>
-		<ul style="padding: 5% 0 0 10%;">
+		<div style="font-size:1.2em; padding: 8px 0 0 8px;">Genres:</div>
+		<ul>
 			@foreach (string genre in Artist.Genres) {
 				<li>@genre</li>
 			}

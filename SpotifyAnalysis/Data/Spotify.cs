@@ -21,6 +21,7 @@ namespace SpotifyAnalysis.Data {
 			var response = new OAuthClient(config).RequestToken(credentials);
 			response.Wait();
 
+			// TODO refresh token
 			SpotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
 		}
 
