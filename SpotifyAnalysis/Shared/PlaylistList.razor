@@ -17,17 +17,18 @@
 			<table>
 				<thead>
 					<tr>
-						<th style="width:70px" @onclick='(e => SortTable(b => b.Index, "#"))'>
-							#
+						<th @onclick='(e => SortTable(b => b.Index, "#"))'>
 							<span>@GetSortIndicator("#")</span>
+							#
 						</th>
-						<th style="width:400px" @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
+						<th />
+						<th style="width:100%" @onclick='(e => SortTable(b => b.Data.Name, "Name"))'>
 							Name
 							<span>@GetSortIndicator("Name")</span>
 						</th>
 						<th style="width:100px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
-							Tracks
 							<span>@GetSortIndicator("Tracks")</span>
+							Tracks
 						</th>
 					</tr>
 				</thead>
@@ -36,6 +37,7 @@
 						foreach (var playlist in playlists) {
 							<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
 								<td>@playlist.Index</td>
+								<td> <img src="@playlist.Data.Images.Last().Url" /></td>
 								<td class="bright">@playlist.Data.Name</td>
 								<td>@playlist.Data.Tracks.Total</td>
 							</tr>
