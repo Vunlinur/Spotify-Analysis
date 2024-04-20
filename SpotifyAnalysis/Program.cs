@@ -8,22 +8,25 @@ using System.Reflection;
 
 namespace SpotifyAnalysis {
 	public class Program {
-		public static IConfiguration Config { get; private set; }
+		public static IConfigurationRoot Config { get; private set; }
 
 		public static void Main(string[] args) {
-            Config = new ConfigurationBuilder()
-				.SetBasePath(Directory.GetCurrentDirectory())
-				.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-				.AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true, reloadOnChange: true)
-				.Build();
-
-			CreateHostBuilder(args).Build().Run();
+            Config = PrepareConfig();
+            CreateHostBuilder(args).Build().Run();
 		}
 
-		public static IHostBuilder CreateHostBuilder(string[] args) =>
-			Host.CreateDefaultBuilder(args)
-				.ConfigureWebHostDefaults(webBuilder => {
-					webBuilder.UseStartup<Startup>();
-				});
-	}
+		public static IConfigurationRoot PrepareConfig() {
+			return new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true, reloadOnChange: true)
+                .Build();
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureWebHostDefaults(webBuilder => {
+                    webBuilder.UseStartup<Startup>();
+                });
+    }
 }
