@@ -1,24 +1,21 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace SpotifyAnalysis {
 	public class Program {
-		public static Config Config { get; } = new Config();
+		public static IConfiguration Config { get; private set; }
 
 		public static void Main(string[] args) {
-			IConfiguration secretConfiguration = new ConfigurationBuilder()
+            Config = new ConfigurationBuilder()
 				.SetBasePath(Directory.GetCurrentDirectory())
-				.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-				.AddUserSecrets<Config>()
+				.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+				.AddUserSecrets(Assembly.GetExecutingAssembly(), optional: true, reloadOnChange: true)
 				.Build();
-			secretConfiguration.Bind(Config);
 
 			CreateHostBuilder(args).Build().Run();
 		}

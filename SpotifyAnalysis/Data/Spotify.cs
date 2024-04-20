@@ -1,4 +1,5 @@
-﻿using SpotifyAPI.Web;
+﻿using Microsoft.Extensions.Configuration;
+using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,8 +16,8 @@ namespace SpotifyAnalysis.Data {
 			var config = SpotifyClientConfig.CreateDefault();
 
 			var credentials = new ClientCredentialsRequest(
-				Program.Config.ClientId,
-				Program.Config.ClientSecret
+				Program.Config.GetValue<string>("ClientId"),
+				Program.Config.GetValue<string>("ClientSecret")
 			);
 			var response = new OAuthClient(config).RequestToken(credentials);
 			response.Wait();
