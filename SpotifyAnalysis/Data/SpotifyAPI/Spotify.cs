@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace SpotifyAnalysis.Data {
+namespace SpotifyAnalysis.Data.SpotifyAPI {
 	public class Spotify {
 		public FullArtists AllArtists { get; } = new FullArtists();
 		public UserData UserData { get; set; }

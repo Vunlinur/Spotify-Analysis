@@ -14,9 +14,9 @@ namespace SpotifyAnalysis.Data.DTO {
         public int DurationMs { get; set; }
 
         public int Popularity { get; set; }
-
-        public virtual AlbumDTO Album { get; set; }
-
+#nullable enable
+        public virtual AlbumDTO? Album { get; set; }
+#nullable restore
         public virtual List<ArtistDTO> Artists { get; set; }
     }
 }
