@@ -1,5 +1,4 @@
-﻿using SpotifyAPI.Web;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 
@@ -14,7 +13,7 @@ namespace SpotifyAnalysis.Data.DTO {
 
         public string ReleaseDate { get; set; }
 
-        public int TotalTracks { get; set; }
+        public int TotalTracks { get; set; } 
 
         public virtual List<ArtistDTO> Artists { get; set; }
 

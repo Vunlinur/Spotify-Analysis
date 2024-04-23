@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using SpotifyAnalysis.Data;
+using SpotifyAnalysis.Data.DataAccessLayer;
 using SpotifyAnalysis.Data.SpotifyAPI;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,8 @@ namespace SpotifyAnalysis {
 			services.AddServerSideBlazor();
 			services.AddSingleton<WeatherForecastService>();
 			services.AddSingleton<Spotify>();
+			services.AddSingleton<SpotifyModule>();
+			services.AddSingleton<SpotifyContext>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

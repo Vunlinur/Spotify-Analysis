@@ -1,11 +1,15 @@
 ﻿@page "/counter"
 
+@using Microsoft.EntityFrameworkCore
 @using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.DataAccessLayer
 @using SpotifyAnalysis.Data.SpotifyAPI
 @using SpotifyAPI.Web
 @using System.Threading
 
 @inject Spotify spotify;
+@inject SpotifyModule spotifyModule;
+@inject SpotifyContext spotifyContext;
 
 <p>
 	<label for="userId">User ID:</label>
@@ -43,11 +47,75 @@
 
 	public async void GetPlaylists() {
 		var userData = new UserData(userID);
-		await spotify.GetUsersPublicPlaylistsAsync(userData);
+		var oldTask = spotify.GetUsersPublicPlaylistsAsync(userData);
+		var newTask = NewGetPlaylists();
+		await newTask;
+
+		await oldTask;
 		StateHasChanged();
 	}
 
+	private async Task NewGetPlaylists() {
+		var userPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
+		// IDs of all playlists the user currently has
+		var newIDs = userPlaylists.Select(t => t.ID).ToHashSet();
+
+		using (var db = new SpotifyContext()) {
+			// TODO setup the user!!! and take only the user's playlists
+
+			// playlists in both DB and from API
+			var commonPlaylists = await db.Playlists
+				.Where(p => newIDs.Contains(p.ID))
+				.ToListAsync();
+
+			// playlists which we have in DB but have been updated
+			var updatedPlaylists = commonPlaylists.Where(
+				up => userPlaylists.First(p => p.ID == up.ID).SnapshotID != up.SnapshotID
+			).ToList();
+
+			// from the API playlists only take those we don't have
+			var newPlaylists = userPlaylists.Where(
+				up => !commonPlaylists.Any(p => p.ID == up.ID)
+			).ToList();
+
+			// add new playlists
+			if (newPlaylists.Count > 0)
+				await db.Playlists.AddRangeAsync(newPlaylists);
+
+			// update existing playlists
+			// TODO hash userPlaylists
+			if (updatedPlaylists.Count > 0) {
+				foreach (var updatedPlaylist in updatedPlaylists) {
+					var correspondingUserPlaylist = userPlaylists.First(p => p.ID == updatedPlaylist.ID);
+
+					updatedPlaylist.Name = correspondingUserPlaylist.Name;
+					updatedPlaylist.SnapshotID = correspondingUserPlaylist.SnapshotID;
+					updatedPlaylist.Followers = correspondingUserPlaylist.Followers;
+					updatedPlaylist.Tracks = correspondingUserPlaylist.Tracks;
+					updatedPlaylist.Images = correspondingUserPlaylist.Images;
+
+					db.Entry(updatedPlaylist).State = EntityState.Modified;
+				}
+			}
+
+			// TODO delete old playlists? but how, since owner != user? user needs to be in Followers?
+			
+			await db.SaveChangesAsync();
+		}
+	}
+
 	public async void GenerateCharts() {
+		var n = NewGenerateCharts();
+		var o = OldGenerateCharts();
+		await n;
+		await o;
+	}
+
+	private async Task NewGenerateCharts() {
+
+	}
+
+	private async Task OldGenerateCharts() {
 		if (spotify.UserData.FullPlaylists == null)
 			return;
 		var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists());
