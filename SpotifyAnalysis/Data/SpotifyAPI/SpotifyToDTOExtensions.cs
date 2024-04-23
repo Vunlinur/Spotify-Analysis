@@ -1,5 +1,6 @@
 ﻿using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
+using System.Collections.Generic;
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
     public static class SpotifyToDTOExtensions {
@@ -7,12 +8,13 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             return new PlaylistDTO() {
                 ID = fp.Id,
                 Name = fp.Name,
-                Followers = fp.Followers.Total,
                 Owner = fp.Owner.Id,
+                SnapshotID = fp.SnapshotId,
+                Followers = fp.Followers?.Total ?? -1,
                 Tracks = [],
                 Images = []
             };
-        }
+		}
 
         public static TrackDTO ToTrackDTO(this FullTrack ft) {
             return new TrackDTO() {
@@ -20,8 +22,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 Name = ft.Name,
                 DurationMs = ft.DurationMs,
                 Popularity = ft.Popularity,
-                Artists = [],
-                Album = null
+                Album = null,
+                Artists = []
             };
         }
 

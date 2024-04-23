@@ -10,6 +10,8 @@ namespace SpotifyAnalysis.Data.DTO {
         public string ID { get; set; }
 
         public string Name { get; set; }
+
+        public string SnapshotID { get; set; }
         
         public string Owner { get; set; }
      
