@@ -64,7 +64,7 @@
 
 		using (var db = new SpotifyContext()) {
 			// Get UserDTO from DB, create new from API if not present
-			UserDTO user = await db.Users.Include(u => u.Playlists).FirstAsync(u => u.ID == userID);
+			UserDTO user = await db.Users.Include(u => u.Playlists).FirstOrDefaultAsync(u => u.ID == userID);
 			if (user is null) {
 				user = await spotifyModule.GetUserProfile(userID);
 				await db.AddAsync(user);
@@ -94,7 +94,6 @@
 
 					updatedPlaylist.Name = correspondingUserPlaylist.Name;
 					updatedPlaylist.SnapshotID = correspondingUserPlaylist.SnapshotID;
-					updatedPlaylist.Followers = correspondingUserPlaylist.Followers;
 					updatedPlaylist.Tracks = correspondingUserPlaylist.Tracks;
 					updatedPlaylist.Images = correspondingUserPlaylist.Images;
 
