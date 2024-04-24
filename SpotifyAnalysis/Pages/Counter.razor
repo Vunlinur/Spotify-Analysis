@@ -2,6 +2,7 @@
 
 @using Microsoft.EntityFrameworkCore
 @using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.DataAccessLayer
 @using SpotifyAnalysis.Data.SpotifyAPI
 @using SpotifyAPI.Web
@@ -56,37 +57,40 @@
 	}
 
 	private async Task NewGetPlaylists() {
-		var userPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
-		// IDs of all playlists the user currently has
-		var newIDs = userPlaylists.Select(t => t.ID).ToHashSet();
+		// TODO optimize await order
+		var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
+		// Map of all playlists the user currently has
+		var idsPlaylistsMap = allUserPlaylists.ToDictionary(p => p.ID, p => p);
 
 		using (var db = new SpotifyContext()) {
-			// TODO setup the user!!! and take only the user's playlists
+			// Get UserDTO from DB, create new from API if not present
+			UserDTO user = await db.Users.Include(u => u.Playlists).FirstAsync(u => u.ID == userID);
+			if (user is null) {
+				user = await spotifyModule.GetUserProfile(userID);
+				await db.AddAsync(user);
+			}
 
-			// playlists in both DB and from API
-			var commonPlaylists = await db.Playlists
-				.Where(p => newIDs.Contains(p.ID))
-				.ToListAsync();
+			// Playlists in both DB and from API
+			var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.Keys.Contains(p.ID));
 
-			// playlists which we have in DB but have been updated
+			// Playlists which we have in DB but have been updated
 			var updatedPlaylists = commonPlaylists.Where(
-				up => userPlaylists.First(p => p.ID == up.ID).SnapshotID != up.SnapshotID
-			).ToList();
+				c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
 
-			// from the API playlists only take those we don't have
-			var newPlaylists = userPlaylists.Where(
-				up => !commonPlaylists.Any(p => p.ID == up.ID)
-			).ToList();
+			// Playlists which we don't have yet
+			//		Need to exclude all Playlists because one can be reffed by multiple users
+			var playlists = await db.Playlists.ToListAsync();
+			var allPlaylistIDs = playlists.Select(p => p.ID).ToHashSet();
+			var newPlaylists = allUserPlaylists.Where(up => !allPlaylistIDs.Contains(up.ID));
 
-			// add new playlists
-			if (newPlaylists.Count > 0)
-				await db.Playlists.AddRangeAsync(newPlaylists);
+			// Add new playlists
+			if (newPlaylists.Count() > 0)
+				user.Playlists.AddRange(newPlaylists.ToList());
 
-			// update existing playlists
-			// TODO hash userPlaylists
-			if (updatedPlaylists.Count > 0) {
+			// Update the existing playlists
+			if (updatedPlaylists.Count() > 0) {
 				foreach (var updatedPlaylist in updatedPlaylists) {
-					var correspondingUserPlaylist = userPlaylists.First(p => p.ID == updatedPlaylist.ID);
+					var correspondingUserPlaylist = idsPlaylistsMap[updatedPlaylist.ID];
 
 					updatedPlaylist.Name = correspondingUserPlaylist.Name;
 					updatedPlaylist.SnapshotID = correspondingUserPlaylist.SnapshotID;

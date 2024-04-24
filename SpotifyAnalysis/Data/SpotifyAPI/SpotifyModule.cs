@@ -8,20 +8,6 @@ using System.Threading.Tasks;
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
 
-/*
- * Playlists
-1. get user's playlists from spotify
-2. get the IDs of these playlists
-3. check which IDs are present in DB
-4. check if SnapshotIDs of the playlist we have match latest
-4. get playlist with remaining IDs from spotify
-5. load these playlits to DB
-
-* Tracks
-1. get a playlist from spotify
-2. cast the Tracks to FullTrack or FullEpisode
-CACHING???
- */
 
 	public class SpotifyModule {
 		private SpotifyClient SpotifyClient { get; }
@@ -40,13 +26,23 @@ CACHING???
 			SpotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
 		}
 
-        /**
-		 * Gets all public playlists of the given userID.
+		/**
+		 * Get public profile information about a Spotify user.
+		 * https://developer.spotify.com/documentation/web-api/reference/get-users-profile
 		 */
-        public async Task<IList<PlaylistDTO>> GetUsersPublicPlaylistsAsync(string userID) {
-            var playlistsTask = await SpotifyClient.Playlists.GetUsers(userID);
+		public async Task<UserDTO> GetUserProfile(string userID) {
+			var userData = await SpotifyClient.UserProfile.Get(userID);
+			return userData.ToUserDTO();
+		}
+
+		/**
+		 * Get a list of the playlists owned or followed by a Spotify user.
+		 * https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
+		 */
+		public async Task<IList<PlaylistDTO>> GetUsersPublicPlaylistsAsync(string userID) {
+			var playlistsTask = await SpotifyClient.Playlists.GetUsers(userID);
 			var fullPlaylists = await SpotifyClient.PaginateAll(playlistsTask);
 			return fullPlaylists.Select(p => p.ToPlaylistDTO()).ToList();
-        }
-    }
+		}
+	}
 }

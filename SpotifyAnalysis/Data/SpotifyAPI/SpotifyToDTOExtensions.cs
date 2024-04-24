@@ -4,6 +4,14 @@ using System.Collections.Generic;
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
     public static class SpotifyToDTOExtensions {
+        // TODO Add recursive field conversion
+		public static UserDTO ToUserDTO(this PublicUser pu) {
+            return new UserDTO() {
+                ID = pu.Id,
+                Name = pu.DisplayName
+			};
+		}
+
         public static PlaylistDTO ToPlaylistDTO(this FullPlaylist fp) {
             return new PlaylistDTO() {
                 ID = fp.Id,
