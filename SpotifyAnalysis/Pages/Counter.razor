@@ -59,7 +59,7 @@
 	private async Task NewGetPlaylists() {
 		// TODO optimize await order
 		var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
-		// Map of all playlists the user currently has
+		// Map of all playlists the user currently has in API
 		var idsPlaylistsMap = allUserPlaylists.ToDictionary(p => p.ID, p => p);
 
 		using (var db = new SpotifyContext()) {
@@ -71,7 +71,7 @@
 			}
 
 			// Playlists in both DB and from API
-			var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.Keys.Contains(p.ID));
+			var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.ContainsKey(p.ID));
 
 			// Playlists which we have in DB but have been updated
 			var updatedPlaylists = commonPlaylists.Where(
@@ -84,11 +84,11 @@
 			var newPlaylists = allUserPlaylists.Where(up => !allPlaylistIDs.Contains(up.ID));
 
 			// Add new playlists
-			if (newPlaylists.Count() > 0)
+			if (newPlaylists.Any())
 				user.Playlists.AddRange(newPlaylists.ToList());
 
 			// Update the existing playlists
-			if (updatedPlaylists.Count() > 0) {
+			if (updatedPlaylists.Any()) {
 				foreach (var updatedPlaylist in updatedPlaylists) {
 					var correspondingUserPlaylist = idsPlaylistsMap[updatedPlaylist.ID];
 
@@ -102,7 +102,10 @@
 				}
 			}
 
-			// TODO delete old playlists? but how, since owner != user? user needs to be in Followers?
+			// Remove the playlist we don't have anymore
+			var stalePlaylists = user.Playlists.Where(p => !idsPlaylistsMap.ContainsKey(p.ID));
+			if (stalePlaylists.Any())
+				db.RemoveRange(stalePlaylists);
 			
 			await db.SaveChangesAsync();
 		}
