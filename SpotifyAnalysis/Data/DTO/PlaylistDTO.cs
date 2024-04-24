@@ -14,8 +14,6 @@ namespace SpotifyAnalysis.Data.DTO {
         public string SnapshotID { get; set; }
         
         public string Owner { get; set; }
-     
-        public int Followers { get; set; }
 
         public virtual List<TrackDTO> Tracks { get; set; }
 

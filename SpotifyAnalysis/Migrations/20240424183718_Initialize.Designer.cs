@@ -11,8 +11,8 @@ using SpotifyAnalysis.Data.DataAccessLayer;
 namespace SpotifyAnalysis.Migrations
 {
     [DbContext(typeof(SpotifyContext))]
-    [Migration("20240422001516_SnapshotID")]
-    partial class SnapshotID
+    [Migration("20240424183718_Initialize")]
+    partial class Initialize
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,6 +37,21 @@ namespace SpotifyAnalysis.Migrations
                     b.HasIndex("ArtistsID");
 
                     b.ToTable("AlbumDTOArtistDTO");
+                });
+
+            modelBuilder.Entity("PlaylistDTOUserDTO", b =>
+                {
+                    b.Property<string>("PlaylistsID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserDTOID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("PlaylistsID", "UserDTOID");
+
+                    b.HasIndex("UserDTOID");
+
+                    b.ToTable("PlaylistDTOUserDTO");
                 });
 
             modelBuilder.Entity("SpotifyAnalysis.Data.DTO.AlbumDTO", b =>
@@ -84,8 +99,11 @@ namespace SpotifyAnalysis.Migrations
 
             modelBuilder.Entity("SpotifyAnalysis.Data.DTO.ImageDTO", b =>
                 {
-                    b.Property<string>("ID")
-                        .HasColumnType("nvarchar(450)");
+                    b.Property<int>("ImageID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ImageID"));
 
                     b.Property<string>("AlbumDTOID")
                         .HasColumnType("nvarchar(450)");
@@ -102,7 +120,7 @@ namespace SpotifyAnalysis.Migrations
                     b.Property<string>("Url")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("ID");
+                    b.HasKey("ImageID");
 
                     b.HasIndex("AlbumDTOID");
 
@@ -118,9 +136,6 @@ namespace SpotifyAnalysis.Migrations
                     b.Property<string>("ID")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("Followers")
-                        .HasColumnType("int");
-
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
@@ -130,12 +145,7 @@ namespace SpotifyAnalysis.Migrations
                     b.Property<string>("SnapshotID")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("UserDTOID")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("ID");
-
-                    b.HasIndex("UserDTOID");
 
                     b.ToTable("Playlists");
                 });
@@ -197,6 +207,21 @@ namespace SpotifyAnalysis.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PlaylistDTOUserDTO", b =>
+                {
+                    b.HasOne("SpotifyAnalysis.Data.DTO.PlaylistDTO", null)
+                        .WithMany()
+                        .HasForeignKey("PlaylistsID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SpotifyAnalysis.Data.DTO.UserDTO", null)
+                        .WithMany()
+                        .HasForeignKey("UserDTOID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("SpotifyAnalysis.Data.DTO.ArtistDTO", b =>
                 {
                     b.HasOne("SpotifyAnalysis.Data.DTO.TrackDTO", null)
@@ -217,13 +242,6 @@ namespace SpotifyAnalysis.Migrations
                     b.HasOne("SpotifyAnalysis.Data.DTO.PlaylistDTO", null)
                         .WithMany("Images")
                         .HasForeignKey("PlaylistDTOID");
-                });
-
-            modelBuilder.Entity("SpotifyAnalysis.Data.DTO.PlaylistDTO", b =>
-                {
-                    b.HasOne("SpotifyAnalysis.Data.DTO.UserDTO", null)
-                        .WithMany("Playlists")
-                        .HasForeignKey("UserDTOID");
                 });
 
             modelBuilder.Entity("SpotifyAnalysis.Data.DTO.TrackDTO", b =>
@@ -261,11 +279,6 @@ namespace SpotifyAnalysis.Migrations
             modelBuilder.Entity("SpotifyAnalysis.Data.DTO.TrackDTO", b =>
                 {
                     b.Navigation("Artists");
-                });
-
-            modelBuilder.Entity("SpotifyAnalysis.Data.DTO.UserDTO", b =>
-                {
-                    b.Navigation("Playlists");
                 });
 #pragma warning restore 612, 618
         }

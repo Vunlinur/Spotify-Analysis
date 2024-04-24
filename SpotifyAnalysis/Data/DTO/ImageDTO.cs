@@ -6,8 +6,7 @@ namespace SpotifyAnalysis.Data.DTO {
     [Table("Images")]
     public class ImageDTO {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public string ID { get; set; }
+        public int ImageID { get; set; }
 
         public string Url { get; set; }
 

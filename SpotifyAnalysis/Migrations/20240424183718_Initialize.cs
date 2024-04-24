@@ -5,7 +5,7 @@
 namespace SpotifyAnalysis.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Initialize : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -25,6 +25,20 @@ namespace SpotifyAnalysis.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Playlists",
+                columns: table => new
+                {
+                    ID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SnapshotID = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Owner = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Playlists", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -34,26 +48,6 @@ namespace SpotifyAnalysis.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.ID);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Playlists",
-                columns: table => new
-                {
-                    ID = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Owner = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Followers = table.Column<int>(type: "int", nullable: false),
-                    UserDTOID = table.Column<string>(type: "nvarchar(450)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Playlists", x => x.ID);
-                    table.ForeignKey(
-                        name: "FK_Playlists_Users_UserDTOID",
-                        column: x => x.UserDTOID,
-                        principalTable: "Users",
-                        principalColumn: "ID");
                 });
 
             migrationBuilder.CreateTable(
@@ -80,6 +74,30 @@ namespace SpotifyAnalysis.Migrations
                         column: x => x.PlaylistDTOID,
                         principalTable: "Playlists",
                         principalColumn: "ID");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PlaylistDTOUserDTO",
+                columns: table => new
+                {
+                    PlaylistsID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserDTOID = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlaylistDTOUserDTO", x => new { x.PlaylistsID, x.UserDTOID });
+                    table.ForeignKey(
+                        name: "FK_PlaylistDTOUserDTO_Playlists_PlaylistsID",
+                        column: x => x.PlaylistsID,
+                        principalTable: "Playlists",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PlaylistDTOUserDTO_Users_UserDTOID",
+                        column: x => x.UserDTOID,
+                        principalTable: "Users",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -130,7 +148,8 @@ namespace SpotifyAnalysis.Migrations
                 name: "Images",
                 columns: table => new
                 {
-                    ID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    ImageID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Url = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Resolution = table.Column<int>(type: "int", nullable: false),
                     AlbumDTOID = table.Column<string>(type: "nvarchar(450)", nullable: true),
@@ -139,7 +158,7 @@ namespace SpotifyAnalysis.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Images", x => x.ID);
+                    table.PrimaryKey("PK_Images", x => x.ImageID);
                     table.ForeignKey(
                         name: "FK_Images_Albums_AlbumDTOID",
                         column: x => x.AlbumDTOID,
@@ -183,8 +202,8 @@ namespace SpotifyAnalysis.Migrations
                 column: "PlaylistDTOID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Playlists_UserDTOID",
-                table: "Playlists",
+                name: "IX_PlaylistDTOUserDTO_UserDTOID",
+                table: "PlaylistDTOUserDTO",
                 column: "UserDTOID");
 
             migrationBuilder.CreateIndex(
@@ -208,7 +227,13 @@ namespace SpotifyAnalysis.Migrations
                 name: "Images");
 
             migrationBuilder.DropTable(
+                name: "PlaylistDTOUserDTO");
+
+            migrationBuilder.DropTable(
                 name: "Artists");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Tracks");
@@ -218,9 +243,6 @@ namespace SpotifyAnalysis.Migrations
 
             migrationBuilder.DropTable(
                 name: "Playlists");
-
-            migrationBuilder.DropTable(
-                name: "Users");
         }
     }
 }
