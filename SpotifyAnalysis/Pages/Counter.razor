@@ -79,8 +79,8 @@
 
 			// Playlists which we don't have yet
 			//		Need to exclude all Playlists because one can be reffed by multiple users
-			var playlists = await db.Playlists.ToListAsync();
-			var allPlaylistIDs = playlists.Select(p => p.ID).ToHashSet();
+			var allPlaylists = await db.Playlists.ToListAsync();
+			var allPlaylistIDs = allPlaylists.Select(p => p.ID).ToHashSet();
 			var newPlaylists = allUserPlaylists.Where(up => !allPlaylistIDs.Contains(up.ID));
 
 			// Add new playlists
@@ -118,7 +118,8 @@
 	}
 
 	private async Task NewGenerateCharts() {
-
+		var selectedPlaylistIDs = playlistList.GetSelectedPlaylists().Select(p => p.Id);
+		var allTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistIDs);
 	}
 
 	private async Task OldGenerateCharts() {
