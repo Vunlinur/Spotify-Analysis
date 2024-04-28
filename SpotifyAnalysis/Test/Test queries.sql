@@ -1,5 +1,6 @@
 ﻿SELECT * FROM Users
 SELECT * FROM Playlists WHERE Name like '%Turnau%'
+SELECT * FROM Tracks
 
 UPDATE Playlists SET UserDTOID = NULL WHERE ID='00gS7nSgypzKL3hZNfxVre'
 

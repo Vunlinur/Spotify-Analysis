@@ -77,15 +77,8 @@
 			var updatedPlaylists = commonPlaylists.Where(
 				c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
 
-			// Playlists which we don't have yet
-			//		Need to exclude all Playlists because one can be reffed by multiple users
-			var allPlaylists = await db.Playlists.ToListAsync();
-			var allPlaylistIDs = allPlaylists.Select(p => p.ID).ToHashSet();
-			var newPlaylists = allUserPlaylists.Where(up => !allPlaylistIDs.Contains(up.ID));
-
 			// Add new playlists
-			if (newPlaylists.Any())
-				user.Playlists.AddRange(newPlaylists.ToList());
+			await db.Playlists.AddRangeIfNotExists(allUserPlaylists, p => p.ID);
 
 			// Update the existing playlists
 			if (updatedPlaylists.Any()) {
