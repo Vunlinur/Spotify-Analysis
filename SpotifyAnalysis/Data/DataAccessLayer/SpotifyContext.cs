@@ -20,6 +20,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
 			IConfigurationRoot configuration = Program.PrepareConfig();
             options.UseSqlServer(configuration.GetConnectionString("SpotifyDB"));
+			options.LogTo(Console.WriteLine);
         }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
