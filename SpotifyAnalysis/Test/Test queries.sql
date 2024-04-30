@@ -1,11 +1,23 @@
 ﻿SELECT * FROM Users
 SELECT * FROM Playlists WHERE Name like '%Turnau%'
 SELECT * FROM Tracks
+SELECT * FROM PlaylistDTOTrackDTO
+SELECT * FROM Albums
+SELECT * FROM Artists
+SELECT * FROM AlbumDTOArtistDTO
+
+SELECT t.ID, t.Name, a.Name, a.ID FROM Tracks t LEFT JOIN Albums a ON a.ID = t.AlbumID ORDER BY a.Name
+SELECT * FROM Tracks WHERE PlaylistDTOTrackDTO
 
 UPDATE Playlists SET UserDTOID = NULL WHERE ID='00gS7nSgypzKL3hZNfxVre'
 
+--DELETE FROM Users
 --DELETE FROM Playlists
---DELETE TOP(10) FROM Playlists
+--UPDATE Tracks SET AlbumID = NULL
+--DELETE FROM Tracks
+--DELETE FROM AlbumDTOArtistDTO
+--DELETE FROM Albums
+--DELETE FROM Artists
 
 
 

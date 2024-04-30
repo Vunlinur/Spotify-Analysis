@@ -112,7 +112,17 @@
 
 	private async Task NewGenerateCharts() {
 		var selectedPlaylistIDs = playlistList.GetSelectedPlaylists().Select(p => p.Id);
+
+		using (var db = new SpotifyContext()) {
 		var allTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistIDs);
+
+			allTracks.RemoveDuplicateArtists(db.Artists.ToDictionary(t => t.ID, t => t));
+			allTracks.RemoveDuplicateAlbums(db.Albums.ToDictionary(t => t.ID, t => t));
+			await db.Artists.AddRangeIfNotExists(allTracks.SelectMany(t => t.Artists).DistinctBy(a => a.ID), t => t.ID);
+
+			await db.Tracks.AddRangeIfNotExists(allTracks, t => t.ID);
+			await db.SaveChangesAsync();
+		}
 	}
 
 	private async Task OldGenerateCharts() {
