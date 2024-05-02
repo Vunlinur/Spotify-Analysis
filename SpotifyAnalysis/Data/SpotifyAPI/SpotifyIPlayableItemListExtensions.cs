@@ -22,16 +22,17 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 			foreach (TrackDTO entity in collection)
 				if (disctinct.TryGetValue(entity.Album.ID, out AlbumDTO current))
 					entity.Album = current;
+				else
+					disctinct.Add(entity.Album.ID, entity.Album);
 		}
 
 		public static void RemoveDuplicateArtists(this IEnumerable<TrackDTO> collection, Dictionary<string, ArtistDTO> disctinct) {
 			foreach (TrackDTO entity in collection) {
-				ArtistDTO artist;
-				for (int i = 0; i < entity.Artists.Count; i++) {
-					artist = entity.Artists[i];
-					if (disctinct.TryGetValue(artist.ID, out ArtistDTO current))
+				for (int i = 0; i < entity.Artists.Count; i++)
+					if (disctinct.TryGetValue(entity.Artists[i].ID, out ArtistDTO current))
 						entity.Artists[i] = current;
-				}
+					else
+						disctinct.Add(entity.Artists[i].ID, entity.Artists[i]);
 			}
 		}
 	}
