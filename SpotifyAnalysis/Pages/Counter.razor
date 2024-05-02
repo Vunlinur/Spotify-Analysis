@@ -19,7 +19,7 @@
 	<button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
 </p>
 
-@if (spotify.UserData?.FullPlaylists != null) {
+@if (playlists?.Any() == true) {
 	<PlaylistList @ref="playlistList" Playlists="spotify.UserData.FullPlaylists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 <p>
@@ -45,6 +45,7 @@
 	private Elements genres;
 
 	private FullArtist selectedArtist;
+	private List<PlaylistDTO> playlists;
 
 	public async void GetPlaylists() {
 		var userData = new UserData(userID);
@@ -78,7 +79,8 @@
 				c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
 
 			// Add new playlists
-			await db.Playlists.AddRangeIfNotExists(allUserPlaylists, p => p.ID);
+			var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
+			user.Playlists.AddRange(newPlaylists);
 
 			// Update the existing playlists
 			if (updatedPlaylists.Any()) {
@@ -100,6 +102,8 @@
 				db.RemoveRange(stalePlaylists);
 			
 			await db.SaveChangesAsync();
+
+			playlists = new List<PlaylistDTO>(user.Playlists);
 		}
 	}
 
@@ -111,14 +115,14 @@
 	}
 
 	private async Task NewGenerateCharts() {
-		var selectedPlaylistIDs = playlistList.GetSelectedPlaylists().Select(p => p.Id);
+		var selectedPlaylistIDs = playlistList.GetSelectedPlaylists().Select(p => p.ID);
 
 		using (var db = new SpotifyContext()) {
 		var allTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistIDs);
 
 			allTracks.RemoveDuplicateArtists(db.Artists.ToDictionary(t => t.ID, t => t));
 			allTracks.RemoveDuplicateAlbums(db.Albums.ToDictionary(t => t.ID, t => t));
-			await db.Artists.AddRangeIfNotExists(allTracks.SelectMany(t => t.Artists).DistinctBy(a => a.ID), t => t.ID);
+			await db.Artists.AddRangeIfNotExists(allTracks.SelectMany(t => t.Artists).DistinctBy(a => a.ID), t => t.ID); // TODO delete DistinctBy?
 
 			await db.Tracks.AddRangeIfNotExists(allTracks, t => t.ID);
 			await db.SaveChangesAsync();
@@ -126,9 +130,20 @@
 	}
 
 	private async Task OldGenerateCharts() {
+		FullPlaylist PlaylistDTOToFullPlaylist(PlaylistDTO dto) {
+			return new FullPlaylist() {
+				Id = dto.ID,
+				Name = dto.Name,
+				SnapshotId = dto.SnapshotID,
+				Owner = new PublicUser() {Id = dto.Owner},
+				Tracks = new Paging<PlaylistTrack<IPlayableItem>>(),
+				Images = []
+			};
+		}
+
 		if (spotify.UserData.FullPlaylists == null)
 			return;
-		var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists());
+		var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists().Select(p => PlaylistDTOToFullPlaylist(p)));
 		var allTracks = await getAllTracks;
 		var getAllArtists = spotify.GetAllArtistsAsync(allTracks);
 		var buildArtistsSongs = BuildArtistsAsync(allTracks);

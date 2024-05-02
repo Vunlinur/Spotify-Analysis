@@ -45,7 +45,6 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				var fullPlaylist = new Playlist(playlist);
 				if (UserData.FullPlaylists[playlist.Id].FullTracks.Any())
 					return await Task.Run(() => {
-						playlists = playlists.ToList();
 						foreach (var track in UserData.FullPlaylists[playlist.Id].FullTracks)
 							fullPlaylist.FullTracks.Add(track);
 						return fullPlaylist;

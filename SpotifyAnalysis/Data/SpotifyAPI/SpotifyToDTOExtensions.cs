@@ -23,7 +23,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 Name = fp.Name,
                 Owner = fp.Owner.Id,
                 SnapshotID = fp.SnapshotId,
-                Tracks = [],
+                Tracks = [], // paging
                 Images = []
 			};
 		}

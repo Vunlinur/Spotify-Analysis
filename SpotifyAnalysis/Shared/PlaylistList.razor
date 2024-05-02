@@ -1,6 +1,6 @@
 ﻿@using System.IO;
 @using System.Linq;
-@using SpotifyAPI.Web
+@using Data.DTO
 
 
 <div class="pane" style="width: 520px">
@@ -26,7 +26,7 @@
 							Name
 							<span>@GetSortIndicator("Name")</span>
 						</th>
-						<th style="width:100px" @onclick='(e => SortTable(b => b.Data.Tracks.Total, "Tracks"))'>
+						<th style="width:100px" @onclick='(e => SortTable(b => b.Data.Tracks.Count, "Tracks"))'>
 							<span>@GetSortIndicator("Tracks")</span>
 							Tracks
 						</th>
@@ -36,10 +36,11 @@
 					@if (playlists != null) {
 						foreach (var playlist in playlists) {
 							<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
+								@* TODO Fix null checks for Images and Tracks *@
 								<td>@playlist.Index</td>
-								<td> <img src="@playlist.Data.Images.Last().Url" /></td>
+								<td> <img src="@playlist.Data.Images?.Last().Url" /></td>
 								<td class="bright">@playlist.Data.Name</td>
-								<td>@playlist.Data.Tracks.Total</td>
+								<td>@playlist.Data.Tracks?.Count</td>
 							</tr>
 						}
 					}
@@ -54,7 +55,7 @@
 	private const string Select = "select";
 
 	[Parameter]
-	public IEnumerable<FullPlaylist> Playlists { get; set; }
+	public IEnumerable<PlaylistDTO> Playlists { get; set; }
 	[Parameter]
 	public bool MultiSelect { get; set; }
 	[Parameter]
@@ -66,9 +67,9 @@
 	internal class Playlist {
 		public string Class;
 		public int Index;
-		public FullPlaylist Data;
+		public PlaylistDTO Data;
 
-		public Playlist(FullPlaylist playlist, int index) {
+		public Playlist(PlaylistDTO playlist, int index) {
 			Data = playlist;
 			Index = index;
 		}
@@ -79,7 +80,7 @@
 		playlists = Playlists.Select(x => new Playlist(x, index++)).ToList();
 	}
 
-	public IEnumerable<FullPlaylist> GetSelectedPlaylists() {
+	public IEnumerable<PlaylistDTO> GetSelectedPlaylists() {
 		return playlists
 			.Where(p => p.Class == Select)
 			.Select(p => p.Data);
