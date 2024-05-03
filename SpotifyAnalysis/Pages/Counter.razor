@@ -20,7 +20,7 @@
 </p>
 
 @if (playlists?.Any() == true) {
-	<PlaylistList @ref="playlistList" Playlists="spotify.UserData.FullPlaylists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
+	<PlaylistList @ref="playlistList" Playlists="playlists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 <p>
 	@if (artistsSongs != null) {
@@ -65,7 +65,10 @@
 
 		using (var db = new SpotifyContext()) {
 			// Get UserDTO from DB, create new from API if not present
-			UserDTO user = await db.Users.Include(u => u.Playlists).FirstOrDefaultAsync(u => u.ID == userID);
+			UserDTO user = await db.Users
+				.Include(u => u.Playlists)
+				.ThenInclude(p => p.Images)
+				.FirstOrDefaultAsync(u => u.ID == userID);
 			if (user is null) {
 				user = await spotifyModule.GetUserProfile(userID);
 				await db.AddAsync(user);

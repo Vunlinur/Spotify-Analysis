@@ -11,7 +11,7 @@ namespace SpotifyAnalysis.Data.DTO {
 
         public string Name { get; set; }
 
-        public int Popularity { get; set; }
+        public int? Popularity { get; set; }
 
         public List<string> Genres { get; set; }
 

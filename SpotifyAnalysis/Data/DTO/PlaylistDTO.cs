@@ -15,6 +15,8 @@ namespace SpotifyAnalysis.Data.DTO {
         
         public string Owner { get; set; }
 
+        public int? TracksTotal { get; set; }
+
         public virtual List<TrackDTO> Tracks { get; set; }
 
         public virtual List<ImageDTO> Images { get; set; }

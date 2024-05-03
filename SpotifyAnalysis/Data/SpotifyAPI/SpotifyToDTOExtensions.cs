@@ -6,9 +6,6 @@ using System.Linq;
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
     public static class SpotifyToDTOExtensions {
-		// Arbitrary number to distinguish from unknowns that came from other systems
-		public const int unknownPopularity = -27;
-
 		public static UserDTO ToUserDTO(this PublicUser pu) {
             return new UserDTO() {
                 ID = pu.Id,
@@ -23,8 +20,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 Name = fp.Name,
                 Owner = fp.Owner.Id,
                 SnapshotID = fp.SnapshotId,
+				TracksTotal = fp.Tracks.Total,
                 Tracks = [], // paging
-                Images = []
+                Images = fp.Images.Select(i => i.ToImageDTO()).ToList()
 			};
 		}
 
@@ -79,7 +77,6 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				ID = a.Id,
 				Name = a.Name,
 				Genres = [],
-				Popularity = unknownPopularity,
 				Albums = [],
 				Images = []
 			};

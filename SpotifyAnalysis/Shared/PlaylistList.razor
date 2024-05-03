@@ -36,11 +36,10 @@
 					@if (playlists != null) {
 						foreach (var playlist in playlists) {
 							<tr class="@playlist.Class" @onclick='(e) => ToggleSelect(playlist)'>
-								@* TODO Fix null checks for Images and Tracks *@
 								<td>@playlist.Index</td>
-								<td> <img src="@playlist.Data.Images?.Last().Url" /></td>
+								<td> <img src="@playlist.Data.Images.Last().Url" /></td>
 								<td class="bright">@playlist.Data.Name</td>
-								<td>@playlist.Data.Tracks?.Count</td>
+								<td>@playlist.Data.TracksTotal</td>
 							</tr>
 						}
 					}
