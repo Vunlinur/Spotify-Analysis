@@ -121,11 +121,16 @@
 		var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID);
 
 		using (var db = new SpotifyContext()) {
-			var playlists = db.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).ToList();
+			var playlists = db.Playlists
+				.Include(p => p.Tracks)
+				.ThenInclude(t => t.Artists)
+				.Where(p => selectedPlaylistsIds.Contains(p.ID))
+				.ToList();
 
-			var allTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(playlists);
+			await spotifyModule.GetMultiplePlaylistsTracksAsync(playlists);
 			//playlists.Select(p => db.Entry(p).State = EntityState.Modified);
 
+			var allTracks = playlists.SelectMany(p => p.Tracks);
 			allTracks.RemoveDuplicateArtists(db.Artists.ToDictionary(t => t.ID, t => t));
 			allTracks.RemoveDuplicateAlbums(db.Albums.ToDictionary(t => t.ID, t => t));
 			await db.Artists.AddRangeIfNotExists(allTracks.SelectMany(t => t.Artists).DistinctBy(a => a.ID), t => t.ID); // TODO delete DistinctBy?

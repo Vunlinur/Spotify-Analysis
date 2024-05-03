@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using SpotifyAnalysis.Data.DataAccessLayer;
 using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
 using System;
@@ -62,27 +63,30 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		 * Get full details of the items of a playlist with given ID.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<IList<TrackDTO>> GetPlaylistTracksAsync(PlaylistDTO playlist) {
+		public async Task GetPlaylistTracksAsync(PlaylistDTO playlist) {
 			var fullPlaylist = await SpotifyClient.Playlists.Get(playlist.ID);
+			var allPlayableItems = await SpotifyClient.PaginateAll(fullPlaylist.Tracks);
+			var allTracks = allPlayableItems.ToFullTracks().Select(p => p.ToTrackDTO());
+			var newTracks = allTracks.FindNewEntities(allTracks, t => t.ID);
+			playlist.Tracks.AddRange(newTracks);
 			playlist.Followers = fullPlaylist.Followers.Total;
-			var allTracks = await SpotifyClient.PaginateAll(fullPlaylist.Tracks);
-			return allTracks.ToFullTracks().Select(p => p.ToTrackDTO()).ToList();
+			playlist.TracksTotal = playlist.Tracks.Count;
 		}
 
 		/**
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<IList<TrackDTO>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlists) {
+		public async Task GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlists) {
 			// TODO cancellation token?
 			var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
-			var tasks = new List<Task<IList<TrackDTO>>>();
+			var tasks = new List<Task>();
 
 			// Create tasks to process each playlist ID asynchronously
 			foreach (var playlist in playlists) {
-				async Task<IList<TrackDTO>> GetTracks() {
+				async Task GetTracks() {
 					try {
-						return await GetPlaylistTracksAsync(playlist);
+						await GetPlaylistTracksAsync(playlist);
 					} finally {
 						semaphore.Release(); // Release the semaphore slot when done
 					}
@@ -91,8 +95,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				await semaphore.WaitAsync(); // Wait for a semaphore slot to limit concurrency
 				tasks.Add(Task.Run(GetTracks));
 			}
-			var results = await Task.WhenAll(tasks);
-			return results.SelectMany(x => x).ToList();
+			await Task.WhenAll(tasks);
 		}
 	}
 }
