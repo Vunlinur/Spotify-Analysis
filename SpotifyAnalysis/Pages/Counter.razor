@@ -103,7 +103,7 @@
 			var stalePlaylists = user.Playlists.Where(p => !idsPlaylistsMap.ContainsKey(p.ID));
 			if (stalePlaylists.Any())
 				db.RemoveRange(stalePlaylists);
-			
+
 			await db.SaveChangesAsync();
 
 			playlists = new List<PlaylistDTO>(user.Playlists);
@@ -118,10 +118,13 @@
 	}
 
 	private async Task NewGenerateCharts() {
-		var selectedPlaylistIDs = playlistList.GetSelectedPlaylists().Select(p => p.ID);
+		var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID);
 
 		using (var db = new SpotifyContext()) {
-		var allTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistIDs);
+			var playlists = db.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).ToList();
+
+			var allTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(playlists);
+			//playlists.Select(p => db.Entry(p).State = EntityState.Modified);
 
 			allTracks.RemoveDuplicateArtists(db.Artists.ToDictionary(t => t.ID, t => t));
 			allTracks.RemoveDuplicateAlbums(db.Albums.ToDictionary(t => t.ID, t => t));

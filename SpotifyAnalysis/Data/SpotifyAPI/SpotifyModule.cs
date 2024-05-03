@@ -52,27 +52,27 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		 * Get full details of the items of a playlist with given ID.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<IList<TrackDTO>> GetPlaylistTracksAsync(string playlistId) {
-			// TODO maybe rework to Playlists.Get() so we can fill the extra data we don't get in SimplePlaylist
-			var tracksPages = await SpotifyClient.Playlists.GetItems(playlistId);
-			var tracksAll = await SpotifyClient.PaginateAll(tracksPages);
-			return tracksAll.ToFullTracks().Select(p => p.ToTrackDTO()).ToList();
+		public async Task<IList<TrackDTO>> GetPlaylistTracksAsync(PlaylistDTO playlist) {
+			var fullPlaylist = await SpotifyClient.Playlists.Get(playlist.ID);
+			playlist.Followers = fullPlaylist.Followers.Total;
+			var allTracks = await SpotifyClient.PaginateAll(fullPlaylist.Tracks);
+			return allTracks.ToFullTracks().Select(p => p.ToTrackDTO()).ToList();
 		}
 
 		/**
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<IList<TrackDTO>> GetMultiplePlaylistsTracksAsync(IEnumerable<string> playlistIds) {
+		public async Task<IList<TrackDTO>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlists) {
 			// TODO cancellation token?
 			var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 			var tasks = new List<Task<IList<TrackDTO>>>();
 
 			// Create tasks to process each playlist ID asynchronously
-			foreach (var playlistId in playlistIds) {
+			foreach (var playlist in playlists) {
 				async Task<IList<TrackDTO>> GetTracks() {
 					try {
-						return await GetPlaylistTracksAsync(playlistId);
+						return await GetPlaylistTracksAsync(playlist);
 					} finally {
 						semaphore.Release(); // Release the semaphore slot when done
 					}
