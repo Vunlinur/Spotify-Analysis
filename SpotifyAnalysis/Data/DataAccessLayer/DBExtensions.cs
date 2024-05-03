@@ -12,7 +12,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			return exists ? null : dbSet.Add(entity);
 		}
 
-		// TODO probably rework into generic extensions
 		public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this IEnumerable<TEnt> group1, IEnumerable<TEnt> group2, Func<TEnt, TKey> keySelector) where TEnt : class {
 			var existingKeys = group1.Select(keySelector).ToHashSet();
 			return group2.Where(e => !existingKeys.Contains(keySelector(e)));
