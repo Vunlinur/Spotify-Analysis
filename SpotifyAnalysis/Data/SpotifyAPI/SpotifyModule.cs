@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
 using System;
@@ -11,22 +12,31 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
 
 	public class SpotifyModule {
-		private const int maxDegreeOfParallelism = 3; // Adjust this based on your requirements
-		private SpotifyClient SpotifyClient { get; }
+		private const int maxDegreeOfParallelism = 3; // Adjust based on Spotify API capacity
+		private SpotifyClient SpotifyClient;
 
 
 		public SpotifyModule() {
+			InitializeSpotifyClient();
+		}
+
+		private void InitializeSpotifyClient() {
 			var config = SpotifyClientConfig.CreateDefault();
 
 			var credentials = new ClientCredentialsRequest(
 				Program.Config.GetValue<string>("ClientId"),
 				Program.Config.GetValue<string>("ClientSecret")
 			);
-			var response = new OAuthClient(config).RequestToken(credentials);
-			response.Wait();
 
-			// TODO refresh token
+			try {
+				// TODO handle server errors like Error SQL80001: An expression of non-boolean type specified in a context where a condition is expected.
+				var response = new OAuthClient(config).RequestToken(credentials);
+				response.Wait(); // Async await did not return with an error but timed out instead: TODO test when API's down
 			SpotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
+		}
+			catch (SecurityTokenExpiredException) {
+				throw; // TODO refresh token
+			}
 		}
 
 		/**
