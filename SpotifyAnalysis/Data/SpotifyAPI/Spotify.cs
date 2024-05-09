@@ -32,7 +32,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		public async Task GetUsersPublicPlaylistsAsync(UserData userData) {
 			UserData = userData;
 			var playlistsTask = await SpotifyClient.Playlists.GetUsers(UserData.ID);
-			UserData.FullPlaylists = new FullPlaylists(await SpotifyClient.PaginateAll(playlistsTask));
+			UserData.FullPlaylists = new FullPlaylistsCache(await SpotifyClient.PaginateAll(playlistsTask));
 		}
 
 		/**

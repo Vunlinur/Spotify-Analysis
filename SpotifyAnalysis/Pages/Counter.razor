@@ -130,86 +130,39 @@
 
 			var playlists = await db.Playlists
 				.Include(p => p.Tracks)
-				.Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t);
+				.Where(p => selectedPlaylistsIds.Contains(p.ID))
+				.ToDictionaryAsync(t => t.ID, t => t);
 			var tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
 			var albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
 			var artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
 
 			var playlistsAndTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistsIds);
 
-			foreach (var data in playlistsAndTracks) {
-				bool hitPlaylist = playlists.TryGetValue(data.Playlist.Id, out PlaylistDTO playlist);
-				if (!hitPlaylist)
-					// if not present in DB, create new
-					playlist = data.Playlist.ToPlaylistDTO();
-				else {
-					// if present, update
-					playlist.Name = data.Playlist.Name;
-					playlist.SnapshotID = data.Playlist.SnapshotId;
-					playlist.TracksTotal = data.Playlist.Tracks.Total;
-					if (data.Playlist.Tracks.Total != data.Tracks.Count)  // TODO remove, debug safety
-						throw new ApplicationException("Data mismatch between playlist.Tracks.Total and Tracks.Count");
-				}
-				// make sure the playlist is associated with the user
+			foreach (var data in playlistsAndTracks)
+			{
+				playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
 				if (!user.Playlists.Any(p => p.ID == playlist.ID))
 					user.Playlists.Add(playlist);
 
-
 				foreach (var fullTrack in data.Tracks) {
-					foreach (var simpleArtist in fullTrack.Artists) {
-						bool hitArtist = artists.TryGetValue(simpleArtist.Id, out ArtistDTO artist);
-						if (!hitArtist) {
-							// if not present in DB, create new
-							artist = simpleArtist.ToArtistDTO();
-							artists.Add(artist.ID, artist);
-						}
-						else {
-							artist.Name = simpleArtist.Name;
-						}
-					}
+					foreach (var simpleArtist in fullTrack.Artists)
+						artists.UpdateOrAdd(simpleArtist, out _);
 
-					foreach (var simpleArtist in fullTrack.Album.Artists) {
-						bool hitArtist = artists.TryGetValue(simpleArtist.Id, out ArtistDTO artist);
-						if (!hitArtist) {
-							// if not present in DB, create new
-							artist = simpleArtist.ToArtistDTO();
-							artists.Add(artist.ID, artist);
-						}
-						else {
-							artist.Name = simpleArtist.Name;
-						}
-					}
+					foreach (var simpleArtist in fullTrack.Album.Artists)
+						artists.UpdateOrAdd(simpleArtist, out _);
 
-
-					bool hitAlbum = albums.TryGetValue(fullTrack.Album.Id, out AlbumDTO album);
-					if (!hitAlbum) {
-						// if not present in DB, create new
-						album = fullTrack.Album.ToAlbumDTO();
+					if (!albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
 						var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
-						album.Artists = artists.Where(a => artistIds.Contains(a.Value.ID)).Select(p => p.Value).ToList();
-						albums.Add(album.ID, album);
-					}
-					else {
-						album.Name = fullTrack.Album.Name;
-						album.ReleaseDate = fullTrack.Album.ReleaseDate;
-						album.TotalTracks = fullTrack.Album.TotalTracks;
-						// TODO update artists?
+						album.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
 					}
 
-					// TODO remove absent tracks from the playlist
-					bool hitTrack = tracks.TryGetValue(fullTrack.Id, out TrackDTO track);
-					if (!hitTrack) {
-						// if not present in DB, create new
-						track = fullTrack.ToTrackDTO();
-						tracks.Add(track.ID, track);
+					if (!tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
 						track.Album = album;
+						var artistIds = fullTrack.Artists.Select(a => a.Id);
+						track.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
 					}
-					else {
-						track.Name = fullTrack.Name;
-						track.DurationMs = fullTrack.DurationMs;
-						track.Popularity = fullTrack.Popularity;
-					}
-					// make sure the track is associated with the playlist
+
+					// TODO remove old tracks
 					if (!playlist.Tracks.Any(t => t.ID == track.ID))
 						playlist.Tracks.Add(track);
 				}

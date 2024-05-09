@@ -17,8 +17,8 @@ JOIN Tracks t ON pdt.TracksID = t.ID
 JOIN Albums al ON al.ID = t.AlbumID
 JOIN AlbumDTOArtistDTO adt ON adt.AlbumsID = al.ID
 JOIN Artists ar ON adt.ArtistsID = ar.ID
-WHERE p.Name LIKE '%forza%'
-ORDER BY al.Name
+WHERE p.Name LIKE '%test%'
+ORDER BY ar.Name, al.Name
 
 
 

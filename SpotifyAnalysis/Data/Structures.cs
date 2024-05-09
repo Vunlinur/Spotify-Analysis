@@ -7,7 +7,7 @@ using System.Linq;
 namespace SpotifyAnalysis.Data {
 	public class UserData {
 		public string ID;
-		public FullPlaylists FullPlaylists;
+		public FullPlaylistsCache FullPlaylists;
 
 		public UserData(string userID) {
 			ID = userID;
@@ -26,8 +26,8 @@ namespace SpotifyAnalysis.Data {
 		}
 	}
 
-	public class FullPlaylists : SpotifyCache<Playlist> {
-		public FullPlaylists(IEnumerable<FullPlaylist> simplePlaylists) {
+	public class FullPlaylistsCache : SpotifyCache<Playlist> {
+		public FullPlaylistsCache(IEnumerable<FullPlaylist> simplePlaylists) {
 			foreach (var simplePlaylist in simplePlaylists)
 				Add(new Playlist(simplePlaylist));
 		}
