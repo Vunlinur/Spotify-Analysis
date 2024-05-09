@@ -18,5 +18,17 @@ namespace SpotifyAnalysis.Data.DTO {
         public virtual List<AlbumDTO> Albums { get; set; }
 
         public virtual List<ImageDTO> Images { get; set; }
+
+
+        public void Update(ArtistDTO other) {
+            if (ID != other.ID)
+                throw new ValidationException($"Mismatching IDs - this: {ID}, other: {other.ID}");
+
+            Name = other.Name;
+            Popularity = other.Popularity;
+            Genres = other.Genres;
+            Albums = other.Albums;
+            Images = other.Images;
+        }
     }
 }

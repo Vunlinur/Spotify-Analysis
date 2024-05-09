@@ -12,9 +12,9 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			return exists ? null : dbSet.Add(entity);
 		}
 
-		public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this IEnumerable<TEnt> group1, IEnumerable<TEnt> group2, Func<TEnt, TKey> keySelector) where TEnt : class {
-			var existingKeys = group1.Select(keySelector).ToHashSet();
-			return group2.Where(e => !existingKeys.Contains(keySelector(e)));
+		public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this IEnumerable<TEnt> current, IEnumerable<TEnt> source, Func<TEnt, TKey> keySelector) where TEnt : class {
+			var existingKeys = current.Select(keySelector).ToHashSet();
+			return source.Where(e => !existingKeys.Contains(keySelector(e)));
 		}
 
 		public static async Task AddRangeIfNotExists<TEnt, TKey>(this DbSet<TEnt> dbSet, IEnumerable<TEnt> entities, Func<TEnt, TKey> keySelector) where TEnt : class {

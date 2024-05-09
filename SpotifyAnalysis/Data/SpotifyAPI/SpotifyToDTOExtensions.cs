@@ -15,14 +15,14 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		}
 
 		public static PlaylistDTO ToPlaylistDTO(this FullPlaylist fp) {
-            return new PlaylistDTO() {
-                ID = fp.Id,
-                Name = fp.Name,
-                Owner = fp.Owner.Id,
-                SnapshotID = fp.SnapshotId,
+			return new PlaylistDTO() {
+				ID = fp.Id,
+				Name = fp.Name,
+				Owner = fp.Owner.Id,
+				SnapshotID = fp.SnapshotId,
 				TracksTotal = fp.Tracks.Total,
-                Tracks = [], // paging
-                Images = fp.Images.Select(i => i.ToImageDTO()).ToList()
+				Tracks = [], // paging
+				Images = fp.Images.Select(i => i.ToImageDTO()).ToList()
 			};
 		}
 
@@ -32,8 +32,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				Name = ft.Name,
 				DurationMs = ft.DurationMs,
 				Popularity = ft.Popularity,
-				Album = ft.Album.ToAlbumDTO(),
-				Artists = ft.Artists.Select(ToArtistDTO).ToList()
+				Album = null, //ft.Album.ToAlbumDTO(),
+				Artists = [] //ft.Artists.Select(ToArtistDTO).ToList()
 			};
 		}
 
@@ -43,7 +43,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				Name = a.Name,
 				ReleaseDate = a.ReleaseDate,
 				TotalTracks = a.TotalTracks,
-				Artists = [], // SimpleArtist instead of FullArtist
+				Artists = [], //a.Artists.Select(ToArtistDTO).ToList(), 
 				Tracks = [],
 				Images = []
 			};
@@ -55,7 +55,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				Name = a.Name,
 				ReleaseDate = a.ReleaseDate,
 				TotalTracks = a.TotalTracks,
-				Artists = [], // SimpleArtist instead of FullArtist
+				Artists = [], //a.Artists.Select(ToArtistDTO).ToList(),
 				Tracks = [],
 				Images = []
 			};

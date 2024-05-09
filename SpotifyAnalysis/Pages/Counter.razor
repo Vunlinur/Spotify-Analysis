@@ -99,6 +99,7 @@
 				}
 			}
 
+			// TODO playlist can be referenced by other users, check if the playlist has no other users first
 			// Remove the playlist we don't have anymore
 			var stalePlaylists = user.Playlists.Where(p => !idsPlaylistsMap.ContainsKey(p.ID));
 			if (stalePlaylists.Any())
@@ -121,22 +122,173 @@
 		var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID);
 
 		using (var db = new SpotifyContext()) {
-			var playlists = db.Playlists
+			var user = await db.Users
+				.Include(u => u.Playlists)
+				.FirstOrDefaultAsync(u => u.ID == userID);
+			if (user is null)
+				throw new NullReferenceException($"User with ID {userID} not found");
+
+			var playlists = await db.Playlists
 				.Include(p => p.Tracks)
-				.ThenInclude(t => t.Artists)
-				.Where(p => selectedPlaylistsIds.Contains(p.ID))
-				.ToList();
+				.Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t);
+			var tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
+			var albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
+			var artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
+
+			var playlistsAndTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistsIds);
+
+			foreach (var data in playlistsAndTracks) {
+				bool hitPlaylist = playlists.TryGetValue(data.Playlist.Id, out PlaylistDTO playlist);
+				if (!hitPlaylist)
+					// if not present in DB, create new
+					playlist = data.Playlist.ToPlaylistDTO();
+				else {
+					// if present, update
+					playlist.Name = data.Playlist.Name;
+					playlist.SnapshotID = data.Playlist.SnapshotId;
+					playlist.TracksTotal = data.Playlist.Tracks.Total;
+					if (data.Playlist.Tracks.Total != data.Tracks.Count)  // TODO remove, debug safety
+						throw new ApplicationException("Data mismatch between playlist.Tracks.Total and Tracks.Count");
+				}
+				// make sure the playlist is associated with the user
+				if (!user.Playlists.Any(p => p.ID == playlist.ID))
+					user.Playlists.Add(playlist);
+
+
+				foreach (var fullTrack in data.Tracks) {
+					foreach (var simpleArtist in fullTrack.Artists) {
+						bool hitArtist = artists.TryGetValue(simpleArtist.Id, out ArtistDTO artist);
+						if (!hitArtist) {
+							// if not present in DB, create new
+							artist = simpleArtist.ToArtistDTO();
+							artists.Add(artist.ID, artist);
+						}
+						else {
+							artist.Name = simpleArtist.Name;
+						}
+					}
+
+					foreach (var simpleArtist in fullTrack.Album.Artists) {
+						bool hitArtist = artists.TryGetValue(simpleArtist.Id, out ArtistDTO artist);
+						if (!hitArtist) {
+							// if not present in DB, create new
+							artist = simpleArtist.ToArtistDTO();
+							artists.Add(artist.ID, artist);
+						}
+						else {
+							artist.Name = simpleArtist.Name;
+						}
+					}
+
+
+					bool hitAlbum = albums.TryGetValue(fullTrack.Album.Id, out AlbumDTO album);
+					if (!hitAlbum) {
+						// if not present in DB, create new
+						album = fullTrack.Album.ToAlbumDTO();
+						var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
+						album.Artists = artists.Where(a => artistIds.Contains(a.Value.ID)).Select(p => p.Value).ToList();
+						albums.Add(album.ID, album);
+					}
+					else {
+						album.Name = fullTrack.Album.Name;
+						album.ReleaseDate = fullTrack.Album.ReleaseDate;
+						album.TotalTracks = fullTrack.Album.TotalTracks;
+						// TODO update artists?
+					}
+
+					// TODO remove absent tracks from the playlist
+					bool hitTrack = tracks.TryGetValue(fullTrack.Id, out TrackDTO track);
+					if (!hitTrack) {
+						// if not present in DB, create new
+						track = fullTrack.ToTrackDTO();
+						tracks.Add(track.ID, track);
+						track.Album = album;
+					}
+					else {
+						track.Name = fullTrack.Name;
+						track.DurationMs = fullTrack.DurationMs;
+						track.Popularity = fullTrack.Popularity;
+					}
+					// make sure the track is associated with the playlist
+					if (!playlist.Tracks.Any(t => t.ID == track.ID))
+						playlist.Tracks.Add(track);
+				}
+			}
+			await db.SaveChangesAsync();
+
+
+			/*
+			return;
+			var playlistsssssss = db.Playlists
+				.Include(p => p.Tracks)
+				.Where(p => selectedPlaylistsIds.Contains(p.ID)).ToList();
+
+			await spotifyModule.GetMultiplePlaylistsTracksAsync(playlists);
+
+			var tracksssss = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
+			foreach (PlaylistDTO playlist in playlists)
+				for (int i = 0; i < playlist.Tracks.Count; i++)
+					if (tracks.TryGetValue(playlist.Tracks[i].ID, out TrackDTO current)) {
+						current.Update(playlist.Tracks[i]);
+						playlist.Tracks[i] = current;
+					}
+					else
+						tracks.Add(playlist.Tracks[i].ID, playlist.Tracks[i]);
+
+			var artistsssss = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
+			foreach (PlaylistDTO playlist in playlists) 
+				foreach (TrackDTO track in playlist.Tracks) {
+					for (int i = 0; i < track.Artists.Count; i++)
+						if (artists.TryGetValue(track.Artists[i].ID, out ArtistDTO current)) {
+							current.Update(track.Artists[i]);
+							track.Artists[i] = current;
+						}
+						else
+							artists.Add(track.Artists[i].ID, track.Artists[i]);
+
+					for (int i = 0; i < track.Album.Artists.Count; i++)
+						if (artists.TryGetValue(track.Album.Artists[i].ID, out ArtistDTO current)) {
+							current.Update(track.Album.Artists[i]);
+							track.Album.Artists[i] = current;
+						}
+						else
+							artists.Add(track.Album.Artists[i].ID, track.Album.Artists[i]);
+				}
+
+			var albumsssss = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
+			foreach (PlaylistDTO playlist in playlists)
+				foreach (TrackDTO track in playlist.Tracks)
+					if (albums.TryGetValue(track.Album.ID, out AlbumDTO current)) {
+						current.Update(track.Album);
+						track.Album = current;
+					}
+					else
+						albums.Add(track.Album.ID, track.Album);
+
+			await db.SaveChangesAsync();
+
+
+			return;
+			var playlistssssssssssss = db.Playlists
+				.Include(p => p.Tracks).ThenInclude(t => t.Artists)
+				.Include(t => t.Tracks).ThenInclude(t => t.Album).ThenInclude(a => a.Artists)
+				.Where(p => selectedPlaylistsIds.Contains(p.ID)).ToList();
 
 			await spotifyModule.GetMultiplePlaylistsTracksAsync(playlists);
 			//playlists.Select(p => db.Entry(p).State = EntityState.Modified);
 
-			var allTracks = playlists.SelectMany(p => p.Tracks);
-			allTracks.RemoveDuplicateArtists(db.Artists.ToDictionary(t => t.ID, t => t));
+			playlists.RemoveDuplicateTracks(db.Tracks.ToDictionary(t => t.ID, t => t));
+			var allTracks = playlists.SelectMany(p => p.Tracks).ToList();
 			allTracks.RemoveDuplicateAlbums(db.Albums.ToDictionary(t => t.ID, t => t));
-			await db.Artists.AddRangeIfNotExists(allTracks.SelectMany(t => t.Artists).DistinctBy(a => a.ID), t => t.ID); // TODO delete DistinctBy?
+			var distinctArtists = db.Artists.ToDictionary(t => t.ID, t => t);
+			allTracks.RemoveDuplicateArtists(distinctArtists);
+			var allAlbums = allTracks.Select(t => t.Album);
+			allAlbums.RemoveDuplicateArtists(distinctArtists);
+			//await db.Artists.AddRangeIfNotExists(allTracks.SelectMany(t => t.Artists).DistinctBy(a => a.ID), t => t.ID); // TODO delete DistinctBy?
 
 			await db.Tracks.AddRangeIfNotExists(allTracks, t => t.ID);
 			await db.SaveChangesAsync();
+			//*/
 		}
 	}
 
