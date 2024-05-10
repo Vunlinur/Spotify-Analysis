@@ -60,18 +60,19 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
 		public class FullPlaylistAndTracks {
 			public FullPlaylist Playlist;
-			public IList<FullTrack> Tracks;
+			public IList<FullTrack> Tracks = [];
 		}
 
 		/**
 		 * Get full details of the items of a playlist with given ID.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<FullPlaylistAndTracks> GetPlaylistTracksAsync(string playlistId) {
+		public async Task<FullPlaylistAndTracks> GetPlaylistTracksAsync(PlaylistDTO playlist) {
 			var payload = new FullPlaylistAndTracks {
-				Playlist = await SpotifyClient.Playlists.Get(playlistId)
+				Playlist = await SpotifyClient.Playlists.Get(playlist.ID)
 			};
-			// TODO skip if snapshotIDs are the same
+			if (!playlist.NeedsUpdate && payload.Playlist.SnapshotId == playlist.SnapshotID)
+				return payload;
 			var allPlayableItems = await SpotifyClient.PaginateAll(payload.Playlist.Tracks);
 			payload.Tracks = allPlayableItems.ToFullTracks().ToList();
 			return payload;
@@ -81,16 +82,16 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksAsync(IEnumerable<string> playlistsIds) {
+		public async Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsIds) {
 			// TODO cancellation token?
 			var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 			var tasks = new List<Task<FullPlaylistAndTracks>>();
 
 			// Create tasks to process each playlist ID asynchronously
-			foreach (string id in playlistsIds) {
+			foreach (PlaylistDTO playlist in playlistsIds) {
 				async Task<FullPlaylistAndTracks> GetTracks() {
 					try {
-						return await GetPlaylistTracksAsync(id);
+						return await GetPlaylistTracksAsync(playlist);
 					} finally {
 						semaphore.Release(); // Release the semaphore slot when done
 					}

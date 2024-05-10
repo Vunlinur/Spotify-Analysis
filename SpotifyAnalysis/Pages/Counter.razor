@@ -77,21 +77,21 @@
 			// Playlists in both DB and from API
 			var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.ContainsKey(p.ID));
 
+			// Add new playlists
+			var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
+			newPlaylists.Select(p => p.NeedsUpdate = true);
+			user.Playlists.AddRange(newPlaylists);
+
 			// Playlists which we have in DB but have been updated
 			var updatedPlaylists = commonPlaylists.Where(
 				c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
-
-			// Add new playlists
-			var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
-			user.Playlists.AddRange(newPlaylists);
-
 			// Update the existing playlists
 			if (updatedPlaylists.Any()) {
 				foreach (var updatedPlaylist in updatedPlaylists) {
 					var correspondingUserPlaylist = idsPlaylistsMap[updatedPlaylist.ID];
 
+					updatedPlaylist.NeedsUpdate = true;
 					updatedPlaylist.Name = correspondingUserPlaylist.Name;
-					updatedPlaylist.SnapshotID = correspondingUserPlaylist.SnapshotID;
 					updatedPlaylist.Tracks = correspondingUserPlaylist.Tracks;
 					updatedPlaylist.Images = correspondingUserPlaylist.Images;
 
@@ -125,9 +125,8 @@
 			var user = await db.Users
 				.Include(u => u.Playlists)
 				.FirstOrDefaultAsync(u => u.ID == userID);
-			if (user is null)
-				throw new NullReferenceException($"User with ID {userID} not found");
-
+			var selectedPlaylists = user.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID));
+			var getPlaylistsAndTracksTask = spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylists);
 			var playlists = await db.Playlists
 				.Include(p => p.Tracks)
 				.Where(p => selectedPlaylistsIds.Contains(p.ID))
@@ -136,10 +135,7 @@
 			var albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
 			var artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
 
-			var playlistsAndTracks = await spotifyModule.GetMultiplePlaylistsTracksAsync(selectedPlaylistsIds);
-
-			foreach (var data in playlistsAndTracks)
-			{
+			foreach (var data in await getPlaylistsAndTracksTask) {
 				playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
 				if (!user.Playlists.Any(p => p.ID == playlist.ID))
 					user.Playlists.Add(playlist);
@@ -233,7 +229,7 @@
 					foreach (var genre in allArtists[artist.Id].Genres)
 						foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
 							genres.Increase(new Element { Label = word, Quantity = 1 });
-			string[] excludes = { "of", "and", "new" };
+			string[] excludes = { "of", "and", "new", "music" };
 			foreach (var exclusion in excludes)
 				genres.Extract(exclusion);
 			return genres;
