@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using MudBlazor.Services;
 
 namespace SpotifyAnalysis {
 	public class Program {
@@ -23,10 +25,14 @@ namespace SpotifyAnalysis {
                 .Build();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
+		public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => {
+				.ConfigureServices(ConfigureServices)
+				.ConfigureWebHostDefaults(webBuilder => {
                     webBuilder.UseStartup<Startup>();
                 });
+
+        public static void ConfigureServices(IServiceCollection services)
+            => services.AddMudServices();
     }
 }
