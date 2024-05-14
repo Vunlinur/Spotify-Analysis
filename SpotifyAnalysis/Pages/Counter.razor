@@ -14,152 +14,146 @@
 @inject SpotifyContext spotifyContext;
 
 <p>
-	<label for="userId">User ID:</label>
-	<input id="userId" size="30" @bind="userID" />
-	<button class="btn btn-primary" @onclick="GetData">Get data</button>
-	<button class="btn btn-primary" @onclick="GetPlaylists">Get playlists</button>
-	<button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
+    <label for="userId">User ID:</label>
+    <input id="userId" size="30" @bind="userID" />
+    <button class="btn btn-primary" @onclick="GetData">Get data</button>
+    <button class="btn btn-primary" @onclick="GetPlaylists">Get playlists</button>
+    <button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
 </p>
 
 @if (loadValue > 0) {
-	<MudProgressLinear Color="Color.Primary" Value="@loadValue" />
-	<div>@loadMessage</div>
+    <MudProgressLinear Color="Color.Primary" Value="@loadValue" />
+    <div>@loadMessage</div>
 }
 
 @if (playlists?.Any() == true) {
-	<PlaylistList @ref="playlistList" Playlists="playlists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
+    <PlaylistList @ref="playlistList" Playlists="playlists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 <p>
-	@if (artistsSongs != null) {
-		<PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="SelectArtist" />
-		<ArtistPane Artist="@selectedArtist"></ArtistPane>
-	}
-	@if (genreSongs != null) {
-		<PieChart Title="Genres" Elements="genreSongs" />
-	}
-	@if (genres != null) {
-		<PieChart Title="Genres general" Elements="genres" />
-	}
+    @if (artistsSongs != null) {
+        <PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="SelectArtist" />
+        <ArtistPane Artist="@selectedArtist"></ArtistPane>
+    }
+    @if (genreSongs != null) {
+        <PieChart Title="Genres" Elements="genreSongs" />
+    }
+    @if (genres != null) {
+        <PieChart Title="Genres general" Elements="genres" />
+    }
 </p>
 
 
 @code {
-	private PlaylistList playlistList;
+    private PlaylistList playlistList;
 
-	private string userID = "11ek5k7fhea9otrb7k2ecizzb";
-	private Elements artistsSongs;
-	private Elements genreSongs;
-	private Elements genres;
+    private string userID = "11ek5k7fhea9otrb7k2ecizzb";
+    private Elements artistsSongs;
+    private Elements genreSongs;
+    private Elements genres;
 
-	private FullArtist selectedArtist;
-	private List<PlaylistDTO> playlists;
+    private FullArtist selectedArtist;
+    private List<PlaylistDTO> playlists;
 
-	private int loadValue = 0;
-	private string loadMessage;
+    private int loadValue = 0;
+    private string loadMessage;
 
-	/*
-	*  Get UserDTO from DB, create new from API if not present
-	*/
-	private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
-		UserDTO user = await db.Users
-				.Include(u => u.Playlists)
-				.FirstOrDefaultAsync(u => u.ID == userID);
-		if (user is null) {
-			user = await spotifyModule.GetUserProfile(userID);
-			await db.AddAsync(user);
-			await db.SaveChangesAsync();
-		}
-		return user;
-	}
+    /*
+    *  Get UserDTO from DB, create new from API if not present
+    */
+    private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
+        UserDTO user = await db.Users
+                .Include(u => u.Playlists)
+                .FirstOrDefaultAsync(u => u.ID == userID);
+        if (user is null) {
+            user = await spotifyModule.GetUserProfile(userID);
+            await db.AddAsync(user);
+            await db.SaveChangesAsync();
+        }
+        return user;
+    }
 
-	private void UpdateProgressBar(ushort value, string message = null) {
-		loadValue = value;
-		loadMessage = message ?? loadMessage;
-		StateHasChanged();
-	}
+    private void UpdateProgressBar(ushort value, string message = null) {
+        loadValue = value;
+        loadMessage = message ?? loadMessage;
+        StateHasChanged();
+    }
 
-	public async void GetData() {
-		UpdateProgressBar(5, "Getting user's playlists");
-		// TODO optimize await order
-		var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
-		var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
+    public async void GetData() {
+        UpdateProgressBar(5, "Getting user's playlists");
+        // TODO optimize await order
+        var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
+        var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
-		UpdateProgressBar(10, "Getting user's details");
-		UserDTO user;
-		using (var db = new SpotifyContext())
-		{
-			user = await GetOrAddUser(db, userID);
+        UpdateProgressBar(10, "Getting user's details");
+        UserDTO user;
+        using (var db = new SpotifyContext()) {
+            user = await GetOrAddUser(db, userID);
 
-			UpdateProgressBar(20, "Processing playlists");
-			// Add new playlists
-			var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
-			foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshodID so that it gets eligible for an update later
-			user.Playlists.AddRange(newPlaylists);
-			await db.SaveChangesAsync();
+            UpdateProgressBar(20, "Processing playlists");
+            // Add new playlists
+            var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
+            foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshodID so that it gets eligible for an update later
+            user.Playlists.AddRange(newPlaylists);
+            await db.SaveChangesAsync();
 
-			// TODO playlist can be referenced by other users, check if the playlist has no other users first
-			// Remove the playlist we don't have anymore
-			var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID));
-			if (stalePlaylists.Any())
-				db.RemoveRange(stalePlaylists);
+            // TODO playlist can be referenced by other users, check if the playlist has no other users first
+            // Remove the playlist we don't have anymore
+            var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID));
+            if (stalePlaylists.Any())
+                db.RemoveRange(stalePlaylists);
 
-			await db.SaveChangesAsync();
-		}
+            await db.SaveChangesAsync();
+        }
 
-		UpdateProgressBar(30, "Getting tracks");
-		var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
-		var getPlaylistsAndTracksTask = spotifyModule.GetMultiplePlaylistsTracksAsync(playlistsToUpdate);
-		string[] selectedPlaylistsIds = playlistsToUpdate.Select(p => p.ID).ToArray();
-		Dictionary<string, PlaylistDTO> playlists;
-		Dictionary<string, TrackDTO> tracks;
-		Dictionary<string, AlbumDTO> albums;
-		Dictionary<string, ArtistDTO> artists;
+        UpdateProgressBar(30, "Getting tracks");
+        var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
+        var getPlaylistsAndTracksTask = spotifyModule.GetMultiplePlaylistsTracksAsync(playlistsToUpdate);
+        string[] selectedPlaylistsIds = playlistsToUpdate.Select(p => p.ID).ToArray();
 
-		using (var db = new SpotifyContext()) {
-			playlists = await db.Playlists
-				.Include(p => p.Tracks)
-				.Where(p => selectedPlaylistsIds.Contains(p.ID))
-				.ToDictionaryAsync(t => t.ID, t => t);
-			tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
-			albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
-			artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
-		}
+        using (var db = new SpotifyContext()) {
+            var playlists = await db.Playlists
+                .Include(p => p.Tracks)
+                .Where(p => selectedPlaylistsIds.Contains(p.ID))
+                .ToDictionaryAsync(t => t.ID, t => t);
+            var tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
+            var albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
+            var artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
 
-		UpdateProgressBar(50, "Processing tracks");
-		foreach (var data in await getPlaylistsAndTracksTask) {
-			playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
-			if (!user.Playlists.Any(p => p.ID == playlist.ID))
-				user.Playlists.Add(playlist);
+            UpdateProgressBar(40, "Processing tracks");
+            foreach (var data in await getPlaylistsAndTracksTask) {
+                playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
+                // Attach the playlist to the user if not done previously. It might have been in the db from another user.
+                if (!user.Playlists.Any(p => p.ID == playlist.ID))
+                    user.Playlists.Add(playlist);
 
-			foreach (var fullTrack in data.Tracks) {
-				foreach (var simpleArtist in fullTrack.Artists)
-					artists.UpdateOrAdd(simpleArtist, out _);
+                foreach (var fullTrack in data.Tracks) {
+                    foreach (var simpleArtist in fullTrack.Artists)
+                        artists.UpdateOrAdd(simpleArtist, out _);
 
-				foreach (var simpleArtist in fullTrack.Album.Artists)
-					artists.UpdateOrAdd(simpleArtist, out _);
+                    foreach (var simpleArtist in fullTrack.Album.Artists)
+                        artists.UpdateOrAdd(simpleArtist, out _);
 
-				if (!albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
-					var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
-					album.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-				}
+                    if (!albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
+                        var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
+                        album.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
+                    }
 
-				if (!tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
-					track.Album = album;
-					var artistIds = fullTrack.Artists.Select(a => a.Id);
-					track.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-				}
+                    if (!tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
+                        track.Album = album;
+                        var artistIds = fullTrack.Artists.Select(a => a.Id);
+                        track.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
+                    }
 
-				// TODO remove old tracks
-				if (!playlist.Tracks.Any(t => t.ID == track.ID))
-					playlist.Tracks.Add(track);
-			}
-		}
-		UpdateProgressBar(95, "Saving results");
-		using (var db = new SpotifyContext())
-			await db.SaveChangesAsync();
-
-		UpdateProgressBar(0);
-	}
+                    // TODO remove old tracks
+                    if (!playlist.Tracks.Any(t => t.ID == track.ID))
+                        playlist.Tracks.Add(track);
+                }
+            }
+            UpdateProgressBar(95, "Saving results");
+            await db.SaveChangesAsync();
+        }
+        UpdateProgressBar(0);
+    }
 
     public async void GetPlaylists() {
         var userData = new UserData(userID);
@@ -172,140 +166,140 @@
     }
 
     private async Task NewGetPlaylists() {
-		// TODO optimize await order
-		var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
-		// Map of all playlists the user currently has in API
-		var idsPlaylistsMap = allUserPlaylists.ToDictionary(p => p.ID, p => p);
+        // TODO optimize await order
+        var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
+        // Map of all playlists the user currently has in API
+        var idsPlaylistsMap = allUserPlaylists.ToDictionary(p => p.ID, p => p);
 
-		using (var db = new SpotifyContext()) {
-			// Get UserDTO from DB, create new from API if not present
-			UserDTO user = await db.Users
-				.Include(u => u.Playlists)
-				.ThenInclude(p => p.Images)
-				.FirstOrDefaultAsync(u => u.ID == userID);
-			if (user is null) {
-				user = await spotifyModule.GetUserProfile(userID);
-				await db.AddAsync(user);
-			}
+        using (var db = new SpotifyContext()) {
+            // Get UserDTO from DB, create new from API if not present
+            UserDTO user = await db.Users
+                .Include(u => u.Playlists)
+                .ThenInclude(p => p.Images)
+                .FirstOrDefaultAsync(u => u.ID == userID);
+            if (user is null) {
+                user = await spotifyModule.GetUserProfile(userID);
+                await db.AddAsync(user);
+            }
 
-			// Add new playlists
-			var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
-			newPlaylists.Select(p => p.NeedsUpdate = true);
-			user.Playlists.AddRange(newPlaylists);
+            // Add new playlists
+            var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
+            newPlaylists.Select(p => p.NeedsUpdate = true);
+            user.Playlists.AddRange(newPlaylists);
 
-			// Playlists in both DB and from API
-			var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.ContainsKey(p.ID));
+            // Playlists in both DB and from API
+            var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.ContainsKey(p.ID));
 
-			// Playlists which we have in DB but have been updated
-			var updatedPlaylists = commonPlaylists.Where(
-				c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
-			// Update the existing playlists
-			if (updatedPlaylists.Any()) {
-				foreach (var updatedPlaylist in updatedPlaylists) {
-					var correspondingUserPlaylist = idsPlaylistsMap[updatedPlaylist.ID];
+            // Playlists which we have in DB but have been updated
+            var updatedPlaylists = commonPlaylists.Where(
+                c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
+            // Update the existing playlists
+            if (updatedPlaylists.Any()) {
+                foreach (var updatedPlaylist in updatedPlaylists) {
+                    var correspondingUserPlaylist = idsPlaylistsMap[updatedPlaylist.ID];
 
-					updatedPlaylist.NeedsUpdate = true;
-					updatedPlaylist.Name = correspondingUserPlaylist.Name;
-					updatedPlaylist.Tracks = correspondingUserPlaylist.Tracks;
-					updatedPlaylist.Images = correspondingUserPlaylist.Images;
+                    updatedPlaylist.NeedsUpdate = true;
+                    updatedPlaylist.Name = correspondingUserPlaylist.Name;
+                    updatedPlaylist.Tracks = correspondingUserPlaylist.Tracks;
+                    updatedPlaylist.Images = correspondingUserPlaylist.Images;
 
-					db.Entry(updatedPlaylist).State = EntityState.Modified;
-				}
-			}
+                    db.Entry(updatedPlaylist).State = EntityState.Modified;
+                }
+            }
 
-			// TODO playlist can be referenced by other users, check if the playlist has no other users first
-			// Remove the playlist we don't have anymore
-			var stalePlaylists = user.Playlists.Where(p => !idsPlaylistsMap.ContainsKey(p.ID));
-			if (stalePlaylists.Any())
-				db.RemoveRange(stalePlaylists);
+            // TODO playlist can be referenced by other users, check if the playlist has no other users first
+            // Remove the playlist we don't have anymore
+            var stalePlaylists = user.Playlists.Where(p => !idsPlaylistsMap.ContainsKey(p.ID));
+            if (stalePlaylists.Any())
+                db.RemoveRange(stalePlaylists);
 
-			await db.SaveChangesAsync();
+            await db.SaveChangesAsync();
 
-			playlists = new List<PlaylistDTO>(user.Playlists);
-		}
-	}
+            playlists = new List<PlaylistDTO>(user.Playlists);
+        }
+    }
 
-	private async Task GenerateCharts() {
-		FullPlaylist PlaylistDTOToFullPlaylist(PlaylistDTO dto) {
-			return new FullPlaylist() {
-				Id = dto.ID,
-				Name = dto.Name,
-				SnapshotId = dto.SnapshotID,
-				Owner = new PublicUser() {Id = dto.Owner},
-				Tracks = new Paging<PlaylistTrack<IPlayableItem>>(),
-				Images = []
-			};
-		}
+    private async Task GenerateCharts() {
+        FullPlaylist PlaylistDTOToFullPlaylist(PlaylistDTO dto) {
+            return new FullPlaylist() {
+                    Id = dto.ID,
+                    Name = dto.Name,
+                    SnapshotId = dto.SnapshotID,
+                    Owner = new PublicUser() { Id = dto.Owner },
+                    Tracks = new Paging<PlaylistTrack<IPlayableItem>>(),
+                    Images = []
+                };
+        }
 
-		if (spotify.UserData.FullPlaylists == null)
-			return;
-		var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists().Select(p => PlaylistDTOToFullPlaylist(p)));
-		var allTracks = await getAllTracks;
-		var getAllArtists = spotify.GetAllArtistsAsync(allTracks);
-		var buildArtistsSongs = BuildArtistsAsync(allTracks);
-		artistsSongs = await buildArtistsSongs;
-		StateHasChanged();
-		var allArtists = await getAllArtists;
-		var buildGenreSongs = BuildGenresAsync(allTracks, allArtists);
-		var buildGenres = BuildGenresGeneralAsync(allTracks, allArtists);
-		genreSongs = await buildGenreSongs;
-		StateHasChanged();
-		genres = await buildGenres;
-		StateHasChanged();
-	}
+        if (spotify.UserData.FullPlaylists == null)
+            return;
+        var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists().Select(p => PlaylistDTOToFullPlaylist(p)));
+        var allTracks = await getAllTracks;
+        var getAllArtists = spotify.GetAllArtistsAsync(allTracks);
+        var buildArtistsSongs = BuildArtistsAsync(allTracks);
+        artistsSongs = await buildArtistsSongs;
+        StateHasChanged();
+        var allArtists = await getAllArtists;
+        var buildGenreSongs = BuildGenresAsync(allTracks, allArtists);
+        var buildGenres = BuildGenresGeneralAsync(allTracks, allArtists);
+        genreSongs = await buildGenreSongs;
+        StateHasChanged();
+        genres = await buildGenres;
+        StateHasChanged();
+    }
 
-	private async Task<Elements> BuildArtistsAsync(FullTracks allTracks) {
-		Elements BuildArtists() {
-			artistsSongs = new Elements();
-			foreach (var track in allTracks)
-				foreach (var artist in track.Artists)
-					artistsSongs.Increase(new Element { Label = artist.Name, Quantity = 1 });
-			return artistsSongs;
-		}
+    private async Task<Elements> BuildArtistsAsync(FullTracks allTracks) {
+        Elements BuildArtists() {
+            artistsSongs = new Elements();
+            foreach (var track in allTracks)
+                foreach (var artist in track.Artists)
+                    artistsSongs.Increase(new Element { Label = artist.Name, Quantity = 1 });
+            return artistsSongs;
+        }
 
-		return await Task<Elements>.Run(BuildArtists);
-	}
+        return await Task<Elements>.Run(BuildArtists);
+    }
 
-	private async Task<Elements> BuildGenresAsync(FullTracks allTracks, FullArtists allArtists) {
-		Elements BuildGenres() {
-			genreSongs = new Elements();
-			foreach (var track in allTracks)
-				foreach (var artist in track.Artists)
-					foreach (var genre in allArtists[artist.Id].Genres)
-						genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
-			return genreSongs;
-		}
+    private async Task<Elements> BuildGenresAsync(FullTracks allTracks, FullArtists allArtists) {
+        Elements BuildGenres() {
+            genreSongs = new Elements();
+            foreach (var track in allTracks)
+                foreach (var artist in track.Artists)
+                    foreach (var genre in allArtists[artist.Id].Genres)
+                        genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
+            return genreSongs;
+        }
 
-		return await Task<Elements>.Run(BuildGenres);
-	}
+        return await Task<Elements>.Run(BuildGenres);
+    }
 
-	private async Task<Elements> BuildGenresGeneralAsync(FullTracks allTracks, FullArtists allArtists) {
-		Elements BuildGenresGeneral() {
-			var genres = new Elements();
-			foreach (var track in allTracks)
-				foreach (var artist in track.Artists)
-					foreach (var genre in allArtists[artist.Id].Genres)
-						foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
-							genres.Increase(new Element { Label = word, Quantity = 1 });
-			string[] excludes = { "of", "and", "new", "music" };
-			foreach (var exclusion in excludes)
-				genres.Extract(exclusion);
-			return genres;
-		}
+    private async Task<Elements> BuildGenresGeneralAsync(FullTracks allTracks, FullArtists allArtists) {
+        Elements BuildGenresGeneral() {
+            var genres = new Elements();
+            foreach (var track in allTracks)
+                foreach (var artist in track.Artists)
+                    foreach (var genre in allArtists[artist.Id].Genres)
+                        foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                            genres.Increase(new Element { Label = word, Quantity = 1 });
+            string[] excludes = { "of", "and", "new", "music" };
+            foreach (var exclusion in excludes)
+                genres.Extract(exclusion);
+            return genres;
+        }
 
-		return await Task<Elements>.Run(BuildGenresGeneral);
-	}
+        return await Task<Elements>.Run(BuildGenresGeneral);
+    }
 
-	private bool areAnyPlaylistsSelected;
-	internal void UpdateGenerateButton(bool areAnySelected) {
-		if (areAnyPlaylistsSelected != areAnySelected) {
-			areAnyPlaylistsSelected = areAnySelected;
-			StateHasChanged();
-		}
-	}
+    private bool areAnyPlaylistsSelected;
+    internal void UpdateGenerateButton(bool areAnySelected) {
+        if (areAnyPlaylistsSelected != areAnySelected) {
+            areAnyPlaylistsSelected = areAnySelected;
+            StateHasChanged();
+        }
+    }
 
-	internal void SelectArtist(string artistName) {
-		selectedArtist = spotify.AllArtists.First((a) => a.Name == artistName);
-		StateHasChanged();
-	}
+    internal void SelectArtist(string artistName) {
+        selectedArtist = spotify.AllArtists.First((a) => a.Name == artistName);
+        StateHasChanged();
+    }
 }
