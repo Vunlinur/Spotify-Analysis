@@ -12,31 +12,25 @@ using static SpotifyAnalysis.Data.SpotifyAPI.SpotifyModule;
 
 
 namespace SpotifyAnalysis.Data.DataAccessLayer {
-    public class DataFetch {
-        readonly Action<int, string> updateProgressBar;
-        readonly Func<string, Task<UserDTO>> getUserProfile;
-        readonly Func<string, Task<IList<PlaylistDTO>>> GetUsersPublicPlaylistsAsync;
-        readonly Func<IEnumerable<PlaylistDTO>, Task<List<FullPlaylistAndTracks>>> GetMultiplePlaylistsTracksAsync;
+    public delegate Task<UserDTO> GetUserProfileDelegate(string userID);
+    public delegate Task<IList<PlaylistDTO>> GetUsersPublicPlaylistsDelegate(string userID);
+    public delegate Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksDelegate(IEnumerable<PlaylistDTO> playlists);
+    public delegate void UpdateProgressBarDelegate(ushort progress, string message);
 
-        /*
-        *  Get UserDTO from DB, create new from API if not present
-        */
-        private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
-            UserDTO user = await db.Users
-            .Include(u => u.Playlists)
-                    .FirstOrDefaultAsync(u => u.ID == userID);
-            if (user is null) {
-                user = await getUserProfile(userID);
-                await db.AddAsync(user);
-                await db.SaveChangesAsync();
-            }
-            return user;
-        }
+    public class DataFetch(UpdateProgressBarDelegate updateProgressBar,
+            GetUserProfileDelegate getUserProfile,
+            GetUsersPublicPlaylistsDelegate getUsersPublicPlaylists,
+            GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracks) {
 
-        public async void GetData(string userID) {
+        private readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
+        private readonly GetUserProfileDelegate getUserProfileAsync = getUserProfile;
+        private readonly GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync = getUsersPublicPlaylists;
+        private readonly GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracksAsync = getMultiplePlaylistsTracks;
+
+
+        public async Task GetData(string userID) {
             updateProgressBar(5, "Getting user's playlists");
-            // TODO optimize await order
-            var allUserPlaylists = await GetUsersPublicPlaylistsAsync(userID);
+            var allUserPlaylists = await getUsersPublicPlaylistsAsync(userID);
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
             updateProgressBar(10, "Getting user's details");
@@ -45,39 +39,34 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                 user = await GetOrAddUser(db, userID);
 
                 updateProgressBar(20, "Processing playlists");
-                // Add new playlists
                 var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
-                foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshodID so that it gets eligible for an update later
+                foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshotID so that it gets eligible for an update later
                 user.Playlists.AddRange(newPlaylists);
                 await db.SaveChangesAsync();
 
-                // TODO playlist can be referenced by other users, check if the playlist has no other users first
-                // Remove the playlist we don't have anymore
-                var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID));
-                if (stalePlaylists.Any())
+                var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID)).ToList();
+                if (stalePlaylists.Count != 0) {
                     db.RemoveRange(stalePlaylists);
-
-                await db.SaveChangesAsync();
+                    await db.SaveChangesAsync();
+                }
             }
 
             updateProgressBar(30, "Getting tracks");
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
-            var getPlaylistsAndTracksTask = GetMultiplePlaylistsTracksAsync(playlistsToUpdate);
+            var getPlaylistsAndTracksTask = getMultiplePlaylistsTracksAsync(playlistsToUpdate);
             string[] selectedPlaylistsIds = playlistsToUpdate.Select(p => p.ID).ToArray();
 
             using (var db = new SpotifyContext()) {
-                var playlists = await db.Playlists
-                    .Include(p => p.Tracks)
-                    .Where(p => selectedPlaylistsIds.Contains(p.ID))
-                    .ToDictionaryAsync(t => t.ID, t => t);
+                var playlists = await db.Playlists.Include(p => p.Tracks).Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t);
                 var tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
                 var albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
                 var artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
 
                 updateProgressBar(40, "Processing tracks");
+
                 foreach (var data in await getPlaylistsAndTracksTask) {
                     playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
-                    // Attach the playlist to the user if not done previously. It might have been in the db from another user.
+
                     if (!user.Playlists.Any(p => p.ID == playlist.ID))
                         user.Playlists.Add(playlist);
 
@@ -99,15 +88,61 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                             track.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
                         }
 
-                        // TODO remove old tracks
                         if (!playlist.Tracks.Any(t => t.ID == track.ID))
                             playlist.Tracks.Add(track);
                     }
                 }
+
                 updateProgressBar(95, "Saving results");
                 await db.SaveChangesAsync();
+                updateProgressBar(0, null);
             }
-            updateProgressBar(0, null);
+        }
+
+        private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
+            UserDTO user = await db.Users
+                .Include(u => u.Playlists)
+                .FirstOrDefaultAsync(u => u.ID == userID);
+            if (user is null) {
+                user = await getUserProfileAsync(userID);
+                await db.AddAsync(user);
+                await db.SaveChangesAsync();
+            }
+            return user;
+        }
+    }
+
+
+    public class DataFetchBuilder {
+        UpdateProgressBarDelegate updateProgressBar;
+        GetUserProfileDelegate getUserProfile;
+        GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync;
+        GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracksAsync;
+
+        public DataFetchBuilder SetUpdateProgressBar(UpdateProgressBarDelegate updateProgressBar) {
+            this.updateProgressBar = updateProgressBar;
+            return this;
+        }
+
+        public DataFetchBuilder SetGetUserProfile(GetUserProfileDelegate getUserProfile) {
+            this.getUserProfile = getUserProfile;
+            return this;
+        }
+
+        public DataFetchBuilder SetGetUsersPublicPlaylistsAsync(GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync) {
+            this.getUsersPublicPlaylistsAsync = getUsersPublicPlaylistsAsync;
+            return this;
+        }
+
+        public DataFetchBuilder SetGetMultiplePlaylistsTracksAsync(GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracksAsync) {
+            this.getMultiplePlaylistsTracksAsync = getMultiplePlaylistsTracksAsync;
+            return this;
+        }
+
+        public DataFetch Build() {
+            if (getUserProfile == null || getUsersPublicPlaylistsAsync == null || getMultiplePlaylistsTracksAsync == null)
+                throw new InvalidOperationException("All dependencies must be provided");
+            return new DataFetch(updateProgressBar, getUserProfile, getUsersPublicPlaylistsAsync, getMultiplePlaylistsTracksAsync);
         }
     }
 }

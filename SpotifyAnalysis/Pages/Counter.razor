@@ -16,7 +16,7 @@
 <p>
     <label for="userId">User ID:</label>
     <input id="userId" size="30" @bind="userID" />
-    <button class="btn btn-primary" @onclick="GetData">Get data</button>
+    <button class="btn btn-primary" @onclick="@(() => dataFetch.GetData(userID))">Get data</button>
     <button class="btn btn-primary" @onclick="GetPlaylists">Get playlists</button>
     <button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
 </p>
@@ -68,7 +68,12 @@
 
     protected override void OnInitialized() {
         base.OnInitialized();
-        dataFetch = 
+        dataFetch = new DataFetchBuilder()
+            .SetGetUserProfile(spotifyModule.GetUserProfile)
+            .SetGetUsersPublicPlaylistsAsync(spotifyModule.GetUsersPublicPlaylistsAsync)
+            .SetGetMultiplePlaylistsTracksAsync(spotifyModule.GetMultiplePlaylistsTracksAsync)
+            .SetUpdateProgressBar(UpdateProgressBar)
+            .Build();
     }
 
     public async void GetPlaylists() {
