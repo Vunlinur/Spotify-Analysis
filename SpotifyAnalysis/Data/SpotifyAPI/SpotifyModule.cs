@@ -58,11 +58,6 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 			return fullPlaylists.Select(p => p.ToPlaylistDTO()).ToList();
 		}
 
-		public class FullPlaylistAndTracks {
-			public FullPlaylist Playlist;
-			public IList<FullTrack> Tracks = [];
-		}
-
 		/**
 		 * Get full details of the playlist with given ID.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
@@ -78,13 +73,18 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		public async Task<List<FullTrack>> GetTracksAsync(Paging<PlaylistTrack<IPlayableItem>> paging) {
 			var allPlayableItems = await SpotifyClient.PaginateAll(paging);
 			return allPlayableItems.ToFullTracks().ToList();
-		}
+        }
 
-		/**
+        public class FullPlaylistAndTracks {
+            public FullPlaylist Playlist;
+            public IList<FullTrack> Tracks = [];
+        }
+
+        /**
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsIds) {
+        public async Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsIds) {
 			// TODO cancellation token?
 			var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
 			var tasks = new List<Task<FullPlaylistAndTracks>>();
