@@ -64,18 +64,20 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		}
 
 		/**
-		 * Get full details of the items of a playlist with given ID.
+		 * Get full details of the playlist with given ID.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-		public async Task<FullPlaylistAndTracks> GetPlaylistTracksAsync(PlaylistDTO playlist) {
-			var payload = new FullPlaylistAndTracks {
-				Playlist = await SpotifyClient.Playlists.Get(playlist.ID)
-			};
-			if (!playlist.NeedsUpdate && payload.Playlist.SnapshotId == playlist.SnapshotID)
-				return payload;
-			var allPlayableItems = await SpotifyClient.PaginateAll(payload.Playlist.Tracks);
-			payload.Tracks = allPlayableItems.ToFullTracks().ToList();
-			return payload;
+		public async Task<FullPlaylist> GetPlaylistAsync(PlaylistDTO playlist) {
+			return await SpotifyClient.Playlists.Get(playlist.ID);
+		}
+
+		/**
+		 * Get tracks from the given Paging.
+		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
+		 */
+		public async Task<List<FullTrack>> GetTracksAsync(Paging<PlaylistTrack<IPlayableItem>> paging) {
+			var allPlayableItems = await SpotifyClient.PaginateAll(paging);
+			return allPlayableItems.ToFullTracks().ToList();
 		}
 
 		/**
@@ -91,7 +93,12 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 			foreach (PlaylistDTO playlist in playlistsIds) {
 				async Task<FullPlaylistAndTracks> GetTracks() {
 					try {
-						return await GetPlaylistTracksAsync(playlist);
+						var data = new FullPlaylistAndTracks() {
+							Playlist = await GetPlaylistAsync(playlist)
+						};
+						if (data.Playlist.SnapshotId != playlist.SnapshotID) 
+							data.Tracks = await GetTracksAsync(data.Playlist.Tracks);
+						return data;
 					} finally {
 						semaphore.Release(); // Release the semaphore slot when done
 					}
