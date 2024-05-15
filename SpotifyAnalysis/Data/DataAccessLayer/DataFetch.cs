@@ -34,75 +34,34 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
             updateProgressBar(10, "Getting user's details");
-            UserDTO user;
-            using (var db = new SpotifyContext()) {
-                user = await GetOrAddUser(db, userID);
+            using var db = new SpotifyContext();
+            var user = await GetOrAddUser(db, userID);
 
-                updateProgressBar(20, "Processing playlists");
-                var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
-                foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshotID so that it gets eligible for an update later
-                user.Playlists.AddRange(newPlaylists);
-                await db.SaveChangesAsync();
-
-                var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID)).ToList();
-                if (stalePlaylists.Count != 0) {
-                    db.RemoveRange(stalePlaylists);
-                    await db.SaveChangesAsync();
-                }
-            }
+            updateProgressBar(20, "Processing playlists");
+            await ProcessPlaylists(db, user, allUserPlaylists);
 
             updateProgressBar(30, "Getting tracks");
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
             var getPlaylistsAndTracksTask = getMultiplePlaylistsTracksAsync(playlistsToUpdate);
             string[] selectedPlaylistsIds = playlistsToUpdate.Select(p => p.ID).ToArray();
 
-            using (var db = new SpotifyContext()) {
-                var playlists = await db.Playlists.Include(p => p.Tracks).Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t);
-                var tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t);
-                var albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t);
-                var artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t);
+            var dtoAggregate = new DTOAggregate {
+                Playlists = await db.Playlists.Include(p => p.Tracks).Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t),
+                Tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t),
+                Albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t),
+                Artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t)
+            };
 
-                updateProgressBar(40, "Processing tracks");
+            updateProgressBar(40, "Processing tracks");
+            ProcessTracks(user, dtoAggregate, await getPlaylistsAndTracksTask);
 
-                foreach (var data in await getPlaylistsAndTracksTask) {
-                    playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
-
-                    if (!user.Playlists.Any(p => p.ID == playlist.ID))
-                        user.Playlists.Add(playlist);
-
-                    foreach (var fullTrack in data.Tracks) {
-                        foreach (var simpleArtist in fullTrack.Artists)
-                            artists.UpdateOrAdd(simpleArtist, out _);
-
-                        foreach (var simpleArtist in fullTrack.Album.Artists)
-                            artists.UpdateOrAdd(simpleArtist, out _);
-
-                        if (!albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
-                            var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
-                            album.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-                        }
-
-                        if (!tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
-                            track.Album = album;
-                            var artistIds = fullTrack.Artists.Select(a => a.Id);
-                            track.Artists = artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-                        }
-
-                        if (!playlist.Tracks.Any(t => t.ID == track.ID))
-                            playlist.Tracks.Add(track);
-                    }
-                }
-
-                updateProgressBar(95, "Saving results");
-                await db.SaveChangesAsync();
-                updateProgressBar(0, null);
-            }
+            updateProgressBar(95, "Saving results");
+            await db.SaveChangesAsync();
+            updateProgressBar(0, null);
         }
 
         private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
-            UserDTO user = await db.Users
-                .Include(u => u.Playlists)
-                .FirstOrDefaultAsync(u => u.ID == userID);
+            UserDTO user = await db.Users.Include(u => u.Playlists).FirstOrDefaultAsync(u => u.ID == userID);
             if (user is null) {
                 user = await getUserProfileAsync(userID);
                 await db.AddAsync(user);
@@ -110,6 +69,57 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             }
             return user;
         }
+
+        private static async Task ProcessPlaylists(SpotifyContext db, UserDTO user, IList<PlaylistDTO> allUserPlaylists) {
+            var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
+            foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshotID so that it gets eligible for an update later
+            user.Playlists.AddRange(newPlaylists);
+            await db.SaveChangesAsync();
+
+            var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID)).ToList();
+            if (stalePlaylists.Count != 0) {
+                db.RemoveRange(stalePlaylists);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        private static void ProcessTracks(UserDTO user, DTOAggregate dtos, List<FullPlaylistAndTracks> playlistsAndTracks) {
+            foreach (var data in playlistsAndTracks) {
+                dtos.Playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
+
+                if (!user.Playlists.Any(p => p.ID == playlist.ID))
+                    user.Playlists.Add(playlist);
+
+                foreach (var fullTrack in data.Tracks) {
+                    foreach (var simpleArtist in fullTrack.Artists)
+                        dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+
+                    foreach (var simpleArtist in fullTrack.Album.Artists)
+                        dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+
+                    if (!dtos.Albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
+                        var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
+                        album.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
+                    }
+
+                    if (!dtos.Tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
+                        track.Album = album;
+                        var artistIds = fullTrack.Artists.Select(a => a.Id);
+                        track.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
+                    }
+
+                    if (!playlist.Tracks.Any(t => t.ID == track.ID))
+                        playlist.Tracks.Add(track);
+                }
+            }
+        }
+    }
+
+    public class DTOAggregate {
+        public Dictionary<string, PlaylistDTO> Playlists;
+        public Dictionary<string, TrackDTO> Tracks;
+        public Dictionary<string, AlbumDTO> Albums;
+        public Dictionary<string, ArtistDTO> Artists;
     }
 
 
