@@ -29,35 +29,41 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
 
         public async Task GetData(string userID) {
-            updateProgressBar(5, "Getting user's playlists");
+            updateProgressBar?.Invoke(5, "Getting user's playlists");
             var allUserPlaylists = await getUsersPublicPlaylistsAsync(userID);
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
-            updateProgressBar(10, "Getting user's details");
-            using var db = new SpotifyContext();
-            var user = await GetOrAddUser(db, userID);
+            updateProgressBar?.Invoke(10, "Getting user's details");
+            UserDTO user;
+            using (var db = new SpotifyContext()) {
+                user = await GetOrAddUser(db, userID);
+                updateProgressBar?.Invoke(20, "Processing playlists");
+                await ProcessPlaylists(db, user, allUserPlaylists);
+            }
 
-            updateProgressBar(20, "Processing playlists");
-            await ProcessPlaylists(db, user, allUserPlaylists);
-
-            updateProgressBar(30, "Getting tracks");
+            updateProgressBar?.Invoke(30, "Getting tracks");
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
             var getPlaylistsAndTracksTask = getMultiplePlaylistsTracksAsync(playlistsToUpdate);
             string[] selectedPlaylistsIds = playlistsToUpdate.Select(p => p.ID).ToArray();
 
-            var dtoAggregate = new DTOAggregate {
-                Playlists = await db.Playlists.Include(p => p.Tracks).Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t),
-                Tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t),
-                Albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t),
-                Artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t)
-            };
+            DTOAggregate dtoAggregate;
+            using (var db = new SpotifyContext()) {
+                dtoAggregate = new DTOAggregate {
+                    User = user,
+                    Playlists = await db.Playlists.Include(p => p.Tracks).Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t),
+                    Tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t),
+                    Albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t),
+                    Artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t)
+                };
+            }
 
-            updateProgressBar(40, "Processing tracks");
-            ProcessTracks(user, dtoAggregate, await getPlaylistsAndTracksTask);
+            updateProgressBar?.Invoke(40, "Processing tracks");
+            ProcessTracks(dtoAggregate, await getPlaylistsAndTracksTask);
+            updateProgressBar?.Invoke(95, "Saving results");
 
-            updateProgressBar(95, "Saving results");
-            await db.SaveChangesAsync();
-            updateProgressBar(0, null);
+            using (var db = new SpotifyContext())
+                await db.SaveChangesAsync();
+            updateProgressBar?.Invoke(0, null);
         }
 
         private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
@@ -83,12 +89,20 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             }
         }
 
-        private static void ProcessTracks(UserDTO user, DTOAggregate dtos, List<FullPlaylistAndTracks> playlistsAndTracks) {
+        private class DTOAggregate {
+            public UserDTO User;
+            public Dictionary<string, PlaylistDTO> Playlists;
+            public Dictionary<string, TrackDTO> Tracks;
+            public Dictionary<string, AlbumDTO> Albums;
+            public Dictionary<string, ArtistDTO> Artists;
+        }
+
+        private static void ProcessTracks(DTOAggregate dtos, List<FullPlaylistAndTracks> playlistsAndTracks) {
             foreach (var data in playlistsAndTracks) {
                 dtos.Playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
 
-                if (!user.Playlists.Any(p => p.ID == playlist.ID))
-                    user.Playlists.Add(playlist);
+                if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID))
+                    dtos.User.Playlists.Add(playlist);
 
                 foreach (var fullTrack in data.Tracks) {
                     foreach (var simpleArtist in fullTrack.Artists)
@@ -113,13 +127,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                 }
             }
         }
-    }
-
-    public class DTOAggregate {
-        public Dictionary<string, PlaylistDTO> Playlists;
-        public Dictionary<string, TrackDTO> Tracks;
-        public Dictionary<string, AlbumDTO> Albums;
-        public Dictionary<string, ArtistDTO> Artists;
     }
 
 
