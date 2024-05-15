@@ -8,24 +8,27 @@ using System.Threading;
 using System.Linq;
 using System;
 using System.Collections.Generic;
-using static SpotifyAnalysis.Data.SpotifyAPI.SpotifyModule;
 
 
 namespace SpotifyAnalysis.Data.DataAccessLayer {
     public delegate Task<UserDTO> GetUserProfileDelegate(string userID);
     public delegate Task<IList<PlaylistDTO>> GetUsersPublicPlaylistsDelegate(string userID);
-    public delegate Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksDelegate(IEnumerable<PlaylistDTO> playlists);
+    public delegate Task<FullPlaylist> GetPlaylistAsyncDelegate(PlaylistDTO playlist);
+    public delegate Task<List<FullTrack>> GetTracksAsyncDelegate(Paging<PlaylistTrack<IPlayableItem>> paging);
     public delegate void UpdateProgressBarDelegate(ushort progress, string message);
 
-    public class DataFetch(UpdateProgressBarDelegate updateProgressBar,
-            GetUserProfileDelegate getUserProfile,
+    public class DataFetch(GetUserProfileDelegate getUserProfile,
             GetUsersPublicPlaylistsDelegate getUsersPublicPlaylists,
-            GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracks) {
+            GetPlaylistAsyncDelegate getPlaylistAsync,
+            GetTracksAsyncDelegate getTracksAsync,
+            UpdateProgressBarDelegate updateProgressBar = null) {
+        private const int maxDegreeOfParallelism = 3; // Adjust based on Spotify API capacity
 
-        private readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
         private readonly GetUserProfileDelegate getUserProfileAsync = getUserProfile;
         private readonly GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync = getUsersPublicPlaylists;
-        private readonly GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracksAsync = getMultiplePlaylistsTracks;
+        private readonly GetPlaylistAsyncDelegate getPlaylistAsync = getPlaylistAsync;
+        private readonly GetTracksAsyncDelegate getTracksAsync = getTracksAsync;
+        private readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
 
 
         public async Task GetData(string userID) {
@@ -34,35 +37,28 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
             updateProgressBar?.Invoke(10, "Getting user's details");
-            UserDTO user;
-            using (var db = new SpotifyContext()) {
-                user = await GetOrAddUser(db, userID);
-                updateProgressBar?.Invoke(20, "Processing playlists");
-                await ProcessPlaylists(db, user, allUserPlaylists);
-            }
+            using var db = new SpotifyContext();
+            UserDTO user = await GetOrAddUser(db, userID);
+            updateProgressBar?.Invoke(20, "Processing playlists");
+            await ProcessPlaylists(db, user, allUserPlaylists);
 
             updateProgressBar?.Invoke(30, "Getting tracks");
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
-            var getPlaylistsAndTracksTask = getMultiplePlaylistsTracksAsync(playlistsToUpdate);
-            string[] selectedPlaylistsIds = playlistsToUpdate.Select(p => p.ID).ToArray();
+            var getPlaylistsAndTracksTask = GetMultiplePlaylistsTracksAsync(playlistsToUpdate);
+            string[] playlistsToUpdateIds = playlistsToUpdate.Select(p => p.ID).ToArray();
 
-            DTOAggregate dtoAggregate;
-            using (var db = new SpotifyContext()) {
-                dtoAggregate = new DTOAggregate {
-                    User = user,
-                    Playlists = await db.Playlists.Include(p => p.Tracks).Where(p => selectedPlaylistsIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t),
-                    Tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t),
-                    Albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t),
-                    Artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t)
-                };
-            }
+            DTOAggregate dtoAggregate = new() {
+                User = user,
+                Playlists = await db.Playlists.Include(p => p.Tracks).Where(p => playlistsToUpdateIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t),
+                Tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t),
+                Albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t),
+                Artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t)
+            };
 
             updateProgressBar?.Invoke(40, "Processing tracks");
             ProcessTracks(dtoAggregate, await getPlaylistsAndTracksTask);
             updateProgressBar?.Invoke(95, "Saving results");
-
-            using (var db = new SpotifyContext())
-                await db.SaveChangesAsync();
+            await db.SaveChangesAsync();
             updateProgressBar?.Invoke(0, null);
         }
 
@@ -87,6 +83,43 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                 db.RemoveRange(stalePlaylists);
                 await db.SaveChangesAsync();
             }
+        }
+
+        class FullPlaylistAndTracks {
+            public FullPlaylist Playlist;
+            public IList<FullTrack> Tracks = [];
+        }
+
+        /**
+		 * Get full details of the items of multiple playlists with given IDs.
+		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
+		 */
+        private async Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsIds) {
+            // TODO cancellation token?
+            var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
+            var tasks = new List<Task<FullPlaylistAndTracks>>();
+
+            // Create tasks to process each playlist ID asynchronously
+            foreach (PlaylistDTO playlist in playlistsIds) {
+                async Task<FullPlaylistAndTracks> GetTracks() {
+                    try {
+                        var data = new FullPlaylistAndTracks() {
+                            Playlist = await getPlaylistAsync(playlist)
+                        };
+                        if (data.Playlist.SnapshotId != playlist.SnapshotID)
+                            data.Tracks = await getTracksAsync(data.Playlist.Tracks);
+                        return data;
+                    }
+                    finally {
+                        semaphore.Release(); // Release the semaphore slot when done
+                    }
+                }
+
+                await semaphore.WaitAsync(); // Wait for a semaphore slot to limit concurrency
+                tasks.Add(Task.Run(GetTracks));
+            }
+            await Task.WhenAll(tasks);
+            return tasks.Select(t => t.Result).ToList();
         }
 
         private class DTOAggregate {
@@ -131,10 +164,11 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
 
     public class DataFetchBuilder {
-        UpdateProgressBarDelegate updateProgressBar;
         GetUserProfileDelegate getUserProfile;
         GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync;
-        GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracksAsync;
+        GetPlaylistAsyncDelegate getPlaylistAsync;
+        GetTracksAsyncDelegate getTracksAsync;
+        UpdateProgressBarDelegate updateProgressBar;
 
         public DataFetchBuilder SetUpdateProgressBar(UpdateProgressBarDelegate updateProgressBar) {
             this.updateProgressBar = updateProgressBar;
@@ -151,15 +185,20 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             return this;
         }
 
-        public DataFetchBuilder SetGetMultiplePlaylistsTracksAsync(GetMultiplePlaylistsTracksDelegate getMultiplePlaylistsTracksAsync) {
-            this.getMultiplePlaylistsTracksAsync = getMultiplePlaylistsTracksAsync;
+        public DataFetchBuilder SetGetPlaylistAsync(GetPlaylistAsyncDelegate getPlaylistAsync) {
+            this.getPlaylistAsync = getPlaylistAsync;
+            return this;
+        }
+
+        public DataFetchBuilder SetGetTracksAsync(GetTracksAsyncDelegate getTracksAsync) {
+            this.getTracksAsync = getTracksAsync;
             return this;
         }
 
         public DataFetch Build() {
-            if (getUserProfile == null || getUsersPublicPlaylistsAsync == null || getMultiplePlaylistsTracksAsync == null)
+            if (getUserProfile == null || getUsersPublicPlaylistsAsync == null || getPlaylistAsync == null || getTracksAsync == null)
                 throw new InvalidOperationException("All dependencies must be provided");
-            return new DataFetch(updateProgressBar, getUserProfile, getUsersPublicPlaylistsAsync, getMultiplePlaylistsTracksAsync);
+            return new DataFetch(getUserProfile, getUsersPublicPlaylistsAsync, getPlaylistAsync, getTracksAsync, updateProgressBar);
         }
     }
 }

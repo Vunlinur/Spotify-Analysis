@@ -37,6 +37,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 				playlist.Name = source.Name;
 				playlist.SnapshotID = source.SnapshotId;
 				playlist.TracksTotal = source.Tracks.Total;
+				// TODO update remaining properties
 			}
 			outPlaylist = playlist;
 			return found;

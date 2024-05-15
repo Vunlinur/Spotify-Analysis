@@ -71,7 +71,8 @@
         dataFetch = new DataFetchBuilder()
             .SetGetUserProfile(spotifyModule.GetUserProfile)
             .SetGetUsersPublicPlaylistsAsync(spotifyModule.GetUsersPublicPlaylistsAsync)
-            .SetGetMultiplePlaylistsTracksAsync(spotifyModule.GetMultiplePlaylistsTracksAsync)
+            .SetGetPlaylistAsync(spotifyModule.GetPlaylistAsync)
+            .SetGetTracksAsync(spotifyModule.GetTracksAsync)
             .SetUpdateProgressBar(UpdateProgressBar)
             .Build();
     }
