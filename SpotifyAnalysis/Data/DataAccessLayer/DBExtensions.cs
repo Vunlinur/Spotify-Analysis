@@ -25,7 +25,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			await dbSet.AddRangeAsync(newEntities);
 		}
 
-		public static bool UpdateOrAdd(this Dictionary<string, PlaylistDTO> dict, FullPlaylist source, out PlaylistDTO outPlaylist) {
+		public static bool UpdateOrAdd(this IDictionary<string, PlaylistDTO> dict, FullPlaylist source, out PlaylistDTO outPlaylist) {
 			bool found = dict.TryGetValue(source.Id, out PlaylistDTO playlist);
 			if (!found) {
 				// this shouldn't really happen as we should already have
@@ -43,7 +43,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			return found;
 		}
 
-		public static bool UpdateOrAdd(this Dictionary<string, ArtistDTO> dict, SimpleArtist source, out ArtistDTO outArtist) {
+		public static bool UpdateOrAdd(this IDictionary<string, ArtistDTO> dict, SimpleArtist source, out ArtistDTO outArtist) {
 			bool found = dict.TryGetValue(source.Id, out ArtistDTO artist);
 			if (!found) {
 				artist = source.ToArtistDTO();
@@ -56,7 +56,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			return found;
 		}
 
-		public static bool UpdateOrAdd(this Dictionary<string, AlbumDTO> dict, SimpleAlbum source, out AlbumDTO outAlbum) {
+		public static bool UpdateOrAdd(this IDictionary<string, AlbumDTO> dict, SimpleAlbum source, out AlbumDTO outAlbum) {
 			bool found = dict.TryGetValue(source.Id, out AlbumDTO album);
 			if (!found) {
 				album = source.ToAlbumDTO();
@@ -71,7 +71,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			return found;
 		}
 
-		public static bool UpdateOrAdd(this Dictionary<string, TrackDTO> dict, FullTrack source, out TrackDTO outTrack) {
+		public static bool UpdateOrAdd(this IDictionary<string, TrackDTO> dict, FullTrack source, out TrackDTO outTrack) {
 			bool found = dict.TryGetValue(source.Id, out TrackDTO track);
 			if (!found) {
 				track = source.ToTrackDTO();

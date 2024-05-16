@@ -8,6 +8,7 @@ using System.Threading;
 using System.Linq;
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 
 namespace SpotifyAnalysis.Data.DataAccessLayer {
@@ -44,21 +45,8 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
             updateProgressBar?.Invoke(30, "Getting tracks");
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
-            var getPlaylistsAndTracksTask = GetMultiplePlaylistsTracksAsync(playlistsToUpdate);
-            string[] playlistsToUpdateIds = playlistsToUpdate.Select(p => p.ID).ToArray();
-
-            DTOAggregate dtoAggregate = new() {
-                User = user,
-                Playlists = await db.Playlists.Include(p => p.Tracks).Where(p => playlistsToUpdateIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t),
-                Tracks = await db.Tracks.ToDictionaryAsync(t => t.ID, t => t),
-                Albums = await db.Albums.ToDictionaryAsync(t => t.ID, t => t),
-                Artists = await db.Artists.ToDictionaryAsync(t => t.ID, t => t)
-            };
-
-            updateProgressBar?.Invoke(40, "Processing tracks");
-            ProcessTracks(dtoAggregate, await getPlaylistsAndTracksTask);
-            updateProgressBar?.Invoke(95, "Saving results");
-            await db.SaveChangesAsync();
+            await GetMultiplePlaylistsTracksAsync(db, playlistsToUpdate, user);
+            
             updateProgressBar?.Invoke(0, null);
         }
 
@@ -94,24 +82,42 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-        private async Task<List<FullPlaylistAndTracks>> GetMultiplePlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsIds) {
+        private async Task GetMultiplePlaylistsTracksAsync(SpotifyContext db, IEnumerable<PlaylistDTO> playlistsIds, UserDTO user) {
             // TODO cancellation token?
             var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
-            var tasks = new List<Task<FullPlaylistAndTracks>>();
+            var dbContextSemaphore = new SemaphoreSlim(1, 1);
+            var tasks = new List<Task>();
+
+            string[] playlistsToUpdateIds = playlistsIds.Select(p => p.ID).ToArray();
+
+            DTOAggregate dtoAggregate = new() {
+                User = user,
+                Playlists = new ConcurrentDictionary<string, PlaylistDTO>(await db.Playlists.Include(p => p.Tracks).Where(p => playlistsToUpdateIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t)),
+                Tracks = new ConcurrentDictionary<string, TrackDTO>(await db.Tracks.ToDictionaryAsync(t => t.ID, t => t)),
+                Albums = new ConcurrentDictionary<string, AlbumDTO>(await db.Albums.ToDictionaryAsync(t => t.ID, t => t)),
+                Artists = new ConcurrentDictionary<string, ArtistDTO>(await db.Artists.ToDictionaryAsync(t => t.ID, t => t))
+            };
 
             // Create tasks to process each playlist ID asynchronously
             foreach (PlaylistDTO playlist in playlistsIds) {
-                async Task<FullPlaylistAndTracks> GetTracks() {
+                async Task GetTracks() {
                     try {
-                        var data = new FullPlaylistAndTracks() {
-                            Playlist = await getPlaylistAsync(playlist)
-                        };
-                        if (data.Playlist.SnapshotId != playlist.SnapshotID)
-                            data.Tracks = await getTracksAsync(data.Playlist.Tracks);
-                        return data;
+                        FullPlaylist fullPlaylist = await getPlaylistAsync(playlist);
+                        List<FullTrack> fullTracks = [];
+                        if (fullPlaylist.SnapshotId != playlist.SnapshotID)
+                            fullTracks = await getTracksAsync(fullPlaylist.Tracks);
+
+                        ProcessTracks(dtoAggregate, fullPlaylist, fullTracks);
+                        updateProgressBar?.Invoke(95, "Saving results");
+                        await dbContextSemaphore.WaitAsync();
+                        await db.SaveChangesAsync();
                     }
-                    finally {
-                        semaphore.Release(); // Release the semaphore slot when done
+                    catch (Exception e) {
+                        Console.WriteLine(e);
+                    }
+                    finally { // Release the semaphore slot when done
+                        dbContextSemaphore.Release();
+                        semaphore.Release();
                     }
                 }
 
@@ -119,45 +125,42 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                 tasks.Add(Task.Run(GetTracks));
             }
             await Task.WhenAll(tasks);
-            return tasks.Select(t => t.Result).ToList();
         }
 
         private class DTOAggregate {
             public UserDTO User;
-            public Dictionary<string, PlaylistDTO> Playlists;
-            public Dictionary<string, TrackDTO> Tracks;
-            public Dictionary<string, AlbumDTO> Albums;
-            public Dictionary<string, ArtistDTO> Artists;
+            public ConcurrentDictionary<string, PlaylistDTO> Playlists;
+            public ConcurrentDictionary<string, TrackDTO> Tracks;
+            public ConcurrentDictionary<string, AlbumDTO> Albums;
+            public ConcurrentDictionary<string, ArtistDTO> Artists;
         }
 
-        private static void ProcessTracks(DTOAggregate dtos, List<FullPlaylistAndTracks> playlistsAndTracks) {
-            foreach (var data in playlistsAndTracks) {
-                dtos.Playlists.UpdateOrAdd(data.Playlist, out PlaylistDTO playlist);
+        private static void ProcessTracks(DTOAggregate dtos, FullPlaylist fullPlaylist, List<FullTrack> fullTracks) {
+            dtos.Playlists.UpdateOrAdd(fullPlaylist, out PlaylistDTO playlist);
 
-                if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID))
-                    dtos.User.Playlists.Add(playlist);
+            if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID))
+                dtos.User.Playlists.Add(playlist);
 
-                foreach (var fullTrack in data.Tracks) {
-                    foreach (var simpleArtist in fullTrack.Artists)
-                        dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+            foreach (var fullTrack in fullTracks) {
+                foreach (var simpleArtist in fullTrack.Artists)
+                    dtos.Artists.UpdateOrAdd(simpleArtist, out _);
 
-                    foreach (var simpleArtist in fullTrack.Album.Artists)
-                        dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+                foreach (var simpleArtist in fullTrack.Album.Artists)
+                    dtos.Artists.UpdateOrAdd(simpleArtist, out _);
 
-                    if (!dtos.Albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
-                        var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
-                        album.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-                    }
-
-                    if (!dtos.Tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
-                        track.Album = album;
-                        var artistIds = fullTrack.Artists.Select(a => a.Id);
-                        track.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-                    }
-
-                    if (!playlist.Tracks.Any(t => t.ID == track.ID))
-                        playlist.Tracks.Add(track);
+                if (!dtos.Albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
+                    var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
+                    album.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
                 }
+
+                if (!dtos.Tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
+                    track.Album = album;
+                    var artistIds = fullTrack.Artists.Select(a => a.Id);
+                    track.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
+                }
+
+                if (!playlist.Tracks.Any(t => t.ID == track.ID))
+                    playlist.Tracks.Add(track);
             }
         }
     }

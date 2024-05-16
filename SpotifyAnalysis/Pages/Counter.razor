@@ -63,7 +63,7 @@
     private void UpdateProgressBar(ushort value, string message) {
         loadValue = value;
         loadMessage = message ?? loadMessage;
-        StateHasChanged();
+        InvokeAsync(StateHasChanged);
     }
 
     protected override void OnInitialized() {
