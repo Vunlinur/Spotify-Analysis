@@ -16,7 +16,7 @@
 <p>
     <label for="userId">User ID:</label>
     <input id="userId" size="30" @bind="userID" />
-    <button class="btn btn-primary" @onclick="@(() => dataFetch.GetData(userID))">Get data</button>
+    <button class="btn btn-primary" @onclick="GetData">Get data</button>
     <button class="btn btn-primary" @onclick="GetPlaylists">Get playlists</button>
     <button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
 </p>
@@ -76,6 +76,9 @@
             .SetUpdateProgressBar(UpdateProgressBar)
             .Build();
     }
+
+    private async Task GetData()
+        => await dataFetch.GetData(userID);
 
     public async void GetPlaylists() {
         var userData = new UserData(userID);

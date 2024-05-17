@@ -23,33 +23,39 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             GetPlaylistAsyncDelegate getPlaylistAsync,
             GetTracksAsyncDelegate getTracksAsync,
             UpdateProgressBarDelegate updateProgressBar = null) {
-        private const int maxDegreeOfParallelism = 3; // Adjust based on Spotify API capacity
+        const int maxDegreeOfParallelism = 3; // Adjust based on Spotify API capacity
 
-        private readonly GetUserProfileDelegate getUserProfileAsync = getUserProfile;
-        private readonly GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync = getUsersPublicPlaylists;
-        private readonly GetPlaylistAsyncDelegate getPlaylistAsync = getPlaylistAsync;
-        private readonly GetTracksAsyncDelegate getTracksAsync = getTracksAsync;
-        private readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
-
+        readonly SemaphoreSlim apiSemaphore = new(maxDegreeOfParallelism);
+        readonly SemaphoreSlim dbContextSemaphore = new(1, 1);
+        readonly GetUserProfileDelegate getUserProfileAsync = getUserProfile;
+        readonly GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync = getUsersPublicPlaylists;
+        readonly GetPlaylistAsyncDelegate getPlaylistAsync = getPlaylistAsync;
+        readonly GetTracksAsyncDelegate getTracksAsync = getTracksAsync;
+        readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
 
         public async Task GetData(string userID) {
             // TODO optimize await order
-            updateProgressBar?.Invoke(5, "Getting user's playlists");
+            updateProgressBar?.Invoke(5, "Processing user data");
             var allUserPlaylists = await getUsersPublicPlaylistsAsync(userID);
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
-
-            updateProgressBar?.Invoke(10, "Getting user's details");
             using var db = new SpotifyContext();
             UserDTO user = await GetOrAddUser(db, userID);
+
             updateProgressBar?.Invoke(20, "Processing playlists");
             await ProcessPlaylists(db, user, allUserPlaylists);
-
-            updateProgressBar?.Invoke(30, "Getting tracks");
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
             var dtoAggregate = await AggregateDTOs(db, playlistsToUpdate, user);
-            await GetMultiplePlaylistsTracksAsync(db, playlistsToUpdate, dtoAggregate);
-            
-            updateProgressBar?.Invoke(0, null);
+
+            // TODO cancellation token?
+            // Create tasks to process each playlist ID asynchronously
+            updateProgressBar?.Invoke(30, "Getting tracks");
+            List<Task> tasks = [];
+            foreach (PlaylistDTO playlist in playlistsToUpdate) {
+                await apiSemaphore.WaitAsync(); // Wait for a semaphore slot to limit concurrency
+                tasks.Add(Task.Run(() => ProcessPlaylist(db, playlist, dtoAggregate)));
+            }
+            await Task.WhenAll(tasks);
+            updateProgressBar?.Invoke(0, "Finished");
         }
 
         private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
@@ -100,39 +106,25 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-        private async Task GetMultiplePlaylistsTracksAsync(SpotifyContext db, IEnumerable<PlaylistDTO> playlistsIds, DTOAggregate dtoAggregate) {
-            // TODO cancellation token?
-            var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
-            var dbContextSemaphore = new SemaphoreSlim(1, 1);
+        private async Task ProcessPlaylist(SpotifyContext db, PlaylistDTO playlist, DTOAggregate dtoAggregate) {
+            try {
+                FullPlaylist fullPlaylist = await getPlaylistAsync(playlist);
+                List<FullTrack> fullTracks = [];
+                if (fullPlaylist.SnapshotId != playlist.SnapshotID)
+                    fullTracks = await getTracksAsync(fullPlaylist.Tracks);
 
-            async Task GetTracks(PlaylistDTO playlist) {
-                try {
-                    FullPlaylist fullPlaylist = await getPlaylistAsync(playlist);
-                    List<FullTrack> fullTracks = [];
-                    if (fullPlaylist.SnapshotId != playlist.SnapshotID)
-                        fullTracks = await getTracksAsync(fullPlaylist.Tracks);
-
-                    ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
-                    updateProgressBar?.Invoke(95, "Saving results");
-                    await dbContextSemaphore.WaitAsync();
-                    await db.SaveChangesAsync();
-                }
-                catch (Exception e) {
-                    Console.WriteLine(e);
-                }
-                finally { // Release the semaphore slot when done
-                    dbContextSemaphore.Release();
-                    semaphore.Release();
-                }
+                ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
+                updateProgressBar?.Invoke(95, "Saving results");
+                await dbContextSemaphore.WaitAsync();
+                await db.SaveChangesAsync();
             }
-
-            // Create tasks to process each playlist ID asynchronously
-            var tasks = new List<Task>();
-            foreach (PlaylistDTO playlist in playlistsIds) {
-                await semaphore.WaitAsync(); // Wait for a semaphore slot to limit concurrency
-                tasks.Add(Task.Run(() => GetTracks(playlist)));
+            catch (Exception e) {
+                Console.WriteLine(e);
             }
-            await Task.WhenAll(tasks);
+            finally { // Release the semaphore slot when done
+                dbContextSemaphore.Release();
+                apiSemaphore.Release();
+            }
         }
 
         private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
