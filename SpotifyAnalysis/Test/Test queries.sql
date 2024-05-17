@@ -1,5 +1,5 @@
 ﻿SELECT * FROM Users
-SELECT * FROM Playlists WHERE Name like '%test%'
+SELECT * FROM Playlists
 SELECT * FROM PlaylistDTOUserDTO
 SELECT * FROM Tracks
 SELECT * FROM PlaylistDTOTrackDTO
@@ -17,7 +17,7 @@ JOIN Tracks t ON pdt.TracksID = t.ID
 JOIN Albums al ON al.ID = t.AlbumID
 JOIN AlbumDTOArtistDTO adt ON adt.AlbumsID = al.ID
 JOIN Artists ar ON adt.ArtistsID = ar.ID
-WHERE p.Name LIKE '%test%'
+--WHERE p.Name LIKE '%test%'
 ORDER BY ar.Name, al.Name
 
 

@@ -54,14 +54,14 @@
     private FullArtist selectedArtist;
     private List<PlaylistDTO> playlists;
 
-    private int loadValue = 0;
+    private ushort loadValue = 0;
     private string loadMessage;
 
     private DataFetch dataFetch;
 
 
-    private void UpdateProgressBar(ushort value, string message) {
-        loadValue = value;
+    private void UpdateProgressBar(float value, string message) {
+        loadValue = (ushort)value;
         loadMessage = message ?? loadMessage;
         InvokeAsync(StateHasChanged);
     }
