@@ -12,16 +12,19 @@ using System.Collections.Concurrent;
 
 
 namespace SpotifyAnalysis.Data.DataAccessLayer {
+    // TODO change the delegates to NOT depend on DTOs
     public delegate Task<UserDTO> GetUserProfileDelegate(string userID);
     public delegate Task<IList<PlaylistDTO>> GetUsersPublicPlaylistsDelegate(string userID);
     public delegate Task<FullPlaylist> GetPlaylistAsyncDelegate(PlaylistDTO playlist);
     public delegate Task<List<FullTrack>> GetTracksAsyncDelegate(Paging<PlaylistTrack<IPlayableItem>> paging);
+    public delegate Task<List<FullArtist>> GetArtistsAsyncDelegate(IList<string> ids);
     public delegate void UpdateProgressBarDelegate(float progress, string message);
 
     public class DataFetch(GetUserProfileDelegate getUserProfile,
             GetUsersPublicPlaylistsDelegate getUsersPublicPlaylists,
             GetPlaylistAsyncDelegate getPlaylistAsync,
             GetTracksAsyncDelegate getTracksAsync,
+            GetArtistsAsyncDelegate getArtistsAsync,
             UpdateProgressBarDelegate updateProgressBar = null) {
         const int maxDegreeOfParallelism = 5; // Adjust based on Spotify API capacity
 
@@ -29,6 +32,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         readonly GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync = getUsersPublicPlaylists;
         readonly GetPlaylistAsyncDelegate getPlaylistAsync = getPlaylistAsync;
         readonly GetTracksAsyncDelegate getTracksAsync = getTracksAsync;
+        readonly GetArtistsAsyncDelegate getArtistsAsync = getArtistsAsync;
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
         readonly SemaphoreSlim apiSemaphore = new(maxDegreeOfParallelism);
         readonly SemaphoreSlim dbContextSemaphore = new(1, 1);
@@ -54,7 +58,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             foreach (PlaylistDTO playlist in playlistsToUpdate) {
                 await apiSemaphore.WaitAsync(); // Wait for a semaphore slot to limit concurrency
                 updateProgressBar?.Invoke(progressBase += progressDelta, null);
-                tasks.Add(Task.Run(() => GetAndProcessPlaylist(db, playlist, dtoAggregate)));
+                tasks.Add(Task.Run(() => GetAndProcessPlaylistData(db, playlist, dtoAggregate)));
             }
             await Task.WhenAll(tasks);
             updateProgressBar?.Invoke(0, "Finished");
@@ -117,7 +121,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-        private async Task GetAndProcessPlaylist(SpotifyContext db, PlaylistDTO playlist, DTOAggregate dtoAggregate) {
+        private async Task GetAndProcessPlaylistData(SpotifyContext db, PlaylistDTO playlist, DTOAggregate dtoAggregate) {
             try {
                 FullPlaylist fullPlaylist = await getPlaylistAsync(playlist);
                 List<FullTrack> fullTracks = [];
@@ -126,6 +130,11 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
                 ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
                 await dbContextSemaphore.WaitAsync();
+                var newArtists = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
+                var artistsData = await getArtistsAsync(newArtists);
+                foreach (var artist in artistsData)
+                    UpdateArtist(dtoAggregate.Artists[artist.Id], artist);
+
                 await db.SaveChangesAsync();
             }
             catch (Exception e) {
@@ -166,45 +175,12 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                     playlist.Tracks.Add(track);
             }
         }
-    }
 
-
-    public class DataFetchBuilder {
-        GetUserProfileDelegate getUserProfile;
-        GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync;
-        GetPlaylistAsyncDelegate getPlaylistAsync;
-        GetTracksAsyncDelegate getTracksAsync;
-        UpdateProgressBarDelegate updateProgressBar;
-
-        public DataFetchBuilder SetUpdateProgressBar(UpdateProgressBarDelegate updateProgressBar) {
-            this.updateProgressBar = updateProgressBar;
-            return this;
-        }
-
-        public DataFetchBuilder SetGetUserProfile(GetUserProfileDelegate getUserProfile) {
-            this.getUserProfile = getUserProfile;
-            return this;
-        }
-
-        public DataFetchBuilder SetGetUsersPublicPlaylistsAsync(GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync) {
-            this.getUsersPublicPlaylistsAsync = getUsersPublicPlaylistsAsync;
-            return this;
-        }
-
-        public DataFetchBuilder SetGetPlaylistAsync(GetPlaylistAsyncDelegate getPlaylistAsync) {
-            this.getPlaylistAsync = getPlaylistAsync;
-            return this;
-        }
-
-        public DataFetchBuilder SetGetTracksAsync(GetTracksAsyncDelegate getTracksAsync) {
-            this.getTracksAsync = getTracksAsync;
-            return this;
-        }
-
-        public DataFetch Build() {
-            if (getUserProfile == null || getUsersPublicPlaylistsAsync == null || getPlaylistAsync == null || getTracksAsync == null)
-                throw new InvalidOperationException("All dependencies must be provided");
-            return new DataFetch(getUserProfile, getUsersPublicPlaylistsAsync, getPlaylistAsync, getTracksAsync, updateProgressBar);
+        // TODO move to extensions and extract more UpdateX from DbExtensions
+        private static void UpdateArtist(ArtistDTO artist, FullArtist fullArtist) {
+            artist.Genres = fullArtist.Genres;
+            artist.Popularity = fullArtist.Popularity;
+            artist.Images = fullArtist.Images.Select(i => i.ToImageDTO()).ToList();
         }
     }
 }

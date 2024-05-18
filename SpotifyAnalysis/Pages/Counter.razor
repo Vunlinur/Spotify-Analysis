@@ -68,13 +68,7 @@
 
     protected override void OnInitialized() {
         base.OnInitialized();
-        dataFetch = new DataFetchBuilder()
-            .SetGetUserProfile(spotifyModule.GetUserProfile)
-            .SetGetUsersPublicPlaylistsAsync(spotifyModule.GetUsersPublicPlaylistsAsync)
-            .SetGetPlaylistAsync(spotifyModule.GetPlaylistAsync)
-            .SetGetTracksAsync(spotifyModule.GetTracksAsync)
-            .SetUpdateProgressBar(UpdateProgressBar)
-            .Build();
+        dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
     }
 
     private async Task GetData()
@@ -82,66 +76,8 @@
 
     public async void GetPlaylists() {
         var userData = new UserData(userID);
-        var oldTask = spotify.GetUsersPublicPlaylistsAsync(userData);
-        var newTask = NewGetPlaylists();
-        await newTask;
-
-        await oldTask;
+        await spotify.GetUsersPublicPlaylistsAsync(userData);
         StateHasChanged();
-    }
-
-    private async Task NewGetPlaylists() {
-        // TODO optimize await order
-        var allUserPlaylists = await spotifyModule.GetUsersPublicPlaylistsAsync(userID);
-        // Map of all playlists the user currently has in API
-        var idsPlaylistsMap = allUserPlaylists.ToDictionary(p => p.ID, p => p);
-
-        using (var db = new SpotifyContext()) {
-            // Get UserDTO from DB, create new from API if not present
-            UserDTO user = await db.Users
-                .Include(u => u.Playlists)
-                .ThenInclude(p => p.Images)
-                .FirstOrDefaultAsync(u => u.ID == userID);
-            if (user is null) {
-                user = await spotifyModule.GetUserProfile(userID);
-                await db.AddAsync(user);
-            }
-
-            // Add new playlists
-            var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
-            newPlaylists.Select(p => p.NeedsUpdate = true);
-            user.Playlists.AddRange(newPlaylists);
-
-            // Playlists in both DB and from API
-            var commonPlaylists = user.Playlists.Where(p => idsPlaylistsMap.ContainsKey(p.ID));
-
-            // Playlists which we have in DB but have been updated
-            var updatedPlaylists = commonPlaylists.Where(
-                c => idsPlaylistsMap[c.ID].SnapshotID != c.SnapshotID);
-            // Update the existing playlists
-            if (updatedPlaylists.Any()) {
-                foreach (var updatedPlaylist in updatedPlaylists) {
-                    var correspondingUserPlaylist = idsPlaylistsMap[updatedPlaylist.ID];
-
-                    updatedPlaylist.NeedsUpdate = true;
-                    updatedPlaylist.Name = correspondingUserPlaylist.Name;
-                    updatedPlaylist.Tracks = correspondingUserPlaylist.Tracks;
-                    updatedPlaylist.Images = correspondingUserPlaylist.Images;
-
-                    db.Entry(updatedPlaylist).State = EntityState.Modified;
-                }
-            }
-
-            // TODO playlist can be referenced by other users, check if the playlist has no other users first
-            // Remove the playlist we don't have anymore
-            var stalePlaylists = user.Playlists.Where(p => !idsPlaylistsMap.ContainsKey(p.ID));
-            if (stalePlaylists.Any())
-                db.RemoveRange(stalePlaylists);
-
-            await db.SaveChangesAsync();
-
-            playlists = new List<PlaylistDTO>(user.Playlists);
-        }
     }
 
     private async Task GenerateCharts() {

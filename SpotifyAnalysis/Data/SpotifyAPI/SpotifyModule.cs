@@ -73,5 +73,13 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 			var allPlayableItems = await SpotifyClient.PaginateAll(paging);
 			return allPlayableItems.ToFullTracks().ToList();
         }
-	}
+
+        /**
+		 * Get multiple artists by their ids.
+		 */
+        public async Task<List<FullArtist>> GetArtistsAsync(IList<string> ids) {
+            var artistsResponse = await SpotifyClient.Artists.GetSeveral(new ArtistsRequest(ids));
+            return artistsResponse.Artists;
+        }
+    }
 }
