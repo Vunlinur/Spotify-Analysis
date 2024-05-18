@@ -130,15 +130,18 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
                 ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
                 await dbContextSemaphore.WaitAsync();
-                var newArtists = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
-                var artistsData = await getArtistsAsync(newArtists);
-                foreach (var artist in artistsData)
-                    UpdateArtist(dtoAggregate.Artists[artist.Id], artist);
+                var newArtistsIds = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
+                if (newArtistsIds.Count != 0) {
+                    ushort chunkSize = 50;
+                    var chunks = newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
+                    foreach (var chunk in chunks) {
+                        var artistsData = await getArtistsAsync(chunk);
+                        foreach (var artist in artistsData)
+                            UpdateArtist(dtoAggregate.Artists[artist.Id], artist);
+                    }
+                }
 
                 await db.SaveChangesAsync();
-            }
-            catch (Exception e) {
-                Console.WriteLine(e);
             }
             finally { // Release the semaphore slot when done
                 dbContextSemaphore.Release();
