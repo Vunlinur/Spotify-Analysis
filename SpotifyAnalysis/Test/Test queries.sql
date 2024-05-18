@@ -4,7 +4,8 @@ SELECT * FROM PlaylistDTOUserDTO
 SELECT * FROM Tracks
 SELECT * FROM PlaylistDTOTrackDTO
 SELECT * FROM Albums
-SELECT * FROM Artists WHERE ID = '6UJ3pPsN7xzsz0Cneucy59'
+SELECT * FROM Artists WHERE Name = 'Orden Ogan'
+SELECT * FROM ArtistDTOTrackDTO
 SELECT * FROM AlbumDTOArtistDTO WHERE AlbumsID = '36Dk0lgHLB8nfpaC8EvGiy'
 SELECT * FROM Images
 
@@ -34,6 +35,7 @@ ORDER BY ar.Name, al.Name
 --DELETE FROM Albums
 --DELETE FROM PlaylistDTOTrackDTO
 --DELETE FROM PlaylistDTOUserDTO
+--DELETE FROM ArtistDTOTrackDTO
 
 
 /* Disconnect all clients

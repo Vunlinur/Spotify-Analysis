@@ -17,8 +17,6 @@ namespace SpotifyAnalysis.Data.DTO {
         
         public string SnapshotID { get; set; }
 
-        public bool NeedsUpdate { get; set; }
-
         public int? TracksTotal { get; set; }
 
         public virtual List<TrackDTO> Tracks { get; set; }

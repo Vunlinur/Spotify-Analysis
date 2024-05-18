@@ -28,9 +28,13 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 				.HasMany(u => u.Playlists)
 				.WithMany();
 
-			modelBuilder.Entity<PlaylistDTO>()
-				.HasMany(u => u.Tracks)
-				.WithMany();
-		}
+            modelBuilder.Entity<PlaylistDTO>()
+                .HasMany(u => u.Tracks)
+                .WithMany();
+
+            modelBuilder.Entity<TrackDTO>()
+                .HasMany(u => u.Artists)
+                .WithMany();
+        }
 	}
 }
