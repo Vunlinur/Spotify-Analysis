@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SpotifyAnalysis.Data.DTO;
 using System;
 using System.IO;
@@ -20,7 +21,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
 			IConfigurationRoot configuration = Program.PrepareConfig();
             options.UseSqlServer(configuration.GetConnectionString("SpotifyDB"));
-			options.LogTo(Console.WriteLine);
+			options.LogTo(Console.WriteLine, LogLevel.Information);
         }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {

@@ -33,7 +33,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         public async Task GetData(string userID) {
             // TODO optimize await order
             updateProgressBar?.Invoke(5, "Processing user data");
-            var allUserPlaylists = (await getUsersPublicPlaylistsAsync(userID)).ToPlaylistDTOs().ToList();
+            var allUserPlaylists = (await getUsersPublicPlaylistsAsync(userID)).ToPlaylistDTOs();
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
             using var db = new SpotifyContext();
             UserDTO user = await GetOrAddUser(db, userID);
@@ -177,14 +177,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         private async Task GetAndProcessArtists(List<string> ids, DTOAggregate dtoAggregate) {
             var fullArtists = await getArtistsAsync(ids);
             foreach (var artist in fullArtists)
-                UpdateArtist(dtoAggregate.Artists[artist.Id], artist);
-        }
-
-        // TODO move to extensions and extract more UpdateX from DbExtensions
-        private static void UpdateArtist(ArtistDTO artist, FullArtist fullArtist) {
-            artist.Genres = fullArtist.Genres;
-            artist.Popularity = fullArtist.Popularity;
-            artist.Images = fullArtist.Images.Select(i => i.ToImageDTO()).ToList();
+                dtoAggregate.Artists[artist.Id].Update(artist);
         }
     }
 }

@@ -22,12 +22,12 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				SnapshotID = fp.SnapshotId,
 				TracksTotal = fp.Tracks.Total,
 				Tracks = [],
-				Images = fp.Images.Select(i => i.ToImageDTO()).ToList()
-			};
+				Images = fp.Images.ToImageDTOs()
+            };
 		}
 
-		public static IEnumerable<PlaylistDTO> ToPlaylistDTOs(this IEnumerable<FullPlaylist> fullPlaylists)
-			=> fullPlaylists.Select(p => p.ToPlaylistDTO());
+		public static List<PlaylistDTO> ToPlaylistDTOs(this IEnumerable<FullPlaylist> fullPlaylists)
+			=> fullPlaylists.Select(p => p.ToPlaylistDTO()).ToList();
 
 		public static TrackDTO ToTrackDTO(this FullTrack ft) {
 			return new TrackDTO() {
@@ -48,8 +48,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				TotalTracks = a.TotalTracks,
 				Artists = [],
 				Tracks = [],
-				Images = a.Images.Select(i => i.ToImageDTO()).ToList()
-			};
+				Images = a.Images.ToImageDTOs()
+            };
 		}
 
 		public static AlbumDTO ToAlbumDTO(this SimpleAlbum a) {
@@ -60,8 +60,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				TotalTracks = a.TotalTracks,
 				Artists = [],
 				Tracks = [],
-				Images = a.Images.Select(i => i.ToImageDTO()).ToList()
-			};
+				Images = a.Images.ToImageDTOs()
+            };
 		}
 
 		public static ArtistDTO ToArtistDTO(this FullArtist fa) {
@@ -71,7 +71,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				Genres = fa.Genres,
 				Popularity = fa.Popularity,
 				Albums = [],
-				Images = fa.Images.Select(i => i.ToImageDTO()).ToList()
+				Images = fa.Images.ToImageDTOs()
 			};
 		}
 
@@ -91,5 +91,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 Resolution = Math.Min(i.Height, i.Width)
 			};
 		}
-	}
+
+		public static List<ImageDTO> ToImageDTOs(this IEnumerable<Image> images)
+			=> images.Select(i => i.ToImageDTO()).ToList();
+
+    }
 }
