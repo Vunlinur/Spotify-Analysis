@@ -71,8 +71,19 @@
         dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
     }
 
-    private async Task GetData()
-        => await dataFetch.GetData(userID);
+    private async Task GetData() {
+        await dataFetch.GetData(userID)
+            .ContinueWith(async (t) => {
+                await Task.Delay(2000);
+                UpdateProgressBar(0, null);
+            });
+        using var db = new SpotifyContext();
+        var userDto = await db.Users
+            .Include(u => u.Playlists)
+            .ThenInclude(p => p.Images)
+            .FirstAsync(u => u.ID == userID);
+        playlists = userDto.Playlists.ToList();
+    }
 
     public async void GetPlaylists() {
         var userData = new UserData(userID);

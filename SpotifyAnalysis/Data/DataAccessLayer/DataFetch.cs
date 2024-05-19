@@ -70,8 +70,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             await db.SaveChangesAsync();
 
             updateProgressBar?.Invoke(100, "Finished!");
-            await Task.Delay(2000);
-            updateProgressBar?.Invoke(0, null);
         }
 
         /**
