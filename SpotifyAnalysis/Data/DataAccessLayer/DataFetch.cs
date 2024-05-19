@@ -46,7 +46,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
             var dtoAggregate = await AggregateDTOs(db, playlistsToUpdate, user);
 
-            // TODO cancellation token?
             // Create tasks to process each playlist ID asynchronously
             updateProgressBar?.Invoke(20, "Processing tracks");
             float progressBase = 20, progressDelta = (60 - progressBase) / playlistsToUpdate.Count();
@@ -60,7 +59,15 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
             updateProgressBar?.Invoke(60, "Processing artists");
             var newArtistsIds = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
-            await GetAndProcessArtists(newArtistsIds, dtoAggregate);
+            IEnumerable<List<string>> chunks = DivideArtistsRequests(newArtistsIds);
+            progressBase = 60; progressDelta = (95 - progressBase) / chunks.Count();
+            tasks = [];
+            foreach (List<string> chunk in chunks)
+                tasks.Add(
+                    Task.Run(() => GetAndProcessArtists(chunk, dtoAggregate))
+                    .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+                );
+            await Task.WhenAll(tasks);
 
             updateProgressBar?.Invoke(95, "Saving data");
             await db.SaveChangesAsync();
@@ -135,30 +142,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
         }
 
-        /**
-		 * Get full details of the items of multiple playlists with given IDs.
-		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
-		 */
-        private async Task GetAndProcessArtists(List<string> newArtistsIds, DTOAggregate dtoAggregate) {
-            if (newArtistsIds.Count == 0)
-                return;
-
-            IEnumerable<List<string>> chunks = DivideArtistsRequests(newArtistsIds);
-            float progressBase = 60, progressDelta = (95 - progressBase) / chunks.Count(); // TODO replace with something that doesn't create empty partitions
-
-            foreach (var chunk in chunks) {
-                updateProgressBar?.Invoke(progressBase += progressDelta, null);
-                var artistsData = await getArtistsAsync(chunk);
-                foreach (var artist in artistsData)
-                    UpdateArtist(dtoAggregate.Artists[artist.Id], artist);
-            }
-        }
-
-        private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
-            ushort chunkSize = 50;
-            return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
-        }
-
         private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
             dtos.Playlists.UpdateOrAdd(fullPlaylist, out PlaylistDTO playlist);
 
@@ -187,6 +170,17 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                 if (!playlist.Tracks.Any(t => t.ID == track.ID))
                     playlist.Tracks.Add(track);
             }
+        }
+
+        private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
+            ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions
+            return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
+        }
+
+        private async Task GetAndProcessArtists(List<string> ids, DTOAggregate dtoAggregate) {
+            var fullArtists = await getArtistsAsync(ids);
+            foreach (var artist in fullArtists)
+                UpdateArtist(dtoAggregate.Artists[artist.Id], artist);
         }
 
         // TODO move to extensions and extract more UpdateX from DbExtensions
