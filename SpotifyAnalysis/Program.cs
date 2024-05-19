@@ -7,6 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using MudBlazor.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace SpotifyAnalysis {
 	public class Program {
@@ -32,7 +35,15 @@ namespace SpotifyAnalysis {
                     webBuilder.UseStartup<Startup>();
                 });
 
-        public static void ConfigureServices(IServiceCollection services)
-            => services.AddMudServices();
+        public static void ConfigureServices(IServiceCollection services) {
+            services.AddRateLimiter(o => o.AddSlidingWindowLimiter(policyName: "sliding", options => {
+                    options.PermitLimit = 30;
+                    options.Window = TimeSpan.FromSeconds(30);
+                    options.SegmentsPerWindow = 10;
+                    options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    options.QueueLimit = 4 * options.PermitLimit;
+                }));
+            services.AddMudServices();
+        }
     }
 }

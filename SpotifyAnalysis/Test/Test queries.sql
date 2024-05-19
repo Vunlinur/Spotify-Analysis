@@ -4,7 +4,7 @@ SELECT * FROM PlaylistDTOUserDTO
 SELECT * FROM Tracks
 SELECT * FROM PlaylistDTOTrackDTO
 SELECT * FROM Albums
-SELECT * FROM Artists WHERE Name = 'Orden Ogan'
+SELECT * FROM Artists WHERE Name in ('Orden Ogan', 'Nightwish', 'Iron Maiden', 'Russell Brower')
 SELECT * FROM ArtistDTOTrackDTO
 SELECT * FROM AlbumDTOArtistDTO WHERE AlbumsID = '36Dk0lgHLB8nfpaC8EvGiy'
 SELECT * FROM Images
@@ -12,7 +12,7 @@ SELECT * FROM Images
 -- All Tracks & their Albums
 SELECT t.ID TrackID, t.Name TrackName, a.Name AlbumName, a.ID AlbumID FROM Tracks t LEFT JOIN Albums a ON a.ID = t.AlbumID ORDER BY a.Name
 -- Playlist's Tracks, their Album & Artists
-SELECT t.ID AS TrackID, t.Name AS TrackName, ar.Name AS Artist, al.Name AS AlbumName, al.ReleaseDate, t.DurationMs, t.Popularity FROM Playlists p
+SELECT t.ID AS TrackID, t.Name AS TrackName, al.Name AS AlbumName, ar.Name AS AlbumArtist, ar.Genres as ArtistGenres, al.ReleaseDate, t.DurationMs, t.Popularity FROM Playlists p
 JOIN PlaylistDTOTrackDTO pdt ON p.ID = pdt.PlaylistDTOID
 JOIN Tracks t ON pdt.TracksID = t.ID
 JOIN Albums al ON al.ID = t.AlbumID

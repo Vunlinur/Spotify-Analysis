@@ -74,7 +74,7 @@
 		}
 	}
 
-	protected override async Task OnInitializedAsync() {
+	protected override void OnInitialized() {
 		int index = 1;
 		playlists = Playlists.Select(x => new Playlist(x, index++)).ToList();
 	}
