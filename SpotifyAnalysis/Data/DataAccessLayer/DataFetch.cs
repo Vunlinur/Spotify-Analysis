@@ -1,10 +1,8 @@
-﻿using SpotifyAnalysis.Data.DTO;
+﻿using Microsoft.EntityFrameworkCore;
+using SpotifyAnalysis.Data.DTO;
 using SpotifyAnalysis.Data.SpotifyAPI;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using SpotifyAnalysis.Data;
 using SpotifyAPI.Web;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Collections.Generic;
@@ -12,10 +10,9 @@ using System.Collections.Concurrent;
 
 
 namespace SpotifyAnalysis.Data.DataAccessLayer {
-    // TODO change the delegates to NOT depend on DTOs
-    public delegate Task<UserDTO> GetUserProfileDelegate(string userID);
-    public delegate Task<IList<PlaylistDTO>> GetUsersPublicPlaylistsDelegate(string userID);
-    public delegate Task<FullPlaylist> GetPlaylistAsyncDelegate(PlaylistDTO playlist);
+    public delegate Task<PublicUser> GetUserProfileDelegate(string userID);
+    public delegate Task<IList<FullPlaylist>> GetUsersPublicPlaylistsDelegate(string userID);
+    public delegate Task<FullPlaylist> GetPlaylistAsyncDelegate(string playlistId);
     public delegate Task<List<FullTrack>> GetTracksAsyncDelegate(Paging<PlaylistTrack<IPlayableItem>> paging);
     public delegate Task<List<FullArtist>> GetArtistsAsyncDelegate(IList<string> ids);
     public delegate void UpdateProgressBarDelegate(float progress, string message);
@@ -36,7 +33,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         public async Task GetData(string userID) {
             // TODO optimize await order
             updateProgressBar?.Invoke(5, "Processing user data");
-            var allUserPlaylists = await getUsersPublicPlaylistsAsync(userID);
+            var allUserPlaylists = (await getUsersPublicPlaylistsAsync(userID)).ToPlaylistDTOs().ToList();
             var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
             using var db = new SpotifyContext();
             UserDTO user = await GetOrAddUser(db, userID);
@@ -83,7 +80,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         private async Task<UserDTO> GetOrAddUser(SpotifyContext db, string userID) {
             UserDTO user = await db.Users.Include(u => u.Playlists).FirstOrDefaultAsync(u => u.ID == userID);
             if (user is null) {
-                user = await getUserProfileAsync(userID);
+                user = (await getUserProfileAsync(userID)).ToUserDTO();
                 await db.AddAsync(user);
                 await db.SaveChangesAsync();
             }
@@ -135,7 +132,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
         private async Task GetAndProcessPlaylistData(PlaylistDTO playlist, DTOAggregate dtoAggregate) {
-            FullPlaylist fullPlaylist = await getPlaylistAsync(playlist);
+            FullPlaylist fullPlaylist = await getPlaylistAsync(playlist.ID);
             List<FullTrack> fullTracks = [];
             if (fullPlaylist.SnapshotId != playlist.SnapshotID)
                 fullTracks = await getTracksAsync(fullPlaylist.Tracks);

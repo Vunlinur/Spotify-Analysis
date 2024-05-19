@@ -26,6 +26,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 			};
 		}
 
+		public static IEnumerable<PlaylistDTO> ToPlaylistDTOs(this IEnumerable<FullPlaylist> fullPlaylists)
+			=> fullPlaylists.Select(p => p.ToPlaylistDTO());
+
 		public static TrackDTO ToTrackDTO(this FullTrack ft) {
 			return new TrackDTO() {
 				ID = ft.Id,
