@@ -26,8 +26,8 @@
     <div>@loadMessage</div>
 }
 
-@if (playlists?.Any() == true) {
-    <PlaylistList @ref="playlistList" Playlists="playlists" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
+@if (userDTO is not null) {
+    <PlaylistList @ref="playlistList" Playlists="userDTO.Playlists.ToList()" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 <p>
     @if (artistsSongs != null) {
@@ -52,7 +52,7 @@
     private Elements genres;
 
     private FullArtist selectedArtist;
-    private List<PlaylistDTO> playlists;
+    private UserDTO userDTO;
 
     private ushort loadValue = 0;
     private string loadMessage;
@@ -78,11 +78,19 @@
                 UpdateProgressBar(0, null);
             });
         using var db = new SpotifyContext();
-        var userDto = await db.Users
+        userDTO = await db.Users
             .Include(u => u.Playlists)
             .ThenInclude(p => p.Images)
+
+            .Include(u => u.Playlists)
+            .ThenInclude(p => p.Tracks)
+            .ThenInclude(t => t.Artists)
+
+            .Include(u => u.Playlists)
+            .ThenInclude(p => p.Tracks)
+            .ThenInclude(t => t.Album)
+
             .FirstAsync(u => u.ID == userID);
-        playlists = userDto.Playlists.ToList();
     }
 
     public async void GetPlaylists() {
