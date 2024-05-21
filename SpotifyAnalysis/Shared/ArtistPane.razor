@@ -2,6 +2,9 @@
 @using MudBlazor
 
 
+@if (Artist?.Genres is null) {
+	MudDialog.Close();
+}
 <MudDialog>
     <DialogContent>
 		<p>
@@ -10,10 +13,9 @@
 			</a>
 			<div style="font-size:1.8em; padding: 8px 0 0 8px;">Genres:</div>
 			<ul>
-				@if (Artist?.Genres is not null) 
-					@foreach (string genre in Artist.Genres) {
-						<li>@genre</li>
-					}
+				@foreach (string genre in Artist.Genres) {
+					<li>@genre</li>
+				}
 			</ul>
 		</p>
 		<div>
