@@ -24,7 +24,6 @@ namespace SpotifyAnalysis {
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 			services.AddSingleton<WeatherForecastService>();
-			services.AddSingleton<Spotify>();
 			services.AddSingleton<SpotifyModule>();
 			services.AddSingleton<SpotifyContext>();
 		}
