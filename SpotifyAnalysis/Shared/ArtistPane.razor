@@ -1,39 +1,46 @@
 ﻿@using Data.DTO
+@using MudBlazor
 
-@if (Artist == null)
-	return;
-<div class="artist-pane">
-	<p style="width: 350px;">
-		<button class="btn btn-primary" style="position:relative; right: 1px; top: -4px" @onclick="Close">x</button>
-		<a style="font-size:1.8em;" href="@(artistLinkBase + Artist.ID)">@Artist.Name</a>
-		<div style="font-size:1.2em; padding: 8px 0 0 8px;">Genres:</div>
-		<ul>
-			@foreach (string genre in Artist.Genres) {
-				<li>@genre</li>
-			}
-		</ul>
-	</p>
-	<div>
-		<img src="@GetImage()" height="300" width="300"/>
-		<div>Popularity: @Artist.Popularity</div>
-	</div>
-</div>
 
+<MudDialog>
+    <DialogContent>
+		<p>
+			<a href="@(artistLinkBase + Artist.ID)" target="_blank" rel="noopener noreferrer"> @* 'rel' set for security *@
+				<img src=@spotifyLogoGreen width="300" />
+			</a>
+			<div style="font-size:1.8em; padding: 8px 0 0 8px;">Genres:</div>
+			<ul>
+				@if (Artist?.Genres is not null) 
+					@foreach (string genre in Artist.Genres) {
+						<li>@genre</li>
+					}
+			</ul>
+		</p>
+		<div>
+			<img src="@GetImage()" height="300" width="300" />
+			<div>Popularity: @Artist.Popularity</div>
+		</div>
+    </DialogContent>
+</MudDialog>
+
+<style>
+	.mud-overlay-scrim.mud-overlay-dark {
+		background-color: unset !important; @* remove the dark background under the dialog *@
+	}
+</style>
 
 @code {
 	[Parameter]
 	public ArtistDTO Artist { get; set; }
+	[CascadingParameter] 
+	MudDialogInstance MudDialog { get; set; }
 
 	private const string wikiQuestionMark = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Question_mark_%28black%29.svg/220px-Question_mark_%28black%29.svg.png";
+	private const string spotifyLogoGreen = "https://storage.googleapis.com/pr-newsroom-wp/1/2021/02/Spotify_Logo_RGB_Green.png";
 	private const string artistLinkBase = "https://open.spotify.com/artist/";
 
 	internal string GetImage() {
 		var image = Artist.Images.FirstOrDefault();
 		return image != null ? image.Url : wikiQuestionMark;
-	}
-
-	internal void Close(MouseEventArgs e) {
-		Artist = null;
-		StateHasChanged();
 	}
 }

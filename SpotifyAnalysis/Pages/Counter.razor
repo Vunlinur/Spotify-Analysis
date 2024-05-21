@@ -12,6 +12,7 @@
 @inject Spotify spotify;
 @inject SpotifyModule spotifyModule;
 @inject SpotifyContext spotifyContext;
+@inject IDialogService dialogService
 
 <p>
     <label for="userId">User ID:</label>
@@ -39,9 +40,6 @@
     @if (genres is not null) {
         <PieChartItem Title="Genres general" Elements=genres />
     }
-    <MudItem>
-        <ArtistPane Artist="@selectedArtist"></ArtistPane>
-    </MudItem>
 </MudGrid>
 
 
@@ -53,7 +51,6 @@
     private Elements genreSongs;
     private Elements genres;
 
-    private ArtistDTO selectedArtist;
     private UserDTO userDTO;
 
     private ushort loadValue = 0;
@@ -163,7 +160,10 @@
     }
 
     internal void SelectArtist(string artistName) {
-        selectedArtist = allArtistsDict.FirstOrDefault(p => p.Value.Name == artistName).Value;
+        var selectedArtist = allArtistsDict.FirstOrDefault(p => p.Value.Name == artistName).Value;
+        var parameters = new DialogParameters<ArtistPane>() { { x => x.Artist, selectedArtist } };
+        var options = new DialogOptions { CloseButton = true, CloseOnEscapeKey = true };
+        dialogService.Show<ArtistPane>(artistName, parameters, options);
         StateHasChanged();
     }
 }
