@@ -31,7 +31,7 @@
 
 <MudGrid>
     @if (artistsSongs is not null) {
-        <PieChartItem Title="Artists" Elements=artistsSongs />
+        <PieChartItem Title="Artists" Elements=artistsSongs OnClickCallback="SelectArtist" />
     }
     @if (genreSongs is not null) {
         <PieChartItem Title="Genres" Elements=genreSongs />
@@ -39,6 +39,9 @@
     @if (genres is not null) {
         <PieChartItem Title="Genres general" Elements=genres />
     }
+    <MudItem>
+        <ArtistPane Artist="@selectedArtist"></ArtistPane>
+    </MudItem>
 </MudGrid>
 
 
@@ -50,7 +53,7 @@
     private Elements genreSongs;
     private Elements genres;
 
-    private FullArtist selectedArtist;
+    private ArtistDTO selectedArtist;
     private UserDTO userDTO;
 
     private ushort loadValue = 0;
@@ -84,6 +87,7 @@
             .Include(u => u.Playlists)
             .ThenInclude(p => p.Tracks)
             .ThenInclude(t => t.Artists)
+            .ThenInclude(a => a.Images)
 
             .Include(u => u.Playlists)
             .ThenInclude(p => p.Tracks)
@@ -92,19 +96,18 @@
             .FirstAsync(u => u.ID == userID);
     }
 
+    Dictionary<string, ArtistDTO> allArtistsDict;
     private async Task GenerateCharts() {
         var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
         var allTracks = userDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
-        var allArtistsDict = allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a);
+        allArtistsDict = allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a);
 
         var artistsSongsTask = BuildArtistsAsync(allTracks);
         var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);
         var genresTask = BuildGenresGeneralAsync(allTracks, allArtistsDict);
 
         artistsSongs = await artistsSongsTask;
-        StateHasChanged();
         genreSongs = await genreSongsTask;
-        StateHasChanged();
         genres = await genresTask;
         StateHasChanged();
     }
@@ -142,7 +145,7 @@
                     foreach (var genre in allArtists[artist.ID].Genres)
                         foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
                             genres.Increase(new Element { Label = word, Quantity = 1 });
-            string[] excludes = { "of", "and", "new", "music", "other" };
+            string[] excludes = { "of", "and", "new", "music" };
             foreach (var exclusion in excludes)
                 genres.Extract(exclusion);
             return genres;
@@ -160,7 +163,7 @@
     }
 
     internal void SelectArtist(string artistName) {
-        selectedArtist = spotify.AllArtists.First((a) => a.Name == artistName);
+        selectedArtist = allArtistsDict.FirstOrDefault(p => p.Value.Name == artistName).Value;
         StateHasChanged();
     }
 }

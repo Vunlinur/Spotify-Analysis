@@ -1,11 +1,11 @@
-﻿@using SpotifyAPI.Web
+﻿@using Data.DTO
 
 @if (Artist == null)
 	return;
 <div class="artist-pane">
 	<p style="width: 350px;">
 		<button class="btn btn-primary" style="position:relative; right: 1px; top: -4px" @onclick="Close">x</button>
-		<a style="font-size:1.8em;" href="@Artist.Uri">@Artist.Name</a>
+		<a style="font-size:1.8em;" href="@(artistLinkBase + Artist.ID)">@Artist.Name</a>
 		<div style="font-size:1.2em; padding: 8px 0 0 8px;">Genres:</div>
 		<ul>
 			@foreach (string genre in Artist.Genres) {
@@ -22,14 +22,13 @@
 
 @code {
 	[Parameter]
-	public FullArtist Artist { get; set; }
+	public ArtistDTO Artist { get; set; }
 
 	private const string wikiQuestionMark = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Question_mark_%28black%29.svg/220px-Question_mark_%28black%29.svg.png";
+	private const string artistLinkBase = "https://open.spotify.com/artist/";
 
 	internal string GetImage() {
-		var image = Artist.Images.FirstOrDefault(i => i.Width == 300)
-			?? Artist.Images.FirstOrDefault(i => i.Width == 320)
-			?? Artist.Images.TakeLast(2).FirstOrDefault();
+		var image = Artist.Images.FirstOrDefault();
 		return image != null ? image.Url : wikiQuestionMark;
 	}
 

@@ -19,14 +19,23 @@
     public string Title { get; set; }
     [Parameter]
     public IEnumerable<Element> Elements { get; set; }
+    [Parameter]
+    public Action<string> OnClickCallback { get; set; }
 
-    ChartOptions chartOptions;
-    int Index = -1; //default value cannot be 0 -> first selectedindex is 0.
     double[] data;
     string[] labels;
+    ChartOptions chartOptions;
+    int index = -1; //default value cannot be 0 -> first selectedindex is 0.
+    int Index {
+        get { return index; }
+        set {
+            index = value;
+            OnClickCallback?.Invoke(labels[index]);
+        }
+    }
 
     protected override void OnInitialized() {
-        Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels
+        Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels. Also Change Append to Prepend
 
         // Any element with arbitrary low Quantity gets merged into one bit "Other"
         var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
@@ -34,7 +43,7 @@
         var sumQuantityBelowThreshold = Elements.Where(e => e.Quantity <= threshold).Select(e => e.Quantity).Sum();
         if (sumQuantityBelowThreshold > 0) {
             Elements = Elements.Where(e => e.Quantity > threshold);
-            Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
+            Elements = Elements.Append(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
         }
 
         // Limit no. of legend items to 3 columns, otherwise the pie does not fit
@@ -42,7 +51,7 @@
         if (leastImportantElementsCount > 0) {
             var sumQuantityExceedRows = Elements.Take(leastImportantElementsCount).Select(e => e.Quantity).Sum();
             Elements = Elements.Skip(leastImportantElementsCount);
-            Elements = Elements.Prepend(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
+            Elements = Elements.Append(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
         }
 
         data = Elements.Select(e => (double)e.Quantity).ToArray();
