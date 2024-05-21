@@ -93,7 +93,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		}
 
 		public static List<ImageDTO> ToImageDTOs(this IEnumerable<Image> images)
-			=> images.Select(i => i.ToImageDTO()).ToList();
+			=> images?.Select(i => i.ToImageDTO()).ToList();
 
     }
 }

@@ -17,7 +17,6 @@
     <label for="userId">User ID:</label>
     <input id="userId" size="30" @bind="userID" />
     <button class="btn btn-primary" @onclick="GetData">Get data</button>
-    <button class="btn btn-primary" @onclick="GetPlaylists">Get playlists</button>
     <button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
 </p>
 
@@ -29,18 +28,18 @@
 @if (userDTO is not null) {
     <PlaylistList @ref="playlistList" Playlists="userDTO.Playlists.ToList()" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
-<p>
-    @if (artistsSongs != null) {
-        <PieChart Title="Artists" Elements="artistsSongs" OnClickCallback="SelectArtist" />
-        <ArtistPane Artist="@selectedArtist"></ArtistPane>
+
+<MudGrid>
+    @if (artistsSongs is not null) {
+        <PieChartItem Title="Artists" Elements=artistsSongs />
     }
-    @if (genreSongs != null) {
-        <PieChart Title="Genres" Elements="genreSongs" />
+    @if (genreSongs is not null) {
+        <PieChartItem Title="Genres" Elements=genreSongs />
     }
-    @if (genres != null) {
-        <PieChart Title="Genres general" Elements="genres" />
+    @if (genres is not null) {
+        <PieChartItem Title="Genres general" Elements=genres />
     }
-</p>
+</MudGrid>
 
 
 @code {
@@ -93,42 +92,24 @@
             .FirstAsync(u => u.ID == userID);
     }
 
-    public async void GetPlaylists() {
-        var userData = new UserData(userID);
-        await spotify.GetUsersPublicPlaylistsAsync(userData);
-        StateHasChanged();
-    }
-
     private async Task GenerateCharts() {
-        FullPlaylist PlaylistDTOToFullPlaylist(PlaylistDTO dto) {
-            return new FullPlaylist() {
-                    Id = dto.ID,
-                    Name = dto.Name,
-                    SnapshotId = dto.SnapshotID,
-                    Owner = new PublicUser() { Id = dto.Owner },
-                    Tracks = new Paging<PlaylistTrack<IPlayableItem>>(),
-                    Images = []
-                };
-        }
+        var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
+        var allTracks = userDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
+        var allArtistsDict = allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a);
 
-        if (spotify.UserData.FullPlaylists == null)
-            return;
-        var getAllTracks = spotify.GetAllTracksAsync(playlistList.GetSelectedPlaylists().Select(p => PlaylistDTOToFullPlaylist(p)));
-        var allTracks = await getAllTracks;
-        var getAllArtists = spotify.GetAllArtistsAsync(allTracks);
-        var buildArtistsSongs = BuildArtistsAsync(allTracks);
-        artistsSongs = await buildArtistsSongs;
+        var artistsSongsTask = BuildArtistsAsync(allTracks);
+        var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);
+        var genresTask = BuildGenresGeneralAsync(allTracks, allArtistsDict);
+
+        artistsSongs = await artistsSongsTask;
         StateHasChanged();
-        var allArtists = await getAllArtists;
-        var buildGenreSongs = BuildGenresAsync(allTracks, allArtists);
-        var buildGenres = BuildGenresGeneralAsync(allTracks, allArtists);
-        genreSongs = await buildGenreSongs;
+        genreSongs = await genreSongsTask;
         StateHasChanged();
-        genres = await buildGenres;
+        genres = await genresTask;
         StateHasChanged();
     }
 
-    private async Task<Elements> BuildArtistsAsync(FullTracks allTracks) {
+    private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {
         Elements BuildArtists() {
             artistsSongs = new Elements();
             foreach (var track in allTracks)
@@ -140,12 +121,12 @@
         return await Task<Elements>.Run(BuildArtists);
     }
 
-    private async Task<Elements> BuildGenresAsync(FullTracks allTracks, FullArtists allArtists) {
+    private async Task<Elements> BuildGenresAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
         Elements BuildGenres() {
             genreSongs = new Elements();
             foreach (var track in allTracks)
                 foreach (var artist in track.Artists)
-                    foreach (var genre in allArtists[artist.Id].Genres)
+                    foreach (var genre in allArtists[artist.ID].Genres)
                         genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
             return genreSongs;
         }
@@ -153,15 +134,15 @@
         return await Task<Elements>.Run(BuildGenres);
     }
 
-    private async Task<Elements> BuildGenresGeneralAsync(FullTracks allTracks, FullArtists allArtists) {
+    private async Task<Elements> BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
         Elements BuildGenresGeneral() {
             var genres = new Elements();
             foreach (var track in allTracks)
                 foreach (var artist in track.Artists)
-                    foreach (var genre in allArtists[artist.Id].Genres)
+                    foreach (var genre in allArtists[artist.ID].Genres)
                         foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
                             genres.Increase(new Element { Label = word, Quantity = 1 });
-            string[] excludes = { "of", "and", "new", "music" };
+            string[] excludes = { "of", "and", "new", "music", "other" };
             foreach (var exclusion in excludes)
                 genres.Extract(exclusion);
             return genres;

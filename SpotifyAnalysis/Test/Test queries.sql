@@ -1,5 +1,5 @@
 ﻿SELECT * FROM Users
-SELECT * FROM Playlists
+SELECT * FROM Playlists ORDER BY Name
 SELECT * FROM PlaylistDTOUserDTO
 SELECT * FROM Tracks
 SELECT * FROM PlaylistDTOTrackDTO

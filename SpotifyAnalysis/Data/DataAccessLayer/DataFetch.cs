@@ -31,45 +31,51 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
 
         public async Task GetData(string userID) {
-            // TODO optimize await order
-            updateProgressBar?.Invoke(5, "Processing user data");
-            var allUserPlaylists = (await getUsersPublicPlaylistsAsync(userID)).ToPlaylistDTOs();
-            var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
-            using var db = new SpotifyContext();
-            UserDTO user = await GetOrAddUser(db, userID);
+            try {
+                // TODO optimize await order
+                updateProgressBar?.Invoke(5, "Processing user data");
+                var allUserPlaylists = (await getUsersPublicPlaylistsAsync(userID)).ToPlaylistDTOs();
+                var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
+                using var db = new SpotifyContext();
+                UserDTO user = await GetOrAddUser(db, userID);
 
-            updateProgressBar?.Invoke(10, "Processing playlists");
-            await ProcessPlaylists(db, user, allUserPlaylists);
-            var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
-            var dtoAggregate = await AggregateDTOs(db, playlistsToUpdate, user);
+                updateProgressBar?.Invoke(10, "Processing playlists");
+                await ProcessPlaylists(db, user, allUserPlaylists);
+                var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
+                var dtoAggregate = await AggregateDTOs(db, playlistsToUpdate, user);
 
-            // Create tasks to process each playlist ID asynchronously
-            updateProgressBar?.Invoke(20, "Processing tracks");
-            float progressBase = 20, progressDelta = (60 - progressBase) / playlistsToUpdate.Count();
-            List<Task> tasks = [];
-            foreach (PlaylistDTO playlist in playlistsToUpdate)
-                tasks.Add(
-                    Task.Run(() => GetAndProcessPlaylistData(playlist, dtoAggregate))
-                    .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
-                );
-            await Task.WhenAll(tasks);
+                // Create tasks to process each playlist ID asynchronously
+                updateProgressBar?.Invoke(20, "Processing tracks");
+                float progressBase = 20, progressDelta = (60 - progressBase) / playlistsToUpdate.Count();
+                List<Task> tasks = [];
+                foreach (PlaylistDTO playlist in playlistsToUpdate)
+                    tasks.Add(
+                        Task.Run(() => GetAndProcessPlaylistData(playlist, dtoAggregate))
+                        .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+                    );
+                await Task.WhenAll(tasks);
 
-            updateProgressBar?.Invoke(60, "Processing artists");
-            var newArtistsIds = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
-            IEnumerable<List<string>> chunks = DivideArtistsRequests(newArtistsIds);
-            progressBase = 60; progressDelta = (95 - progressBase) / chunks.Count();
-            tasks = [];
-            foreach (List<string> chunk in chunks)
-                tasks.Add(
-                    Task.Run(() => GetAndProcessArtists(chunk, dtoAggregate))
-                    .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
-                );
-            await Task.WhenAll(tasks);
+                updateProgressBar?.Invoke(60, "Processing artists");
+                var newArtistsIds = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
+                IEnumerable<List<string>> chunks = DivideArtistsRequests(newArtistsIds);
+                progressBase = 60; progressDelta = (95 - progressBase) / chunks.Count();
+                tasks = [];
+                foreach (List<string> chunk in chunks)
+                    tasks.Add(
+                        Task.Run(() => GetAndProcessArtists(chunk, dtoAggregate))
+                        .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+                    );
+                await Task.WhenAll(tasks);
 
-            updateProgressBar?.Invoke(95, "Saving data");
-            await db.SaveChangesAsync();
+                updateProgressBar?.Invoke(95, "Saving data");
+                await db.SaveChangesAsync();
 
-            updateProgressBar?.Invoke(100, "Finished!");
+                updateProgressBar?.Invoke(100, "Finished!");
+            }
+            catch (Exception e) {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         /**

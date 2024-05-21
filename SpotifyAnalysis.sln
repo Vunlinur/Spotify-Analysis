@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32929.386
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpotifyAnalysis", "SpotifyAnalysis\SpotifyAnalysis.csproj", "{4602A00C-F038-4E8E-8C0D-74BA9DA8B57C}"
 EndProject

@@ -1,17 +1,12 @@
-﻿using SpotifyAPI.Web;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace SpotifyAnalysis.Data {
 	public class Elements : KeyedCollection<string, Element> {
-		protected override string GetKeyForItem(Element item) {
-			return item.Label;
-		}
+		protected override string GetKeyForItem(Element item) => item.Label;
 
-		public void Increase(Element item) {
+        public void Increase(Element item) {
 			if (Contains(item.Label))
 				this[item.Label].Quantity += item.Quantity;
 			else
