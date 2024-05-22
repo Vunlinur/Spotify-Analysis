@@ -9,6 +9,7 @@ namespace SpotifyAnalysis.Data {
 		public static string ColorHexString(int r, int g, int b) 
 			=> $"#{r:X2}{g:X2}{b:X2}";
 	}
+
 	public class RandomColor : IChartColorFactory {
 		public string Next() {
 			throw new NotImplementedException();
@@ -17,7 +18,7 @@ namespace SpotifyAnalysis.Data {
 	}
 
 	public class Pastel : IChartColorFactory {
-		private static readonly Random random = new Random();
+		private static readonly Random random = new();
 		private const int min = 100;
 		private const int max = 255;
 
@@ -39,17 +40,12 @@ namespace SpotifyAnalysis.Data {
 		}
 	}
 
-	public class RotateHue : IChartColorFactory {
+	public class RotateHue(double step = 0.2, byte magnitude = 255) : IChartColorFactory {
 		private const double thirdCycle = Math.PI / 3 * 2;
 		private const double twoThirdsCycle = thirdCycle * 2;
 		private double offset = 0;
-		private readonly double step;
-		private readonly byte magnitude;
-
-		public RotateHue(double step = 0.2, byte magnitude = 255) {
-			this.step = step;
-			this.magnitude = magnitude;
-		}
+		private readonly double step = step;
+		private readonly byte magnitude = magnitude;
 
 		public string Next() {
 			offset += step;

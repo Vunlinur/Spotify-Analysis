@@ -31,13 +31,13 @@
 
 <MudGrid>
     @if (artistsSongs is not null) {
-        <PieChartItem Title="Artists" Elements=artistsSongs OnClickCallback="SelectArtist" />
+        <PieChartMudItem Title="Artists" Elements=artistsSongs OnClickCallback="SelectArtist" />
     }
     @if (genreSongs is not null) {
-        <PieChartItem Title="Genres" Elements=genreSongs />
+        <PieChartMudItem Title="Genres" Elements=genreSongs />
     }
     @if (genres is not null) {
-        <PieChartItem Title="Genres general" Elements=genres />
+        <PieChartMudItem Title="Genres general" Elements=genres />
     }
 </MudGrid>
 
