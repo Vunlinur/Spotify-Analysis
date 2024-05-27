@@ -11,7 +11,7 @@
     to call that callback instead.
 *@
 
-<MudItem lg="4" md="6">
+<MudItem xl="6" lg="12">
     <MudPaper Class="pa-4">
         <ApexChart TItem="Element"
                    Title=@Title
@@ -49,10 +49,11 @@
     private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
         Title = new Title {
             Align = ApexCharts.Align.Center,
-                Style = new TitleStyle { Color = "#fff" }
+                Style = new TitleStyle { Color = "#fff", FontSize = "18px" }
         },
         Legend = new Legend {
-            Width = 200,
+            Width = 220,
+            FontSize = "14",
             OnItemClick = new LegendOnItemClick { ToggleDataSeries = true }, // doesn't do anything for pie
             Labels = new LegendLabels { Colors = ["#fff"] }
         },
@@ -69,28 +70,36 @@
         }
     };
 
+    protected string other = "Other";
     protected override void OnInitialized() {
         Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels. Also Change Append to Prepend
 
-        // Any element with arbitrary low Quantity gets merged into one bit "Other"
-        var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
-        var threshold = (int)(allQuantitySum / 220f);
-        var sumQuantityBelowThreshold = Elements.Where(e => e.Quantity <= threshold).Select(e => e.Quantity).Sum();
-        if (sumQuantityBelowThreshold > 0) {
-            Elements = Elements.Where(e => e.Quantity > threshold);
-            Elements = Elements.Append(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
-        }
-
-        // Limit no. of legend items to 3 columns, otherwise the pie does not fit
-        int leastImportantElementsCount = Math.Max(Elements.Count() - 22 * 2, 0);
-        if (leastImportantElementsCount > 0) {
-            var sumQuantityExceedRows = Elements.Take(leastImportantElementsCount).Select(e => e.Quantity).Sum();
-            Elements = Elements.Skip(leastImportantElementsCount);
-            Elements = Elements.Append(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
-        }
+        //MergeBelowDegree(Elements, 360f);
+        MergeAfterTop(Elements, 100);
 
         series = Elements.ToArray();
         quantities = series.Select(e => e.Quantity).ToArray();
+    }
+
+    protected void MergeBelowDegree(IEnumerable<Element> elements, float oneOver) {
+        // Any element taking less space of the pie than certain degree gets merged into "Other"
+        var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
+        var threshold = (int)(allQuantitySum / oneOver); // anything taking less than 1/oneOver degree of the pie
+        var sumQuantityBelowThreshold = Elements.Where(e => e.Quantity <= threshold).Select(e => e.Quantity).Sum();
+        if (sumQuantityBelowThreshold > 0) {
+            Elements = Elements.Where(e => e.Quantity > threshold);
+            Elements = Elements.Increase(new Element { Label = other, Quantity = sumQuantityBelowThreshold });
+        }
+    }
+
+    protected void MergeAfterTop(IEnumerable<Element> elements, int topN) {
+        // Limit no. of items to topN for performance reasons, rest goes into "Other"
+        int leastImportantElementsCount = Math.Max(Elements.Count() - topN, 0);
+        if (leastImportantElementsCount > 0) {
+            var sumQuantityExceedRows = Elements.TakeLast(leastImportantElementsCount).Select(e => e.Quantity).Sum();
+            Elements = Elements.SkipLast(leastImportantElementsCount);
+            Elements = Elements.Increase(new Element { Label = other, Quantity = sumQuantityExceedRows });
+        }
     }
 
     private int[] quantities;
