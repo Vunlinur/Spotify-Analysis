@@ -35,6 +35,10 @@ html, body {
     color: var(--text-base)
 }
 
+.fullHeight {
+    height: 100%;
+}
+
 .pane {
     margin: 8px 8px 8px 0px;
     border-radius: 8px;
@@ -159,9 +163,6 @@ td {
         width: 40px;
         border-radius: 4px;
     }
-
-
-
 
 a, .btn-link {
     color: #0366d6;

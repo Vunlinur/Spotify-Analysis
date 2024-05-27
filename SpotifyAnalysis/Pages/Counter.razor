@@ -32,6 +32,7 @@
 <MudGrid>
     @if (artistsSongs is not null) {
         <PieChartMudItem Title="Artists" Elements=artistsSongs OnClickCallback="SelectArtist" />
+        <ArtistPaneMudItem Artist=@selectedArtist />
     }
     @if (genreSongs is not null) {
         <PieChartMudItem Title="Genres" Elements=genreSongs />
@@ -155,11 +156,9 @@
         }
     }
 
+    ArtistDTO selectedArtist;
     internal void SelectArtist(string artistName) {
-        var selectedArtist = allArtistsDict.FirstOrDefault(p => p.Value.Name == artistName).Value;
-        var parameters = new DialogParameters<ArtistPane>() { { x => x.Artist, selectedArtist } };
-        var options = new DialogOptions { CloseButton = true, CloseOnEscapeKey = true };
-        dialogService.Show<ArtistPane>(artistName, parameters, options);
+        selectedArtist = allArtistsDict.FirstOrDefault(p => p.Value.Name == artistName).Value ?? selectedArtist;
         StateHasChanged();
     }
 }

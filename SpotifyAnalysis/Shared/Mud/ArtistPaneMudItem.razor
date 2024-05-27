@@ -1,0 +1,41 @@
+﻿@namespace SpotifyAnalysis.Shared
+@using MudBlazor
+@using Data.DTO
+
+
+<MudItem xl="6" lg="12">
+	<MudPaper Class="fullHeight pa-4">
+		@if (Artist?.Genres is not null) {
+			<p>
+				<a href="@(artistLinkBase + Artist.ID)" target="_blank" rel="noopener noreferrer">
+					@* 'rel' set for security *@
+					<img src=@spotifyLogoGreen width="300" />
+				</a>
+				<div style="font-size:1.8em; padding: 8px 0 0 8px;">Genres:</div>
+				<ul>
+					@foreach (string genre in Artist.Genres) {
+						<li>@genre</li>
+					}
+				</ul>
+			</p>
+			<div>
+				<img src="@GetImage()" height="300" width="300" />
+				<div>Popularity: @Artist.Popularity</div>
+			</div>
+		}
+    </MudPaper>
+</MudItem>
+
+@code {
+	[Parameter]
+	public ArtistDTO Artist { get; set; }
+
+	private const string wikiQuestionMark = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Question_mark_%28black%29.svg/220px-Question_mark_%28black%29.svg.png";
+	private const string spotifyLogoGreen = "https://storage.googleapis.com/pr-newsroom-wp/1/2021/02/Spotify_Logo_RGB_Green.png";
+	private const string artistLinkBase = "spotify:artist:";
+
+	internal string GetImage() {
+		var image = Artist.Images.FirstOrDefault();
+		return image != null ? image.Url : wikiQuestionMark;
+	}
+}
