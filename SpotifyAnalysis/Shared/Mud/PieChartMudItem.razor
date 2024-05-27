@@ -3,8 +3,13 @@
 @using SpotifyAnalysis.Data
 @using ApexCharts
 
-@inject IJSRuntime JS
-
+@*
+    Currently it is impossible to distinguish whether the clicks are coming from the legend or from the chart:
+    https://github.com/apexcharts/Blazor-ApexCharts/issues/442
+    https://github.com/apexcharts/Blazor-ApexCharts/issues/464
+    So the solution is to toggle data series by default, but if callback is provided, we show a switch
+    to call that callback instead.
+*@
 
 <MudItem lg="4" md="6">
     <MudPaper Class="pa-4">
@@ -20,6 +25,14 @@
                              XValue="@(e => e.Label)"
                              YValue="@(e => e.Quantity)"/>
         </ApexChart>
+
+        @if (OnClickCallback is not null) {
+            <MudStack Row=true Justify="Justify.Center" AlignItems="AlignItems.Center">
+                <MudInputLabel >Toggle series</MudInputLabel>
+                <MudSwitch @bind-Value="@invokeCallback" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small" />
+                <MudInputLabel>Get details</MudInputLabel>
+            </MudStack>
+        }
     </MudPaper>
 </MudItem>
 
@@ -29,7 +42,6 @@
     [Parameter]
     public IEnumerable<Element> Elements { get; set; }
     private Element[] series { get; set; }
-    private int[] quantities;
     [Parameter]
     public Action<string> OnClickCallback { get; set; }
 
@@ -81,13 +93,19 @@
         quantities = series.Select(e => e.Quantity).ToArray();
     }
 
+    private int[] quantities;
+    public bool invokeCallback;
     async void OnDataPointSelection(SelectedData<Element> selection) {
-        int index = selection.DataPointIndex;
-        var serie = series[index];
-        if (serie.Quantity == 0)
-            serie.Quantity = quantities[index];
-        else
-            serie.Quantity = 0;
-        await chart.UpdateSeriesAsync();
+        if (invokeCallback)
+            OnClickCallback?.Invoke(selection.DataPoint.X.ToString());
+        else {
+            int index = selection.DataPointIndex;
+            var serie = series[index];
+            if (serie.Quantity == 0)
+                serie.Quantity = quantities[index];
+            else
+                serie.Quantity = 0;
+            await chart.UpdateSeriesAsync();
+        }
     }
 }
