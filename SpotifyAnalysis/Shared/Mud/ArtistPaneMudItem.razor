@@ -6,22 +6,30 @@
 <MudItem xl="6" lg="12">
 	<MudPaper Class="fullHeight pa-4">
 		@if (Artist?.Genres is not null) {
-			<p>
-				<a href="@(artistLinkBase + Artist.ID)" target="_blank" rel="noopener noreferrer">
-					@* 'rel' set for security *@
-					<img src=@spotifyLogoGreen width="300" />
-				</a>
-				<div style="font-size:1.8em; padding: 8px 0 0 8px;">Genres:</div>
-				<ul>
-					@foreach (string genre in Artist.Genres) {
-						<li>@genre</li>
-					}
-				</ul>
-			</p>
-			<div>
-				<img src="@GetImage()" height="300" width="300" />
-				<div>Popularity: @Artist.Popularity</div>
-			</div>
+			<MudStack Row=true Class="fullHeight" Justify="Justify.SpaceEvenly" AlignItems="AlignItems.Stretch">
+				<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
+					<MudInputLabel Class="mudItemTitle">@Artist.Name</MudInputLabel>
+					<MudDataGrid Items="@Artist.Genres" Style="width: 300px" Dense=true >
+						<Columns>
+							<PropertyColumn Property="x => x" Title="Genres:" HeaderStyle="font-size: 16px ;width: 120px" />
+						</Columns>
+					</MudDataGrid>
+					<div /> <!--for Justify.SpaceBetween to look better-->
+				</MudStack>
+				<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+					<MudButton Href=@(artistLinkBase + Artist.ID)
+							   Variant="Variant.Outlined"
+							   Color="Color.Primary">
+						Open in
+						<MudImage Src=@spotifyLogoGreen Height="60" Elevation="25" Class="ma-4" />
+					</MudButton>
+					<MudImage Style="border: solid 1px white;" Src=@GetImage() Width="300" Height="300" Elevation="25" Class="ma-4" />
+					<MudStack Class="fullWidth" AlignItems="AlignItems.Center">
+						<MudInputLabel Style="font-size: 16px">Popularity</MudInputLabel>
+						<MudProgressLinear Color="Color.Primary" Size="Size.Large" Value=@(Artist.Popularity ?? 0) />
+					</MudStack>
+				</MudStack>
+			</MudStack>
 		}
     </MudPaper>
 </MudItem>

@@ -39,6 +39,16 @@ html, body {
     height: 100%;
 }
 
+.fullWidth {
+    width: 100%;
+}
+
+.mudItemTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+}
+
 .pane {
     margin: 8px 8px 8px 0px;
     border-radius: 8px;
@@ -108,9 +118,9 @@ table {
             background-color: rgba(255,255,255, .3);
         }
 
-tr:hover:not(:first-child) {
-    background: rgba(255,255,255,.1);
-}
+        .scrollable > * tr:hover {
+            background: rgba(255,255,255,.1);
+        }
 
 tr.select {
     background: rgba(255,255,255,.2);

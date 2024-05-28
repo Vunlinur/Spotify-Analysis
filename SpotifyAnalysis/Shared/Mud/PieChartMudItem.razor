@@ -13,8 +13,8 @@
 
 <MudItem xl="6" lg="12">
     <MudPaper Class="pa-4">
+        <MudInputLabel Class="mudItemTitle">@Title</MudInputLabel>
         <ApexChart TItem="Element"
-                   Title=@Title
                    Options="options"
                    OnDataPointSelection=OnDataPointSelection
                    @ref="chart">
@@ -52,8 +52,8 @@
                 Style = new TitleStyle { Color = "#fff", FontSize = "18px" }
         },
         Legend = new Legend {
-            Width = 220,
-            FontSize = "14",
+            Width = 250,
+            FontSize = "15",
             OnItemClick = new LegendOnItemClick { ToggleDataSeries = true }, // doesn't do anything for pie
             Labels = new LegendLabels { Colors = ["#fff"] }
         },
@@ -103,9 +103,9 @@
     }
 
     private int[] quantities;
-    public bool invokeCallback;
+    public bool invokeCallback = true;
     async void OnDataPointSelection(SelectedData<Element> selection) {
-        if (invokeCallback)
+        if (OnClickCallback is not null && invokeCallback)
             OnClickCallback?.Invoke(selection.DataPoint.X.ToString());
         else {
             int index = selection.DataPointIndex;
