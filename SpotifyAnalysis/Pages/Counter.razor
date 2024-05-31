@@ -8,6 +8,7 @@
 @using SpotifyAPI.Web
 @using System.Threading
 @using MudBlazor
+@using System.Collections.Concurrent
 
 @inject SpotifyModule spotifyModule;
 @inject SpotifyContext spotifyContext;
@@ -90,11 +91,11 @@
         UpdateProgressBar(0, null);
     }
 
-    Dictionary<string, ArtistDTO> allArtistsDict;
+    IDictionary<string, ArtistDTO> allArtistsDict;
     private async Task GenerateCharts() {
         var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
         var allTracks = userDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
-        allArtistsDict = allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a);
+        allArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
 
         var artistsSongsTask = BuildArtistsAsync(allTracks);
         var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);

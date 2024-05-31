@@ -6,7 +6,7 @@
 <MudItem xl="6" lg="12">
 	<MudPaper Class="fullHeight pa-4">
 		@if (Artist?.Genres is not null) {
-			<MudStack Row=true Class="fullHeight" Justify="Justify.SpaceEvenly" AlignItems="AlignItems.Stretch">
+			<MudStack Row=true Class="fullHeight" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
 				<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
 					<MudInputLabel Class="mudItemTitle">@Artist.Name</MudInputLabel>
 					<MudDataGrid Items="@Artist.Genres" Style="width: 300px" Dense=true >
