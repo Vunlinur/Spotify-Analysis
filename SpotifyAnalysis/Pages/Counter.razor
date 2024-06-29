@@ -32,14 +32,14 @@
 
 <MudGrid>
     @if (artistsSongs is not null) {
-        <PieChartMudItem Title="Artists" Elements=artistsSongs OnClickCallback="SelectArtist" />
+        <PieChartMudItem Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
         <ArtistPaneMudItem Artist=@selectedArtist />
     }
     @if (genreSongs is not null) {
-        <PieChartMudItem Title="Genres" Elements=genreSongs />
+        <PieChartMudItem Title="Genres" Elements=genreSongs @ref=chartRef />
     }
     @if (genres is not null) {
-        <PieChartMudItem Title="Genres general" Elements=genres />
+        <PieChartMudItem Title="Genres general" Elements=genres @ref=chartRef />
     }
 </MudGrid>
 
@@ -59,6 +59,8 @@
 
     private DataFetch dataFetch;
 
+    List<PieChartMudItem> chartRefs = [];
+    PieChartMudItem chartRef { set { chartRefs.Add(value); } }
 
     private void UpdateProgressBar(float value, string message) {
         loadValue = (ushort)value;
@@ -97,14 +99,17 @@
         var allTracks = userDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
         allArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
 
-        var artistsSongsTask = BuildArtistsAsync(allTracks);
-        var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);
         var genresTask = BuildGenresGeneralAsync(allTracks, allArtistsDict);
+        var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);
+        var artistsSongsTask = BuildArtistsAsync(allTracks);
 
-        artistsSongs = await artistsSongsTask;
+        genres = genresTask;
         genreSongs = await genreSongsTask;
-        genres = await genresTask;
-        StateHasChanged();
+        artistsSongs = await artistsSongsTask;
+
+        foreach (var chart in chartRefs)
+            chart.RefreshChartAsync(); // cannot await because thread locks
+        Console.WriteLine($"{DateTime.Now.TimeOfDay} All tasks complete\n");
     }
 
     private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {
@@ -132,7 +137,7 @@
         return await Task<Elements>.Run(BuildGenres);
     }
 
-    private async Task<Elements> BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
+    private Elements BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
         Elements BuildGenresGeneral() {
             var genres = new Elements();
             foreach (var track in allTracks)
@@ -146,7 +151,7 @@
             return genres;
         }
 
-        return await Task<Elements>.Run(BuildGenresGeneral);
+        return BuildGenresGeneral();
     }
 
     private bool areAnyPlaylistsSelected;

@@ -11,7 +11,7 @@
     to call that callback instead.
 *@
 
-<MudItem xl="6" lg="12">
+<MudItem xxl="4" xl="6" lg="12">
     <MudPaper Class="pa-4">
         <MudInputLabel Class="mudItemTitle">@Title</MudInputLabel>
         <ApexChart TItem="Element"
@@ -70,18 +70,30 @@
         }
     };
 
+    public async Task RefreshChartAsync() {
+        if (chart is null)
+            return;
+        ProcessElements();
+        await chart.UpdateSeriesAsync(false);
+        await chart.UpdateOptionsAsync(false, false, true);
+    }
+
     protected string other = "Other";
     protected override void OnInitialized() {
+        ProcessElements();
+    }
+
+    protected void ProcessElements() {
         Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels. Also Change Append to Prepend
 
-        //MergeBelowDegree(Elements, 360f);
-        MergeAfterTop(Elements, 100);
+        //MergeBelowDegree(360f);
+        MergeAfterTop(100);
 
         series = Elements.ToArray();
         quantities = series.Select(e => e.Quantity).ToArray();
     }
 
-    protected void MergeBelowDegree(IEnumerable<Element> elements, float oneOver) {
+    protected void MergeBelowDegree(float oneOver) {
         // Any element taking less space of the pie than certain degree gets merged into "Other"
         var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
         var threshold = (int)(allQuantitySum / oneOver); // anything taking less than 1/oneOver degree of the pie
@@ -92,7 +104,7 @@
         }
     }
 
-    protected void MergeAfterTop(IEnumerable<Element> elements, int topN) {
+    protected void MergeAfterTop(int topN) {
         // Limit no. of items to topN for performance reasons, rest goes into "Other"
         int leastImportantElementsCount = Math.Max(Elements.Count() - topN, 0);
         if (leastImportantElementsCount > 0) {
@@ -102,18 +114,15 @@
         }
     }
 
-    private int[] quantities;
-    public bool invokeCallback = true;
-    async void OnDataPointSelection(SelectedData<Element> selection) {
+    int[] quantities;
+    bool invokeCallback = true;
+    protected async void OnDataPointSelection(SelectedData<Element> selection) {
         if (OnClickCallback is not null && invokeCallback)
             OnClickCallback?.Invoke(selection.DataPoint.X.ToString());
         else {
             int index = selection.DataPointIndex;
             var serie = series[index];
-            if (serie.Quantity == 0)
-                serie.Quantity = quantities[index];
-            else
-                serie.Quantity = 0;
+            serie.Quantity = serie.Quantity == 0 ? quantities[index] : 0;
             await chart.UpdateSeriesAsync();
         }
     }
