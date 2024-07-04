@@ -12,13 +12,14 @@
 
 @inject SpotifyModule spotifyModule;
 @inject SpotifyContext spotifyContext;
-@inject IDialogService dialogService
+@inject IDialogService dialogService;
+@inject TransientData data;
 
 <p>
     <label for="userId">User ID:</label>
     <input id="userId" size="30" @bind="userID" />
-    <button class="btn btn-primary" @onclick="GetData">Get data</button>
-    <button class="btn btn-primary" disabled="@(!areAnyPlaylistsSelected)" @onclick="GenerateCharts">Generate charts</button>
+    <MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GetData">Get data</MudButton>
+    <MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)" >Generate charts</MudButton>
 </p>
 
 @if (loadValue > 0) {
@@ -26,8 +27,8 @@
     <div>@loadMessage</div>
 }
 
-@if (userDTO is not null) {
-    <PlaylistList @ref="playlistList" Playlists="userDTO.Playlists.ToList()" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
+@if (data.UserDTO is not null) {
+    <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists.ToList()" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 
 <MudGrid>
@@ -52,8 +53,6 @@
     private Elements genreSongs;
     private Elements genres;
 
-    private UserDTO userDTO;
-
     private ushort loadValue = 0;
     private string loadMessage;
 
@@ -76,7 +75,7 @@
     private async Task GetData() {
         await dataFetch.GetData(userID);
         using var db = new SpotifyContext();
-        userDTO = await db.Users
+        data.UserDTO = await db.Users
             .Include(u => u.Playlists)
             .ThenInclude(p => p.Images)
 
@@ -96,7 +95,7 @@
     IDictionary<string, ArtistDTO> allArtistsDict;
     private async Task GenerateCharts() {
         var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
-        var allTracks = userDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
+        var allTracks = data.UserDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
         allArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
 
         var genresTask = BuildGenresGeneralAsync(allTracks, allArtistsDict);

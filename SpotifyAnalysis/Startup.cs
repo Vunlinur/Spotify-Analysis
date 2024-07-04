@@ -1,14 +1,18 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using MudBlazor.Services;
 using SpotifyAnalysis.Data;
 using SpotifyAnalysis.Data.DataAccessLayer;
+using SpotifyAnalysis.Data.DTO;
 using SpotifyAnalysis.Data.SpotifyAPI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.RateLimiting;
 
 namespace SpotifyAnalysis {
     public class Startup(IConfiguration configuration) {
@@ -17,11 +21,20 @@ namespace SpotifyAnalysis {
 		// This method gets called by the runtime. Use this method to add services to the container.
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services) {
+			services.AddRateLimiter(o => o.AddSlidingWindowLimiter(policyName: "sliding", options => {
+				options.PermitLimit = 30;
+				options.Window = TimeSpan.FromSeconds(30);
+				options.SegmentsPerWindow = 10;
+				options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+				options.QueueLimit = 4 * options.PermitLimit;
+			}));
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
+			services.AddMudServices();
 			services.AddSingleton<WeatherForecastService>();
 			services.AddSingleton<SpotifyModule>();
 			services.AddSingleton<SpotifyContext>();
+			services.AddTransient<TransientData>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
