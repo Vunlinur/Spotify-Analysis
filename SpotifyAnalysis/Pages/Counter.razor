@@ -109,7 +109,6 @@
 
         foreach (var chart in chartRefs)
             chart.RefreshChartAsync(); // cannot await because thread locks
-        Console.WriteLine($"{DateTime.Now.TimeOfDay} All tasks complete\n");
     }
 
     private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {

@@ -33,6 +33,8 @@ namespace SpotifyAnalysis {
 				.ConfigureServices(ConfigureServices)
 				.ConfigureWebHostDefaults(webBuilder => {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseWebRoot("wwwroot");
+                    webBuilder.UseStaticWebAssets();
                 });
 
         public static void ConfigureServices(IServiceCollection services) {
