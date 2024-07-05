@@ -1,5 +1,5 @@
 ﻿namespace SpotifyAnalysis.Data.DTO {
-	public class TransientData {
+	public class ScopedData {
 		public UserDTO UserDTO;
 	}
 }

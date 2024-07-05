@@ -1,32 +1,43 @@
 ﻿@inherits LayoutComponentBase
 @using MudBlazor
 
-<div class="page">
-    <MudThemeProvider IsDarkMode=true Theme="Spotify" />
-    <MudDialogProvider />
-    <MudSnackbarProvider />
+<MudThemeProvider IsDarkMode=true Theme="Spotify" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-    <div class="sidebar pane">
-        <NavMenu />
-    </div>
+<MudLayout>
+    <MudAppBar Color="Color.Primary" Fixed="true" Dense=true Elevation ="1">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/MudBlazor/MudBlazor" Target="_blank" />
+    </MudAppBar>
 
-    <div class="main pane">
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
-        </div>
+    <MudDrawer Breakpoint=Breakpoint.Sm ClipMode=DrawerClipMode.Always
+               Variant="@DrawerVariant.Mini" OpenMiniOnHover="true" @bind-Open="@_open">
+        <NavMenu></NavMenu>
+    </MudDrawer>
 
-        <div class="content px-4">
-            @Body
-        </div>
-    </div>
-</div>
+    <MudMainContent Class="pt-16 px-16">
+        @Body
+    </MudMainContent>
+</MudLayout>
+
 
 @code {
     MudTheme Spotify = new MudTheme() {
-            PaletteDark = new PaletteDark() {
-                Primary = new MudBlazor.Utilities.MudColor("#1DB954"),
-                Background = Colors.Shades.Black,
-                Surface = new MudBlazor.Utilities.MudColor("#242424")
-            }
-        };
+        LayoutProperties = new LayoutProperties() {
+            DefaultBorderRadius = "9999px"
+        },
+        PaletteDark = new PaletteDark() {
+            Primary = new MudBlazor.Utilities.MudColor("#1DB954"),
+            Background = Colors.Shades.Black,
+            Surface = new MudBlazor.Utilities.MudColor("#242424")
+        }
+    };
+
+    private bool _open = true;
+
+    private void ToggleDrawer() {
+        _open = !_open;
+    }
 }
