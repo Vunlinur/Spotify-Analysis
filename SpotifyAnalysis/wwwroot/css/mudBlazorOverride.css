@@ -5,3 +5,8 @@
 .mud-input.mud-input-outlined .mud-input-outlined-border {
     border-radius: 9999px;
 }
+
+.mud-table-cell {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}

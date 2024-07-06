@@ -28,7 +28,7 @@
 }
 
 @if (data.UserDTO is not null) {
-    <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists.ToList()" MultiSelect="true" SelectionChanged="UpdateGenerateButton"></PlaylistList>
+    <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists.ToList()" SelectionChanged="UpdateGenerateButton"></PlaylistList>
 }
 
 <MudGrid>
