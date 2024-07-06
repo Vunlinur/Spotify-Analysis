@@ -1,3 +1,7 @@
 ﻿.mud-button-outlined:hover {
     border-color: white;
 }
+
+.mud-input.mud-input-outlined .mud-input-outlined-border {
+    border-radius: 9999px;
+}

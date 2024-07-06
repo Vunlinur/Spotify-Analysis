@@ -18,8 +18,8 @@
 <p>
     <MudTextField @bind-Value="userID" Label="User ID" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
 
-    <MudButton Variant=Variant.Outlined OnClick="GetData">Get data</MudButton>
-    <MudButton Variant=Variant.Outlined OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)" >Generate charts</MudButton>
+    <MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GetData">Get data</MudButton>
+    <MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)" >Generate charts</MudButton>
 </p>
 
 @if (loadValue > 0) {
