@@ -1,0 +1,21 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+<MudButton Href=@Href
+		   Disabled=@Disabled
+		   Variant="Variant.Outlined"
+		   Color="Color.Primary">
+	Open in
+	<MudImage Src=@spotifyLogoGreen Height="60" Elevation="25" Class="ma-4" Style=@(Disabled ? disabledStyle : "")/>
+</MudButton>
+
+@code {
+	[Parameter]
+	public string Href { get; set; }
+
+	[Parameter]
+	public bool Disabled { get; set; } = false;
+
+	private const string spotifyLogoGreen = "https://storage.googleapis.com/pr-newsroom-wp/1/2021/02/Spotify_Logo_RGB_Green.png";
+
+	private const string disabledStyle = "filter: opacity(24%) grayscale(100%);";
+}
