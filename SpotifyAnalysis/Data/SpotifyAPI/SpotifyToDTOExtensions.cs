@@ -10,7 +10,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             return new UserDTO() {
                 ID = pu.Id,
                 Name = pu.DisplayName,
-				Playlists = []
+				Updated = DateTime.Now,
+				Playlists = [],
+				Images = pu.Images.ToImageDTOs()
 			};
 		}
 

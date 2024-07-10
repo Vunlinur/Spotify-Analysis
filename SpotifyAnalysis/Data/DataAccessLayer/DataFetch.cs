@@ -30,6 +30,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         readonly GetArtistsAsyncDelegate getArtistsAsync = getArtistsAsync;
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
 
+        /**
         public async Task GetData(string userID) {
             try {
                 // TODO optimize await order
