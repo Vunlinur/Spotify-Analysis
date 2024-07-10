@@ -1,6 +1,6 @@
 ﻿@namespace SpotifyAnalysis.Shared
 
-<MudButton Href=@Href
+<MudButton Href=@(GetResource() + Id)
 		   Disabled=@Disabled
 		   Variant="Variant.Outlined"
 		   Color="Color.Primary">
@@ -9,13 +9,27 @@
 </MudButton>
 
 @code {
-	[Parameter]
-	public string Href { get; set; }
+	public enum ResourceType {
+		Artist,
+		User
+	}
 
+	[Parameter, EditorRequired]
+	public string Id { get; set; }
+	[Parameter, EditorRequired]
+	public ResourceType ResType { get; set; }
 	[Parameter]
 	public bool Disabled { get; set; } = false;
 
-	private const string spotifyLogoGreen = "https://storage.googleapis.com/pr-newsroom-wp/1/2021/02/Spotify_Logo_RGB_Green.png";
 
-	private const string disabledStyle = "filter: opacity(24%) grayscale(100%);";
+
+	string GetResource() => ResType switch {
+		ResourceType.Artist => "spotify:artist:",
+		ResourceType.User => "spotify:user:",
+		_ => throw new KeyNotFoundException($"Resource type not defined: {ResType}")
+	};
+
+	const string spotifyLogoGreen = "https://storage.googleapis.com/pr-newsroom-wp/1/2021/02/Spotify_Logo_RGB_Green.png";
+
+	const string disabledStyle = "filter: opacity(24%) grayscale(100%);";
 }

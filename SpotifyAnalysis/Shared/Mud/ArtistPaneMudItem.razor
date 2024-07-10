@@ -17,7 +17,7 @@
 					<div /> <!--for Justify.SpaceBetween to look better-->
 				</MudStack>
 				<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-					<OpenInSpotify Href=@(artistLinkBase + Artist.ID) />
+					<OpenInSpotify Id=@Artist.ID ResType=OpenInSpotify.ResourceType.Artist/>
 					<MudImage Style="border: solid 1px white;" Src=@GetImage() Width="300" Height="300" Elevation="25" Class="ma-4" />
 					<MudStack Class="fullWidth" AlignItems="AlignItems.Center">
 						<MudInputLabel Style="font-size: 16px">Popularity</MudInputLabel>
@@ -34,7 +34,6 @@
 	public ArtistDTO Artist { get; set; }
 
 	private const string wikiQuestionMark = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Question_mark_%28black%29.svg/220px-Question_mark_%28black%29.svg.png";
-	private const string artistLinkBase = "spotify:artist:";
 
 	internal string GetImage() {
 		var image = Artist.Images.FirstOrDefault();
