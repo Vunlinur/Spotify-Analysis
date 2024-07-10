@@ -1,7 +1,76 @@
 ﻿@page "/"
 
-<h1>Hello, world!</h1>
+@using SpotifyAnalysis.Data.SpotifyAPI
+@using SpotifyAnalysis.Data.DTO
+@using SpotifyAnalysis.Data.DataAccessLayer
+@using Microsoft.EntityFrameworkCore
+@using System.Text.RegularExpressions
 
-Welcome to your new app.
+@inject SpotifyModule spotifyModule;
+@inject SpotifyContext db;
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+<MudContainer MaxWidth="MaxWidth.Medium">
+    <MudStack Justify=Justify.SpaceEvenly Style="height: 80vh">
+        <MudStack AlignItems=AlignItems.Center>
+            <MudTextField @bind-Value="userID" Label="User ID" Variant="Variant.Outlined" FullWidth Margin="Margin.Dense"></MudTextField>
+            <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="SwitchUserAsync">Select User</MudButton>
+        </MudStack>
+        <MudDivider DividerType=DividerType.Middle />
+        <MudPaper>
+            <MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Class="pa-4" >
+                <MudAvatar Size="Size.Large">
+                    <MudImage Src=@user.Images.Last().Url />
+                </MudAvatar>
+                <div>
+                    <MudText Typo="Typo.h6">@user.Name</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">@user.ID</MudText>
+                </div>
+                <OpenInSpotify Href=@(userLinkBase + userID) Disabled=@(string.IsNullOrEmpty(user.ID)) />
+            </MudStack>
+        </MudPaper>
+    </MudStack>
+</MudContainer>
+
+
+@code {
+    private const string userLinkBase = "spotify:user:";
+
+    string userID = "11ek5k7fhea9otrb7k2ecizzb";
+    UserDTO user = new UserDTO {
+        Images = new List<ImageDTO> {
+            new ImageDTO { Url = "anonymous-user.jpg" }
+        }
+    };
+
+
+    async Task SwitchUserAsync() {
+        var tempId = SanitizeUserID(userID);
+        if (string.IsNullOrEmpty(tempId)) {
+            // TODO tell it's wrong
+            return;
+        }
+        userID = tempId;
+
+        // Do we have the user in the DB?
+        var userDTO = await db.Users
+            .Include(u => u.Images)
+            .FirstOrDefaultAsync(u => u.ID == userID);
+
+        bool getUserData = userDTO is null || MinutesSince(userDTO.Updated) > 1;
+
+        // Get user data if not
+        if (userDTO is null) {
+            var publicUser = await spotifyModule.GetUserProfile(userID);
+            userDTO = publicUser.ToUserDTO();
+        }
+
+        user = userDTO;
+        StateHasChanged();
+        // TODO launch "is this the correct user" prompt to finalize switch
+    }
+
+    static readonly Regex idRegex = new Regex(@"^(?:.+users?[\/:])?(\w{20,28})\??");
+    static string SanitizeUserID(string input) => idRegex.Match(input).Groups[1]?.Value;
+
+    static int MinutesSince(DateTime since) => DateTime.Now.Subtract(since).Minutes;
+}
