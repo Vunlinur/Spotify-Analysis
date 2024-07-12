@@ -15,17 +15,8 @@
 @inject IDialogService dialogService;
 @inject ScopedData data;
 
-<p>
-    <MudTextField @bind-Value="userID" Label="User ID" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+<MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)" >Generate charts</MudButton>
 
-    <MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GetData">Get data</MudButton>
-    <MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)" >Generate charts</MudButton>
-</p>
-
-@if (loadValue > 0) {
-    <MudProgressLinear Color="Color.Primary" Value="@loadValue" />
-    <div>@loadMessage</div>
-}
 
 @if (data.UserDTO is not null) {
     <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists.ToList()" SelectionChanged="UpdateGenerateButton"></PlaylistList>
@@ -48,49 +39,14 @@
 @code {
     private PlaylistList playlistList;
 
-    private string userID = "11ek5k7fhea9otrb7k2ecizzb";
     private Elements artistsSongs;
     private Elements genreSongs;
     private Elements genres;
 
-    private ushort loadValue = 0;
-    private string loadMessage;
 
-    private DataFetch dataFetch;
 
     List<PieChartMudItem> chartRefs = [];
     PieChartMudItem chartRef { set { chartRefs.Add(value); } }
-
-    private void UpdateProgressBar(float value, string message) {
-        loadValue = (ushort)value;
-        loadMessage = message ?? loadMessage;
-        InvokeAsync(StateHasChanged);
-    }
-
-    protected override void OnInitialized() {
-        base.OnInitialized();
-        dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
-    }
-
-    private async Task GetData() {
-        await dataFetch.GetData(userID);
-        using var db = new SpotifyContext();
-        data.UserDTO = await db.Users
-            .Include(u => u.Playlists)
-            .ThenInclude(p => p.Images)
-
-            .Include(u => u.Playlists)
-            .ThenInclude(p => p.Tracks)
-            .ThenInclude(t => t.Artists)
-            .ThenInclude(a => a.Images)
-
-            .Include(u => u.Playlists)
-            .ThenInclude(p => p.Tracks)
-            .ThenInclude(t => t.Album)
-
-            .FirstAsync(u => u.ID == userID);
-        UpdateProgressBar(0, null);
-    }
 
     IDictionary<string, ArtistDTO> allArtistsDict;
     private async Task GenerateCharts() {

@@ -9,6 +9,7 @@
 @inject IDialogService DialogService
 @inject SpotifyModule spotifyModule;
 @inject SpotifyContext db;
+@inject ScopedData data;
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Justify=Justify.SpaceEvenly Style="height: 80vh">
@@ -16,7 +17,10 @@
             <MudTextField @bind-Value="userID" Label="User ID" Variant="Variant.Outlined" FullWidth Margin="Margin.Dense"></MudTextField>
             <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="OpenSwitchUserDialogAsync">Select User</MudButton>
         </MudStack>
-        <MudDivider DividerType=DividerType.Middle />
+        <MudStack AlignItems=AlignItems.Center Style="height:50px;">
+            <MudProgressLinear Color="Color.Primary" Value="@loadValue" />
+            <MudText Typo="Typo.h6">@loadMessage</MudText>
+        </MudStack>
         <MudPaper>
             <MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Class="pa-4" >
                 <MudAvatar Size="Size.Large">
@@ -34,9 +38,24 @@
 
 
 @code {
+    DataFetch dataFetch;
+    UserDTO user;
     string userID = "11ek5k7fhea9otrb7k2ecizzb";
-    UserDTO user = new UserDTO();
+    ushort loadValue = 0;
+    string loadMessage;
 
+
+    protected override void OnInitialized() {
+        base.OnInitialized();
+        dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
+        user = data.UserDTO ?? new UserDTO();
+    }
+
+    private void UpdateProgressBar(float value, string message) {
+        loadValue = (ushort)value;
+        loadMessage = message ?? loadMessage;
+        InvokeAsync(StateHasChanged);
+    }
 
     async Task OpenSwitchUserDialogAsync() {
         var tempId = SanitizeUserID(userID);
@@ -49,7 +68,12 @@
         var publicUser = await spotifyModule.GetUserProfile(userID);
         var userDTO = publicUser.ToUserDTO();
 
-        await OpenDialogAsync(userDTO);
+        var response = await OpenDialogAsync(userDTO);
+        if (response.Canceled)
+            return;
+
+        user = userDTO;
+        StateHasChanged();
 
         // Do we have the user in the DB?
         //var userDTO = await db.Users
@@ -58,21 +82,35 @@
         //
         //bool getUserData = userDTO is null || MinutesSince(userDTO.Updated) > 1;
 
-
-        // TODO launch "is this the correct user" prompt to finalize switch
+        await dataFetch.GetData(userID);
+        data.UserDTO = await GetUserDTOFromDB(userID);
     }
 
-    private async Task OpenDialogAsync(UserDTO userDto) {
+    private async Task<DialogResult> OpenDialogAsync(UserDTO userDto) {
         var options = new DialogOptions { CloseOnEscapeKey = true };
         var parameters = new DialogParameters<UserSelectionDialog>{ {x => x.User, userDto } };
         var dialog = await DialogService.ShowAsync<UserSelectionDialog>("Is this the correct user?", parameters, options);
-        var result = await dialog.Result;
+        return await dialog.Result;
+    }
 
-        if (result.Canceled)
-            return;
+    private async Task<UserDTO> GetUserDTOFromDB(string userID) {
+        using var db = new SpotifyContext();
+        return await db.Users
+            .Include(u => u.Images)
 
-        user = userDto;
-        StateHasChanged();
+            .Include(u => u.Playlists)
+            .ThenInclude(p => p.Images)
+
+            .Include(u => u.Playlists)
+            .ThenInclude(p => p.Tracks)
+            .ThenInclude(t => t.Artists)
+            .ThenInclude(a => a.Images)
+
+            .Include(u => u.Playlists)
+            .ThenInclude(p => p.Tracks)
+            .ThenInclude(t => t.Album)
+
+            .FirstAsync(u => u.ID == userID);
     }
 
     static readonly Regex idRegex = new Regex(@"^(?:.+users?[\/:])?(\w{20,28})\??");
