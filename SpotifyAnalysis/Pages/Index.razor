@@ -14,8 +14,13 @@
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Justify=Justify.SpaceEvenly Style="height: 80vh">
         <MudStack AlignItems=AlignItems.Center>
-            <MudTextField @bind-Value="userID" Label="User ID" Variant="Variant.Outlined" FullWidth Margin="Margin.Dense"></MudTextField>
-            <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="OpenSwitchUserDialogAsync">Select User</MudButton>
+            <MudForm @ref="form" Style="width: 100%;">
+                <MudTextField @bind-Value="userID" Label="User ID"
+                              Required="true" RequiredError="User ID or user link is required."
+                              Validation=@(new Func<string, Task<string>>(ValidateInput)) OnlyValidateIfDirty="true"
+                              Variant="Variant.Outlined" FullWidth Margin="Margin.Dense" />
+            </MudForm>
+            <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="TrySwitchUserAsync">Select User</MudButton>
         </MudStack>
         <MudStack AlignItems=AlignItems.Center Style="height:50px;">
             <MudProgressLinear Color="Color.Primary" Value="@loadValue" />
@@ -38,8 +43,10 @@
 
 
 @code {
+    MudForm form;
     DataFetch dataFetch;
     UserDTO user;
+    UserDTO userFromAPI;
     string userID = "11ek5k7fhea9otrb7k2ecizzb";
     ushort loadValue = 0;
     string loadMessage;
@@ -57,22 +64,17 @@
         InvokeAsync(StateHasChanged);
     }
 
-    async Task OpenSwitchUserDialogAsync() {
-        var tempId = SanitizeUserID(userID);
-        if (string.IsNullOrEmpty(tempId)) {
-            // TODO tell it's wrong
+    async Task TrySwitchUserAsync() {
+        // TODO return if new user the same as the old one
+        await form.Validate();
+        if (!form.IsValid)
             return;
-        }
-        userID = tempId;
 
-        var publicUser = await spotifyModule.GetUserProfile(userID);
-        var userDTO = publicUser.ToUserDTO();
-
-        var response = await OpenDialogAsync(userDTO);
+        var response = await OpenDialogAsync(userFromAPI);
         if (response.Canceled)
             return;
 
-        user = userDTO;
+        user = userFromAPI;
         StateHasChanged();
 
         // Do we have the user in the DB?
@@ -85,6 +87,24 @@
         await dataFetch.GetData(userID);
         data.UserDTO = await GetUserDTOFromDB(userID);
     }
+
+    private async Task<string> ValidateInput(string input) {
+        var id = SanitizeUserID(input);
+        if (string.IsNullOrWhiteSpace(id))
+            return "Input must be either a User ID, URI or URL";
+
+        var publicUser = await spotifyModule.GetUserProfile(userID);
+        if (publicUser is null)
+            return "User not found, possible incorrect ID";
+
+        userFromAPI = publicUser.ToUserDTO();
+        return null;
+    }
+
+    static readonly Regex idRegex = new Regex(@"^(?:.+users?[\/:])?(\w{7,30})\??$");
+    static string SanitizeUserID(string input) => idRegex.Match(input).Groups[1]?.Value;
+
+    static int MinutesSince(DateTime since) => DateTime.Now.Subtract(since).Minutes;
 
     private async Task<DialogResult> OpenDialogAsync(UserDTO userDto) {
         var options = new DialogOptions { CloseOnEscapeKey = true };
@@ -112,9 +132,4 @@
 
             .FirstAsync(u => u.ID == userID);
     }
-
-    static readonly Regex idRegex = new Regex(@"^(?:.+users?[\/:])?(\w{20,28})\??");
-    static string SanitizeUserID(string input) => idRegex.Match(input).Groups[1]?.Value;
-
-    static int MinutesSince(DateTime since) => DateTime.Now.Subtract(since).Minutes;
 }
