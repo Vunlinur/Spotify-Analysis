@@ -58,7 +58,7 @@
         var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);
         var artistsSongsTask = BuildArtistsAsync(allTracks);
 
-        genres = genresTask;
+        genres = await genresTask;
         genreSongs = await genreSongsTask;
         artistsSongs = await artistsSongsTask;
 
@@ -68,30 +68,30 @@
 
     private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {
         Elements BuildArtists() {
-            artistsSongs = new Elements();
+            var artists = new Elements();
             foreach (var track in allTracks)
                 foreach (var artist in track.Artists)
-                    artistsSongs.Increase(new Element { Label = artist.Name, Quantity = 1 });
-            return artistsSongs;
+                    artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
+            return artists;
         }
 
-        return await Task<Elements>.Run(BuildArtists);
+        return await Task.Run(BuildArtists);
     }
 
     private async Task<Elements> BuildGenresAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
         Elements BuildGenres() {
-            genreSongs = new Elements();
+            var genres = new Elements();
             foreach (var track in allTracks)
                 foreach (var artist in track.Artists)
                     foreach (var genre in allArtists[artist.ID].Genres)
-                        genreSongs.Increase(new Element { Label = genre, Quantity = 1 });
-            return genreSongs;
+                        genres.Increase(new Element { Label = genre, Quantity = 1 });
+            return genres;
         }
 
-        return await Task<Elements>.Run(BuildGenres);
+        return await Task.Run(BuildGenres);
     }
 
-    private Elements BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
+    private async Task<Elements> BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
         Elements BuildGenresGeneral() {
             var genres = new Elements();
             foreach (var track in allTracks)
@@ -105,7 +105,7 @@
             return genres;
         }
 
-        return BuildGenresGeneral();
+        return await Task.Run(BuildGenresGeneral);
     }
 
     private bool areAnyPlaylistsSelected;
