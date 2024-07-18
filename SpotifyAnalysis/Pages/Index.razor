@@ -115,7 +115,7 @@
 
     private async Task<UserDTO> GetUserDTOFromDB(string userID) {
         using var db = new SpotifyContext();
-        return await db.Users
+        var user = await db.Users
             .Include(u => u.Images)
 
             .Include(u => u.Playlists)
@@ -131,5 +131,8 @@
             .ThenInclude(t => t.Album)
 
             .FirstAsync(u => u.ID == userID);
+
+        UpdateProgressBar(100, "Finished!");
+        return user;
     }
 }

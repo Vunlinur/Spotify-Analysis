@@ -74,8 +74,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
                 updateProgressBar?.Invoke(95, "Saving data");
                 await db.SaveChangesAsync();
-
-                updateProgressBar?.Invoke(100, "Finished!");
             }
             catch (Exception e) {
                 Console.WriteLine(e);
