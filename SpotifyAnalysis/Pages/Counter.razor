@@ -24,8 +24,10 @@
 </MudAppBar>
 <div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
-@if (open && data.UserDTO is not null) {
-    <PlaylistTable @ref="playlistTable" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
+@if (data.UserDTO is not null) {
+    <MudCollapse Expanded=@open>
+        <PlaylistTable @ref="playlistTable" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
+    </MudCollapse>
 }
 
 <div id="scroll_area" class="pt-6 px-6" style="height:100%;">
@@ -57,15 +59,16 @@
     private Elements genreSongs;
     private Elements genres;
 
+    List<PieChartMudItem> chartRefs = [];
+    PieChartMudItem chartRef { set { chartRefs.Add(value); } }
+
     private bool open { get; set; }
     private void TogglePlaylistTable() => open = !open;
 
 
-    List<PieChartMudItem> chartRefs = [];
-    PieChartMudItem chartRef { set { chartRefs.Add(value); } }
-
     IDictionary<string, ArtistDTO> allArtistsDict;
     private async Task GenerateCharts() {
+        open = false;
         var selectedPlaylistsIds = playlistTable.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
         var allTracks = data.UserDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
         allArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));

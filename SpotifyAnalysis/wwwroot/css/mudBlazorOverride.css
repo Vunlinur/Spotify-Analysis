@@ -10,3 +10,7 @@
     padding-top: 8px;
     padding-bottom: 8px;
 }
+
+.mud-collapse-entering {
+    animation-duration: .2s !important
+}

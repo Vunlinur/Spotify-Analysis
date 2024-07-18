@@ -3,7 +3,7 @@
 @using Data.DTO
 
 
-<MudDataGrid Height="80vh" Style="width: 40vw; position: fixed; z-index: 1;" T="PlaylistDTO" Items="@Playlists" MultiSelection FixedHeader
+<MudDataGrid Height="80vh" Style="width: 40vw;" T="PlaylistDTO" Items="@Playlists" MultiSelection FixedHeader
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter SelectedItemsChanged="@SelectedItemsChanged">
 	<ToolBarContent>
 		<MudText Typo="Typo.h6">Tracks</MudText>
