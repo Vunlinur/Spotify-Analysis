@@ -18,14 +18,14 @@
 
 <MudAppBar Color="Color.Surface" Fixed="false" Style="position: fixed; width: -webkit-fill-available; width: -moz-available;">
     <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
-    <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{playlistList?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
+    <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{playlistTable?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
     <MudSpacer />
     <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)">Generate charts</MudButton>
 </MudAppBar>
 <div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
 @if (open && data.UserDTO is not null) {
-    <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
+    <PlaylistTable @ref="playlistTable" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
 }
 
 <div id="scroll_area" class="pt-6 px-6" style="height:100%;">
@@ -51,7 +51,7 @@
 
 
 @code {
-    private PlaylistList playlistList;
+    private PlaylistTable playlistTable;
 
     private Elements artistsSongs;
     private Elements genreSongs;
@@ -66,7 +66,7 @@
 
     IDictionary<string, ArtistDTO> allArtistsDict;
     private async Task GenerateCharts() {
-        var selectedPlaylistsIds = playlistList.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
+        var selectedPlaylistsIds = playlistTable.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
         var allTracks = data.UserDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
         allArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
 
