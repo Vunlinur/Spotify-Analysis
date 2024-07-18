@@ -17,7 +17,7 @@
         <NavMenu></NavMenu>
     </MudDrawer>
 
-    <MudMainContent Class="pt-16 px-16">
+    <MudMainContent>
         @Body
     </MudMainContent>
 </MudLayout>
@@ -32,9 +32,6 @@
         }
     };
 
-    private bool _open = true;
-
-    private void ToggleDrawer() {
-        _open = !_open;
-    }
+    private bool _open;
+    private void ToggleDrawer() => _open = !_open;
 }

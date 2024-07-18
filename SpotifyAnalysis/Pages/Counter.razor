@@ -15,25 +15,39 @@
 @inject IDialogService dialogService;
 @inject ScopedData data;
 
-<MudButton Variant=Variant.Outlined class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)" >Generate charts</MudButton>
 
+<MudAppBar Color="Color.Surface" Fixed="false" Style="position: fixed; width: -webkit-fill-available; width: -moz-available;">
+    <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
+    <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{playlistList?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
+    <MudSpacer />
+    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)">Generate charts</MudButton>
+</MudAppBar>
+<div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
-@if (data.UserDTO is not null) {
-    <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists.ToList()" SelectionChanged="UpdateGenerateButton"></PlaylistList>
+@if (open && data.UserDTO is not null) {
+    <PlaylistList @ref="playlistList" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
 }
 
-<MudGrid>
-    @if (artistsSongs is not null) {
-        <PieChartMudItem Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
-        <ArtistPaneMudItem Artist=@selectedArtist />
-    }
-    @if (genreSongs is not null) {
-        <PieChartMudItem Title="Genres" Elements=genreSongs @ref=chartRef />
-    }
-    @if (genres is not null) {
-        <PieChartMudItem Title="Genres general" Elements=genres @ref=chartRef />
-    }
-</MudGrid>
+<div id="scroll_area" class="pt-6 px-6" style="height:100%;">
+    <div>
+        <MudGrid>
+            @if (artistsSongs is not null) {
+                <PieChartMudItem Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
+                <ArtistPaneMudItem Artist=@selectedArtist />
+            }
+            @if (genreSongs is not null) {
+                <PieChartMudItem Title="Genres" Elements=genreSongs @ref=chartRef />
+            }
+            @if (genres is not null) {
+                <PieChartMudItem Title="Genres general" Elements=genres @ref=chartRef />
+            }
+        </MudGrid>
+
+        <MudScrollToTop Selector="#scroll_area" VisibleCssClass="visible absolute" HiddenCssClass="invisible">
+            <MudButton Variant="Variant.Outlined" Class="rounded-pill" StartIcon="@Icons.Material.Filled.ArrowUpward">Go to top</MudButton>
+        </MudScrollToTop>
+    </div>
+</div>
 
 
 @code {
@@ -43,6 +57,8 @@
     private Elements genreSongs;
     private Elements genres;
 
+    private bool open { get; set; }
+    private void TogglePlaylistTable() => open = !open;
 
 
     List<PieChartMudItem> chartRefs = [];
@@ -62,8 +78,9 @@
         genreSongs = await genreSongsTask;
         artistsSongs = await artistsSongsTask;
 
-        foreach (var chart in chartRefs)
-            chart.RefreshChartAsync(); // cannot await because thread locks
+        var refreshTasks = chartRefs.Select(async r => await r.RefreshChartAsync());
+        await Task.WhenAll(refreshTasks);
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {
@@ -91,6 +108,7 @@
         return await Task.Run(BuildGenres);
     }
 
+    static readonly string[] excludes = { "of", "and", "new", "music" };
     private async Task<Elements> BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
         Elements BuildGenresGeneral() {
             var genres = new Elements();
@@ -99,7 +117,6 @@
                     foreach (var genre in allArtists[artist.ID].Genres)
                         foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
                             genres.Increase(new Element { Label = word, Quantity = 1 });
-            string[] excludes = { "of", "and", "new", "music" };
             foreach (var exclusion in excludes)
                 genres.Extract(exclusion);
             return genres;
