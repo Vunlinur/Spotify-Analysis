@@ -93,7 +93,7 @@
         if (string.IsNullOrWhiteSpace(id))
             return "Input must be either a User ID, URI or URL";
 
-        var publicUser = await spotifyModule.GetUserProfile(userID);
+        var publicUser = await spotifyModule.GetUserProfile(id);
         if (publicUser is null)
             return "User not found, possible incorrect ID";
 
@@ -101,8 +101,21 @@
         return null;
     }
 
-    static readonly Regex idRegex = new Regex(@"^(?:.+users?[\/:])?(\w{7,30})\??$");
-    static string SanitizeUserID(string input) => idRegex.Match(input).Groups[1]?.Value;
+
+    static readonly Regex URLRegex = new Regex(@"^(?:https:\/\/)?open\.spotify\.com\/user\/(\w{7,30})(?:\?.+)?$");  // https://open.spotify.com/user/11ek5k7fhea9otrb7k2ecizzb?si=01cec8557cc642f1
+    static readonly Regex HrefRegex = new Regex(@"^(?:https:\/\/)?api\.spotify\.com\/v1\/users\/(\w{7,30})(?:\?.+)?$");  // https://api.spotify.com/v1/users/11ek5k7fhea9otrb7k2ecizzb
+    static readonly Regex URIRegex = new Regex(@"^spotify:user:(\w{7,30})$");  // spotify:user:11ek5k7fhea9otrb7k2ecizzb
+    static readonly Regex IdRegex = new Regex(@"^(\w{7,30})$");  // 11ek5k7fhea9otrb7k2ecizzb
+
+    static readonly Regex[] patterns = [URLRegex, HrefRegex, URIRegex, IdRegex];
+    static string SanitizeUserID(string input) {
+        input = input.Trim();
+        string id;
+        foreach (Regex re in patterns)
+            if (!string.IsNullOrEmpty(id = re.Match(input).Groups[1]?.Value))
+                return id;
+        return null;
+    }
 
     static int MinutesSince(DateTime since) => DateTime.Now.Subtract(since).Minutes;
 
