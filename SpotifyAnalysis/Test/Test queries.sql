@@ -7,7 +7,7 @@ SELECT * FROM Albums
 SELECT * FROM Artists WHERE Name in ('Orden Ogan', 'Nightwish', 'Iron Maiden', 'Russell Brower')
 SELECT * FROM ArtistDTOTrackDTO
 SELECT * FROM AlbumDTOArtistDTO WHERE AlbumsID = '36Dk0lgHLB8nfpaC8EvGiy'
-SELECT * FROM Images
+SELECT * FROM Images WHERE UserDTOID IS NOT NULL
 
 -- All Tracks & their Albums
 SELECT t.ID TrackID, t.Name TrackName, a.Name AlbumName, a.ID AlbumID FROM Tracks t LEFT JOIN Albums a ON a.ID = t.AlbumID ORDER BY a.Name

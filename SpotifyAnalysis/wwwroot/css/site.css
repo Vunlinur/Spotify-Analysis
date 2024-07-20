@@ -35,6 +35,20 @@ html, body {
     color: var(--text-base)
 }
 
+.fullHeight {
+    height: 100%;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+.mudItemTitle {
+    font-size: 20px;
+    font-weight: bold;
+    color: white;
+}
+
 .pane {
     margin: 8px 8px 8px 0px;
     border-radius: 8px;
@@ -104,9 +118,9 @@ table {
             background-color: rgba(255,255,255, .3);
         }
 
-tr:hover:not(:first-child) {
-    background: rgba(255,255,255,.1);
-}
+        .scrollable > * tr:hover {
+            background: rgba(255,255,255,.1);
+        }
 
 tr.select {
     background: rgba(255,255,255,.2);
@@ -160,9 +174,6 @@ td {
         border-radius: 4px;
     }
 
-
-
-
 a, .btn-link {
     color: #0366d6;
 }
@@ -171,10 +182,6 @@ app {
     position: relative;
     display: flex;
     flex-direction: column;
-}
-
-.content {
-    padding-top: 1.1rem;
 }
 
 .valid.modified:not([type=checkbox]) {

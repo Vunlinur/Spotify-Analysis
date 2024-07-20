@@ -1,16 +1,37 @@
 ﻿@namespace SpotifyAnalysis.Shared
-@using MudBlazor
 @using SpotifyAnalysis.Data
+@using ApexCharts
 
-<MudItem lg="4" md="6">
+@*
+    Currently it is impossible to distinguish whether the clicks are coming from the legend or from the chart:
+    https://github.com/apexcharts/Blazor-ApexCharts/issues/442
+    https://github.com/apexcharts/Blazor-ApexCharts/issues/464
+    So the solution is to toggle data series by default, but if callback is provided, we show a switch
+    to call that callback instead.
+*@
+
+<MudItem xl="4" lg="6" md="12">
     <MudPaper Class="pa-4">
-        <MudChart
-            ChartType=ChartType.Pie
-            InputData=@data
-            InputLabels=@labels
-            @bind-SelectedIndex=Index
-            ChartOptions=chartOptions
-            Width="400px" Height="400px" />
+        <MudInputLabel Class="mudItemTitle">@Title</MudInputLabel>
+        <ApexChart TItem="Element"
+                   Options="options"
+                   OnDataPointSelection=OnDataPointSelection
+                   @ref="chart">
+
+            <ApexPointSeries TItem="Element"
+                             Items="series"
+                             SeriesType="SeriesType.Donut"
+                             XValue="@(e => e.Label)"
+                             YValue="@(e => e.Quantity)"/>
+        </ApexChart>
+
+        @if (OnClickCallback is not null) {
+            <MudStack Row=true Justify="Justify.Center" AlignItems="AlignItems.Center">
+                <MudInputLabel >Toggle series</MudInputLabel>
+                <MudSwitch @bind-Value="@invokeCallback" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small" />
+                <MudInputLabel>Get details</MudInputLabel>
+            </MudStack>
+        }
     </MudPaper>
 </MudItem>
 
@@ -19,48 +40,89 @@
     public string Title { get; set; }
     [Parameter]
     public IEnumerable<Element> Elements { get; set; }
+    private Element[] series { get; set; }
     [Parameter]
     public Action<string> OnClickCallback { get; set; }
 
-    double[] data;
-    string[] labels;
-    ChartOptions chartOptions;
-    int index = -1; //default value cannot be 0 -> first selectedindex is 0.
-    int Index {
-        get { return index; }
-        set {
-            index = value;
-            OnClickCallback?.Invoke(labels[index]);
+    private ApexChart<Element> chart;
+    private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
+        Title = new Title {
+            Align = ApexCharts.Align.Center,
+                Style = new TitleStyle { Color = "#fff", FontSize = "18px" }
+        },
+        Legend = new Legend {
+            Width = 250,
+            FontSize = "15",
+            OnItemClick = new LegendOnItemClick { ToggleDataSeries = true }, // doesn't do anything for pie
+            Labels = new LegendLabels { Colors = ["#fff"] }
+        },
+        PlotOptions = new PlotOptions {
+            Pie = new PlotOptionsPie {
+                ExpandOnClick = false,
+                Donut = new PlotOptionsDonut {
+                    Labels = new DonutLabels {
+                        Total = new DonutLabelTotal { FontSize = "20px", Color = "#1DB954", Formatter = @"function (w) {return w.globals.seriesTotals.reduce((a, b) => { return (a + b) }, 0)}" },
+                        Value = new DonutLabelValue { Color = "#888" }
+                    }
+                }
+            }
         }
+    };
+
+    public async Task RefreshChartAsync() {
+        if (chart is null)
+            return;
+        ProcessElements();
+        await chart.UpdateSeriesAsync(false);
+        await chart.UpdateOptionsAsync(false, false, true);
     }
 
+    protected string other = "Other";
     protected override void OnInitialized() {
+        ProcessElements();
+    }
+
+    protected void ProcessElements() {
         Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels. Also Change Append to Prepend
 
-        // Any element with arbitrary low Quantity gets merged into one bit "Other"
+        //MergeBelowDegree(360f);
+        MergeAfterTop(100);
+
+        series = Elements.ToArray();
+        quantities = series.Select(e => e.Quantity).ToArray();
+    }
+
+    protected void MergeBelowDegree(float oneOver) {
+        // Any element taking less space of the pie than certain degree gets merged into "Other"
         var allQuantitySum = Elements.Select(e => e.Quantity).Sum();
-        var threshold = (int)(allQuantitySum / 220f);
+        var threshold = (int)(allQuantitySum / oneOver); // anything taking less than 1/oneOver degree of the pie
         var sumQuantityBelowThreshold = Elements.Where(e => e.Quantity <= threshold).Select(e => e.Quantity).Sum();
         if (sumQuantityBelowThreshold > 0) {
             Elements = Elements.Where(e => e.Quantity > threshold);
-            Elements = Elements.Append(new Element { Label = "Other", Quantity = sumQuantityBelowThreshold });
+            Elements = Elements.Increase(new Element { Label = other, Quantity = sumQuantityBelowThreshold });
         }
+    }
 
-        // Limit no. of legend items to 3 columns, otherwise the pie does not fit
-        int leastImportantElementsCount = Math.Max(Elements.Count() - 22 * 2, 0);
+    protected void MergeAfterTop(int topN) {
+        // Limit no. of items to topN for performance reasons, rest goes into "Other"
+        int leastImportantElementsCount = Math.Max(Elements.Count() - topN, 0);
         if (leastImportantElementsCount > 0) {
-            var sumQuantityExceedRows = Elements.Take(leastImportantElementsCount).Select(e => e.Quantity).Sum();
-            Elements = Elements.Skip(leastImportantElementsCount);
-            Elements = Elements.Append(new Element { Label = "Other", Quantity = sumQuantityExceedRows });
+            var sumQuantityExceedRows = Elements.TakeLast(leastImportantElementsCount).Select(e => e.Quantity).Sum();
+            Elements = Elements.SkipLast(leastImportantElementsCount);
+            Elements = Elements.Increase(new Element { Label = other, Quantity = sumQuantityExceedRows });
         }
+    }
 
-        data = Elements.Select(e => (double)e.Quantity).ToArray();
-        labels = Elements.Select(e => e.Label).ToArray();
-
-        //var colorFactory = new RotateHue(1.333, 200);
-        //string[] chartPalette = Elements.Select(e => e.Color ?? colorFactory.Next()).ToArray();
-        chartOptions = new ChartOptions {
-     //       ChartPalette = chartPalette
-        };
+    int[] quantities;
+    bool invokeCallback = true;
+    protected async void OnDataPointSelection(SelectedData<Element> selection) {
+        if (OnClickCallback is not null && invokeCallback)
+            OnClickCallback?.Invoke(selection.DataPoint.X.ToString());
+        else {
+            int index = selection.DataPointIndex;
+            var serie = series[index];
+            serie.Quantity = serie.Quantity == 0 ? quantities[index] : 0;
+            await chart.UpdateSeriesAsync();
+        }
     }
 }

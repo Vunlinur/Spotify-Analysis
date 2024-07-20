@@ -1,0 +1,55 @@
+﻿@using System.IO;
+@using System.Linq;
+@using Data.DTO
+
+
+<MudDataGrid Height="80vh" Style="width: 40vw;" T="PlaylistDTO" Items="@Playlists" MultiSelection FixedHeader
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter SelectedItemsChanged="@SelectedItemsChanged">
+	<ToolBarContent>
+		<MudText Typo="Typo.h6">Tracks</MudText>
+		<MudSpacer />
+		<MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+					  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+	</ToolBarContent>
+	<Columns>
+		<SelectColumn T="PlaylistDTO" />
+		<TemplateColumn Sortable=false>
+			<CellTemplate>
+				<MudImage Height="50" Width="50" Src=@context.Item.Images.Last().Url />
+			</CellTemplate>
+		</TemplateColumn>
+		<PropertyColumn Property="x => x.Name" Title="Name" SortBy="x => x.Name" />
+		<PropertyColumn Property="x => x.TracksTotal" Title="Tracks" SortBy="x => x.TracksTotal" HeaderStyle="width:100px" />
+	</Columns>
+</MudDataGrid>
+
+
+@code {
+	[Parameter]
+	public IEnumerable<PlaylistDTO> Playlists { get; set; }
+	[Parameter]
+	public Action<bool> SelectionChanged { get; set; }
+
+	string _searchString;
+	HashSet<PlaylistDTO> _items;
+
+	public IEnumerable<PlaylistDTO> GetSelectedPlaylists() => _items;
+
+	void SelectedItemsChanged(HashSet<PlaylistDTO> items) {
+		_items = items;
+		SelectionChanged?.Invoke(items.Count > 0);
+	}
+
+	bool Filter(PlaylistDTO p) {
+		if (string.IsNullOrWhiteSpace(_searchString))
+			return true;
+
+		if (p.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (p.TracksTotal.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		return false;
+	}
+}

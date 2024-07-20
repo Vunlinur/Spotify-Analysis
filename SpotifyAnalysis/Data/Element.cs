@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -22,9 +23,20 @@ namespace SpotifyAnalysis.Data {
 			else
 				return null;
 		}
-	}
+    }
 
-	public class Element {
+    public static class ElementsExtensions {
+        public static IEnumerable<Element> Increase(this IEnumerable<Element> elements, Element element) {
+            var existingElement = elements.FirstOrDefault(e => e.Label == element.Label);
+            if (existingElement is not null)
+                existingElement.Quantity += element.Quantity;
+            else
+                elements = elements.Append(element);
+			return elements;
+        }
+    }
+
+    public class Element {
 		public string Label { get; set; }
 		public int Quantity { get; set; }
 		public string Color { get; set; }

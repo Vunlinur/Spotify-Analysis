@@ -4,6 +4,7 @@ using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,7 +43,15 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		 * https://developer.spotify.com/documentation/web-api/reference/get-users-profile
 		 */
 		public async Task<PublicUser> GetUserProfile(string userID) {
-            return await SpotifyClient.UserProfile.Get(userID);
+			try {
+	            return await SpotifyClient.UserProfile.Get(userID);
+            }
+			catch (APIException e) {
+				// The only error this endpoint seems to return is 500 - throw if anything else
+                if (e.Response.StatusCode == HttpStatusCode.InternalServerError)
+					return null;
+				throw;
+            }
 		}
 
 		/**

@@ -29,7 +29,12 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         readonly GetTracksAsyncDelegate getTracksAsync = getTracksAsync;
         readonly GetArtistsAsyncDelegate getArtistsAsync = getArtistsAsync;
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
-
+        
+        /**
+         * Fethes User data from Spotify API and inserts to the DB.
+         * User Data include:
+         * User's profile, User's playlists, playlists' tracks, tracks' artists
+         */
         public async Task GetData(string userID) {
             try {
                 // TODO optimize await order
@@ -69,8 +74,6 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
                 updateProgressBar?.Invoke(95, "Saving data");
                 await db.SaveChangesAsync();
-
-                updateProgressBar?.Invoke(100, "Finished!");
             }
             catch (Exception e) {
                 Console.WriteLine(e);
