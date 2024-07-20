@@ -34,14 +34,14 @@
     <div>
         <MudGrid>
             @if (artistsSongs is not null) {
-                <PieChartMudItem Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
-                <ArtistPaneMudItem Artist=@selectedArtist />
+                <MudItemPieChart Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
+                <MudItemArtistPane Artist=@selectedArtist />
             }
             @if (genreSongs is not null) {
-                <PieChartMudItem Title="Genres" Elements=genreSongs @ref=chartRef />
+                <MudItemPieChart Title="Genres" Elements=genreSongs @ref=chartRef />
             }
             @if (genres is not null) {
-                <PieChartMudItem Title="Genres general" Elements=genres @ref=chartRef />
+                <MudItemPieChart Title="Genres general" Elements=genres @ref=chartRef />
             }
         </MudGrid>
 
@@ -59,8 +59,8 @@
     private Elements genreSongs;
     private Elements genres;
 
-    List<PieChartMudItem> chartRefs = [];
-    PieChartMudItem chartRef { set { chartRefs.Add(value); } }
+    List<MudItemPieChart> chartRefs = [];
+    MudItemPieChart chartRef { set { chartRefs.Add(value); } }
 
     private bool open { get; set; }
     private void TogglePlaylistTable() => open = !open;
