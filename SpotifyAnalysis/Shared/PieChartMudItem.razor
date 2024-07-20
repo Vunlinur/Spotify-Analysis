@@ -4,13 +4,11 @@
 @*
     Currently it is impossible to distinguish whether the clicks are coming from the legend or from the chart:
     https://github.com/apexcharts/Blazor-ApexCharts/issues/442
-    https://github.com/apexcharts/Blazor-ApexCharts/issues/464
     So the solution is to toggle data series by default, but if callback is provided, we show a switch
     to call that callback instead.
 *@
 
-<MudItem xl="4" lg="6" md="12">
-    <MudPaper Class="pa-4">
+<MudItemBase>
         <MudInputLabel Class="mudItemTitle">@Title</MudInputLabel>
         <ApexChart TItem="Element"
                    Options="options"
@@ -31,8 +29,8 @@
                 <MudInputLabel>Get details</MudInputLabel>
             </MudStack>
         }
-    </MudPaper>
-</MudItem>
+</MudItemBase>
+
 
 @code {
     [Parameter]
