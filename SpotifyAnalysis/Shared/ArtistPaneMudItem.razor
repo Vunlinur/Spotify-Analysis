@@ -3,9 +3,9 @@
 
 
 <MudItem xl="4" lg="6" md="12">
-	<MudPaper Class="fullHeight pa-4">
+	<MudPaper Class="full-height pa-4">
 		@if (Artist?.Genres is not null) {
-			<MudStack Row=true Class="fullHeight" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
+			<MudStack Row=true Class="full-height" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
 				<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
 					<MudInputLabel Class="mudItemTitle">@Artist.Name</MudInputLabel>
 					<MudDataGrid Items="@Artist.Genres" Style="width: 300px" Dense=true >
@@ -18,7 +18,7 @@
 				<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
 					<OpenInSpotify Id=@Artist.ID ResType=OpenInSpotify.ResourceType.Artist/>
 					<MudImage Style="border: solid 1px white;" Src=@GetImage() Width="300" Height="300" Elevation="25" Class="ma-4" />
-					<MudStack Class="fullWidth" AlignItems="AlignItems.Center">
+					<MudStack Class="full-width" AlignItems="AlignItems.Center">
 						<MudInputLabel Style="font-size: 16px">Popularity</MudInputLabel>
 						<MudProgressLinear Color="Color.Primary" Size="Size.Large" Value=@(Artist.Popularity ?? 0) />
 					</MudStack>
