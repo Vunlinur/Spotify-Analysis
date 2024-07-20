@@ -86,6 +86,7 @@
 
         await dataFetch.GetData(userID);
         data.UserDTO = await GetUserDTOFromDB(userID);
+        UpdateProgressBar(100, "Finished!");
     }
 
     private async Task<string> ValidateInput(string input) {
@@ -128,7 +129,7 @@
 
     private async Task<UserDTO> GetUserDTOFromDB(string userID) {
         using var db = new SpotifyContext();
-        var user = await db.Users
+        return await db.Users
             .Include(u => u.Images)
 
             .Include(u => u.Playlists)
@@ -144,8 +145,5 @@
             .ThenInclude(t => t.Album)
 
             .FirstAsync(u => u.ID == userID);
-
-        UpdateProgressBar(100, "Finished!");
-        return user;
     }
 }
