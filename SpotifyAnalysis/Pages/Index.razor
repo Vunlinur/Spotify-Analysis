@@ -36,13 +36,13 @@
         <MudPaper>
             <MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Class="pa-4" >
                 <MudAvatar Size="Size.Large">
-                    <MudImage Src=@(user?.Images?.Last()?.Url ?? "anonymous-user.jpg") />
+                    <MudImage Src=@(selectedUser?.Images?.Last()?.Url ?? "anonymous-user.jpg") />
                 </MudAvatar>
                 <div>
-                    <MudText Typo="Typo.h6">@user.Name</MudText>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">@user.ID</MudText>
+                    <MudText Typo="Typo.h6">@selectedUser.Name</MudText>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">@selectedUser.ID</MudText>
                 </div>
-                <OpenInSpotify Id=@userID ResType=OpenInSpotify.ResourceType.User Disabled=@(string.IsNullOrEmpty(user.ID)) />
+                <OpenInSpotify Id=@userID ResType=OpenInSpotify.ResourceType.User Disabled=@(string.IsNullOrEmpty(selectedUser.ID)) />
             </MudStack>
         </MudPaper>
     </MudStack>
@@ -52,8 +52,7 @@
 @code {
     MudForm form;
     DataFetch dataFetch;
-    UserDTO user;
-    UserDTO userFromAPI;
+    UserDTO selectedUser;
     string userID = "11ek5k7fhea9otrb7k2ecizzb";
     ushort loadValue = 0;
     string loadMessage;
@@ -62,7 +61,7 @@
     protected override void OnInitialized() {
         base.OnInitialized();
         dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
-        user = data.UserDTO ?? new UserDTO();
+        selectedUser = data.UserDTO ?? new UserDTO();
     }
 
     private void UpdateProgressBar(float value, string message) {
@@ -71,31 +70,7 @@
         InvokeAsync(StateHasChanged);
     }
 
-    async Task TrySwitchUserAsync() {
-        // TODO return if new user the same as the old one
-        await form.Validate();
-        if (!form.IsValid)
-            return;
-
-        var response = await OpenDialogAsync(userFromAPI);
-        if (response.Canceled)
-            return;
-
-        user = userFromAPI;
-        StateHasChanged();
-
-        // Do we have the user in the DB?
-        //var userDTO = await db.Users
-        //    .Include(u => u.Images)
-        //    .FirstOrDefaultAsync(u => u.ID == userID);
-        //
-        //bool getUserData = userDTO is null || MinutesSince(userDTO.Updated) > 1;
-
-        await dataFetch.GetData(userID);
-        data.UserDTO = await GetUserDTOFromDB(userID);
-        UpdateProgressBar(100, "Finished!");
-    }
-
+    UserDTO userFromAPI;
     private async Task<string> ValidateInput(string input) {
         var id = SanitizeUserID(input);
         if (string.IsNullOrWhiteSpace(id))
@@ -109,6 +84,31 @@
         return null;
     }
 
+    async Task TrySwitchUserAsync() {
+        // TODO return if new user the same as the old one
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        var response = await OpenDialogAsync(userFromAPI);
+        if (response.Canceled)
+            return;
+
+        selectedUser = userFromAPI;
+        StateHasChanged();
+
+        // Do we have the user in the DB?
+        //var userDTO = await db.Users
+        //    .Include(u => u.Images)
+        //    .FirstOrDefaultAsync(u => u.ID == userID);
+        //
+        //bool getUserData = userDTO is null || MinutesSince(userDTO.Updated) > 1;
+
+        await dataFetch.GetData(selectedUser.ID);
+        UpdateProgressBar(95, null);
+        data.UserDTO = await GetUserDTOFromDB(selectedUser.ID);
+        UpdateProgressBar(100, "Finished!");
+    }
 
     static readonly Regex URLRegex = new Regex(@"^(?:https:\/\/)?open\.spotify\.com\/user\/(\w{7,30})(?:\?.+)?$");  // https://open.spotify.com/user/11ek5k7fhea9otrb7k2ecizzb?si=01cec8557cc642f1
     static readonly Regex HrefRegex = new Regex(@"^(?:https:\/\/)?api\.spotify\.com\/v1\/users\/(\w{7,30})(?:\?.+)?$");  // https://api.spotify.com/v1/users/11ek5k7fhea9otrb7k2ecizzb

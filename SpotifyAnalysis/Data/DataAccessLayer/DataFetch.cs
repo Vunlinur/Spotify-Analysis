@@ -63,7 +63,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                 updateProgressBar?.Invoke(60, "Processing artists");
                 var newArtistsIds = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
                 IEnumerable<List<string>> chunks = DivideArtistsRequests(newArtistsIds);
-                progressBase = 60; progressDelta = (95 - progressBase) / chunks.Count();
+                progressBase = 60; progressDelta = (90 - progressBase) / chunks.Count();
                 tasks = [];
                 foreach (List<string> chunk in chunks)
                     tasks.Add(
@@ -72,7 +72,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                     );
                 await Task.WhenAll(tasks);
 
-                updateProgressBar?.Invoke(95, "Saving data");
+                updateProgressBar?.Invoke(90, "Saving data");
                 await db.SaveChangesAsync();
             }
             catch (Exception e) {
