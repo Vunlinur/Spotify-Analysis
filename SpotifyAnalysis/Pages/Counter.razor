@@ -20,7 +20,7 @@
     <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
     <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{playlistTable?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
     <MudSpacer />
-    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(!areAnyPlaylistsSelected)">Generate charts</MudButton>
+    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(selectedCount == 0)">Generate charts</MudButton>
 </MudAppBar>
 <div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
@@ -128,12 +128,10 @@
         return await Task.Run(BuildGenresGeneral);
     }
 
-    private bool areAnyPlaylistsSelected;
-    internal void UpdateGenerateButton(bool areAnySelected) {
-        if (areAnyPlaylistsSelected != areAnySelected) {
-            areAnyPlaylistsSelected = areAnySelected;
-            StateHasChanged();
-        }
+    private int selectedCount;
+    internal void UpdateGenerateButton(int newSelectedCount) {
+        selectedCount = newSelectedCount;
+        StateHasChanged();
     }
 
     ArtistDTO selectedArtist;

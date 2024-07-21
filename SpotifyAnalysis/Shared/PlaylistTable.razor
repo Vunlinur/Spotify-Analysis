@@ -28,7 +28,7 @@
 	[Parameter]
 	public IEnumerable<PlaylistDTO> Playlists { get; set; }
 	[Parameter]
-	public Action<bool> SelectionChanged { get; set; }
+	public Action<int> SelectionChanged { get; set; }
 
 	string _searchString;
 	HashSet<PlaylistDTO> _items;
@@ -37,7 +37,7 @@
 
 	void SelectedItemsChanged(HashSet<PlaylistDTO> items) {
 		_items = items;
-		SelectionChanged?.Invoke(items.Count > 0);
+		SelectionChanged?.Invoke(items.Count);
 	}
 
 	bool Filter(PlaylistDTO p) {
