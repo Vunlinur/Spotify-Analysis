@@ -1,7 +1,8 @@
 ﻿@inherits LayoutComponentBase
-@using MudBlazor
 
-<MudThemeProvider IsDarkMode=true Theme="Spotify" />
+@inject SpotifyMudTheme SpotifyTheme
+
+<MudThemeProvider IsDarkMode=true Theme="SpotifyTheme" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
@@ -24,14 +25,6 @@
 
 
 @code {
-    MudTheme Spotify = new MudTheme() {
-        PaletteDark = new PaletteDark() {
-            Primary = new MudBlazor.Utilities.MudColor("#1DB954"),
-            Background = Colors.Shades.Black,
-            Surface = new MudBlazor.Utilities.MudColor("#242424")
-        }
-    };
-
     private bool _open;
     private void ToggleDrawer() => _open = !_open;
 }

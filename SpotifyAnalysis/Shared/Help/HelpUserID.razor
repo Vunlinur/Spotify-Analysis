@@ -1,5 +1,7 @@
 ﻿@namespace SpotifyAnalysis.Shared
 
+@inject SpotifyMudTheme SpotifyTheme
+
 <MudList>
     <MudListItem>
         <MudText>1. <b>Open Spotify</b> on your desktop or mobile device.</MudText>
@@ -42,11 +44,11 @@
 
 <style>
     b {
-        color: #1DB954;
+        color: @(SpotifyTheme.PaletteDark.Primary.Value);
     }
 
     .@(cell){
-        color: #569bd7 !important;
+        color: @(SpotifyTheme.PaletteDark.Secondary.Value) !important;
         font-family: monospace;
         font-size: large;
     }

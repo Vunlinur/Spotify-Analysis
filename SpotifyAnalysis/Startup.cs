@@ -9,6 +9,7 @@ using SpotifyAnalysis.Data;
 using SpotifyAnalysis.Data.DataAccessLayer;
 using SpotifyAnalysis.Data.DTO;
 using SpotifyAnalysis.Data.SpotifyAPI;
+using SpotifyAnalysis.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,6 +35,7 @@ namespace SpotifyAnalysis {
 			services.AddSingleton<WeatherForecastService>();
 			services.AddSingleton<SpotifyModule>();
 			services.AddSingleton<SpotifyContext>();
+			services.AddSingleton<SpotifyMudTheme>();
 			services.AddScoped<ScopedData>();
 		}
 
