@@ -81,9 +81,9 @@
         genreSongs = await genreSongsTask;
         artistsSongs = await artistsSongsTask;
 
-        var refreshTasks = chartRefs.Select(async r => await r.RefreshChartAsync());
-        await Task.WhenAll(refreshTasks);
         await InvokeAsync(StateHasChanged);
+        foreach (var chart in chartRefs)
+            chart.RefreshChartAsync();
     }
 
     private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {
