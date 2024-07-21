@@ -14,18 +14,25 @@
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Justify=Justify.SpaceEvenly Style="height: 80vh">
         <MudStack AlignItems=AlignItems.Center>
-            <MudForm @ref="form" Style="width: 100%;">
-                <MudTextField @bind-Value="userID" Label="User ID"
-                              Required="true" RequiredError="User ID or user link is required."
-                              Validation=@(new Func<string, Task<string>>(ValidateInput)) OnlyValidateIfDirty="true"
-                              Variant="Variant.Outlined" FullWidth Margin="Margin.Dense" />
-            </MudForm>
+            <MudStack Row AlignItems=AlignItems.Center Style="width: 100%;">
+                <MudForm @ref="form" Class="flex-grow-1">
+                    <MudTextField @bind-Value="userID" Label="User ID"
+                                  Required="true" RequiredError="User ID or user link is required."
+                                  Validation=@(new Func<string, Task<string>>(ValidateInput)) OnlyValidateIfDirty="true"
+                                  Variant="Variant.Outlined" FullWidth Margin="Margin.Dense" />
+                </MudForm>
+                <HelpButton Title="How to get a user ID or URL?">
+                    <HelpUserID />
+                </HelpButton>
+            </MudStack>
             <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="TrySwitchUserAsync">Select User</MudButton>
         </MudStack>
+
         <MudStack AlignItems=AlignItems.Center Style="height:50px;">
             <MudProgressLinear Color="Color.Primary" Value="@loadValue" />
             <MudText Typo="Typo.h6">@loadMessage</MudText>
         </MudStack>
+
         <MudPaper>
             <MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Class="pa-4" >
                 <MudAvatar Size="Size.Large">

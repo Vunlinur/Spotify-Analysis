@@ -1,0 +1,65 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+<MudList>
+    <MudListItem>
+        <MudText>1. <b>Open Spotify</b> on your desktop or mobile device.</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText>2. <b>Go to the Profile</b> of the user who you wish to analyze. You can get there from e.g. your Friend Activity pane or via a playlist owner.</MudText>
+    </MudListItem>
+</MudList>
+
+<MudStack Row>
+    <MudStack>
+        <MudText Typo="Typo.h6" Align=Align.Center Style="color: grey;" >Desktop</MudText>
+        <MudList>
+            <MudListItem>
+                <MudText>3. <b>Copy link to the profile</b> by right-clicking on the user name.</MudText>
+            </MudListItem>
+        </MudList>
+    </MudStack>
+
+    <MudDivider Vertical=true FlexItem=true/>
+
+    <MudStack>
+        <MudText Typo="Typo.h6" Align=Align.Center Style="color: grey;">Mobile</MudText>
+        <MudList>
+            <MudListItem>
+                <MudText>3. <b>Open the profile's menu</b> by clicking the three dots underneath the profile name.</MudText>
+            </MudListItem>
+            <MudListItem>
+                <MudText>4. <b>Select Share,</b> then Copy link in the bottom drawer.</MudText>
+            </MudListItem>
+        </MudList>
+    </MudStack>
+</MudStack>
+
+<MudDataGrid Items="@examples" Dense SortMode=SortMode.None Class="ma-16 pr-16 pl-16" Elevation=0>
+    <Columns>
+        <PropertyColumn Property="x => x" Title="Examples of valid input:" HeaderStyle="font-size: 16px;" CellClassFunc=@(s => cell)/>
+    </Columns>
+</MudDataGrid>
+
+<style>
+    b {
+        color: #1DB954;
+    }
+
+    .@(cell){
+        color: #569bd7 !important;
+        font-family: monospace;
+        font-size: large;
+    }
+</style>
+
+@code {
+    const string cell = "s-cell";
+
+    const string id = "sampleuserid1234";
+    static readonly string[] examples = [
+        "https://open.spotify.com/user/" + id + "?si=01cec8557cc642f1",
+        "https://api.spotify.com/v1/users/" + id,
+        "spotify:user:" + id,
+        id
+    ];
+}

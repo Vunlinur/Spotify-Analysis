@@ -1,0 +1,25 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+@inject IDialogService Dialog
+
+<MudTooltip Text=@Title>
+    <MudIconButton Icon="@Icons.Material.Filled.Help" Color="Color.Primary" Size="Size.Large" OnClick=@OpenDialogAsync aria-label="help" />
+</MudTooltip>
+
+@code {
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+    [Parameter, EditorRequired]
+    public string Title { get; set; }
+
+    static readonly DialogOptions options = new() {
+        CloseOnEscapeKey = true,
+        CloseButton = true,
+        MaxWidth = MaxWidth.Large
+    };
+
+    private async Task OpenDialogAsync() {
+        var parameters = new DialogParameters<HelpDialog> { { x => x.ChildContent, ChildContent } };
+        var dialog = await Dialog.ShowAsync<HelpDialog>(Title, parameters, options);
+    }
+}
