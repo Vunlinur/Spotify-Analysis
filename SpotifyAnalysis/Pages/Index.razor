@@ -90,6 +90,7 @@
         if (!form.IsValid)
             return;
 
+        // Get user confirmation
         var response = await OpenDialogAsync(userFromAPI);
         if (response.Canceled)
             return;
@@ -97,14 +98,14 @@
         selectedUser = userFromAPI;
         StateHasChanged();
 
-        // Do we have the user in the DB?
-        //var userDTO = await db.Users
-        //    .Include(u => u.Images)
-        //    .FirstOrDefaultAsync(u => u.ID == userID);
-        //
-        //bool getUserData = userDTO is null || MinutesSince(userDTO.Updated) > 1;
+        // Get user data if user not in DB or not updated for a long time
+        using var db = new SpotifyContext();
+        var userDTO = await db.Users
+            .FirstOrDefaultAsync(u => u.ID == userID);
 
+        if (userDTO is null || MinutesSince(userDTO.Updated) > 10)
         await dataFetch.GetData(selectedUser.ID);
+        
         UpdateProgressBar(95, null);
         data.UserDTO = await GetUserDTOFromDB(selectedUser.ID);
         UpdateProgressBar(100, "Finished!");
