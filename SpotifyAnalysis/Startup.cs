@@ -34,9 +34,9 @@ namespace SpotifyAnalysis {
 			services.AddMudServices();
 			services.AddSingleton<WeatherForecastService>();
 			services.AddSingleton<SpotifyModule>();
-			services.AddSingleton<SpotifyContext>();
 			services.AddSingleton<SpotifyMudTheme>();
 			services.AddScoped<ScopedData>();
+			services.AddTransient<SpotifyContext>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
