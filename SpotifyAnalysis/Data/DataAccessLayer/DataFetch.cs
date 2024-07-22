@@ -89,8 +89,9 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             if (user is null) {
                 user = (await getUserProfileAsync(userID)).ToUserDTO();
                 await db.AddAsync(user);
-                await db.SaveChangesAsync();
             }
+            user.Updated = DateTime.Now;
+            await db.SaveChangesAsync();
             return user;
         }
 
