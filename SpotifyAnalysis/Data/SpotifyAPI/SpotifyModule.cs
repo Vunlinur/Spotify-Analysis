@@ -72,12 +72,12 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		}
 
 		/**
-		 * Get tracks from the given Paging. Omits unavailable tracks.
+		 * Get tracks from the given Paging. Omits local tracks.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
 		public async Task<List<FullTrack>> GetTracksAsync(Paging<PlaylistTrack<IPlayableItem>> paging) {
 			var allPlayableItems = await SpotifyClient.PaginateAll(paging);
-			return allPlayableItems.ToFullTracks().Where(t => t.Id is not null).ToList();  // ID is null when track is unavailable
+			return allPlayableItems.ToFullTracks().Where(t => t.Id is not null).ToList();  // ID is null when track is local
         }
 
         /**
