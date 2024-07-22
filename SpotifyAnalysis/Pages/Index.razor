@@ -8,7 +8,6 @@
 
 @inject IDialogService DialogService
 @inject SpotifyModule spotifyModule;
-@inject SpotifyContext db;
 @inject ScopedData data;
 
 <MudContainer MaxWidth="MaxWidth.Medium">
@@ -16,7 +15,7 @@
         <MudStack AlignItems=AlignItems.Center>
             <MudStack Row AlignItems=AlignItems.Center Style="width: 100%;">
                 <MudForm @ref="form" Class="flex-grow-1">
-                    <MudTextField @bind-Value="userID" Label="User ID"
+                    <MudTextField @bind-Value="userInput" Label="User ID"
                                   Required="true" RequiredError="User ID or user link is required."
                                   Validation=@(new Func<string, Task<string>>(ValidateInput)) OnlyValidateIfDirty="true"
                                   Variant="Variant.Outlined" FullWidth Margin="Margin.Dense" />
@@ -42,7 +41,7 @@
                     <MudText Typo="Typo.h6">@selectedUser.Name</MudText>
                     <MudText Typo="Typo.subtitle2" Color="Color.Primary">@selectedUser.ID</MudText>
                 </div>
-                <OpenInSpotify Id=@userID ResType=OpenInSpotify.ResourceType.User Disabled=@(string.IsNullOrEmpty(selectedUser.ID)) />
+                <OpenInSpotify Id=@selectedUser.ID ResType=OpenInSpotify.ResourceType.User Disabled=@(string.IsNullOrEmpty(selectedUser.ID)) />
             </MudStack>
         </MudPaper>
     </MudStack>
@@ -53,7 +52,7 @@
     MudForm form;
     DataFetch dataFetch;
     UserDTO selectedUser;
-    string userID = "11ek5k7fhea9otrb7k2ecizzb";
+    string userInput = "11ek5k7fhea9otrb7k2ecizzb";
     ushort loadValue = 0;
     string loadMessage;
 
@@ -101,10 +100,10 @@
         // Get user data if user not in DB or not updated for a long time
         using var db = new SpotifyContext();
         var userDTO = await db.Users
-            .FirstOrDefaultAsync(u => u.ID == userID);
-
-        if (userDTO is null || MinutesSince(userDTO.Updated) > 10)
-        await dataFetch.GetData(selectedUser.ID);
+            .FirstOrDefaultAsync(u => u.ID == selectedUser.ID);
+        
+        if (userDTO is null || MinutesSince(userDTO.Updated) > 15)
+            await dataFetch.GetData(selectedUser.ID);
         
         UpdateProgressBar(95, null);
         data.UserDTO = await GetUserDTOFromDB(selectedUser.ID);
