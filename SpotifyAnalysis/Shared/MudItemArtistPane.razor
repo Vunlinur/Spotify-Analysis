@@ -29,5 +29,5 @@
 	[Parameter]
 	public ArtistDTO Artist { get; set; }
 
-	internal string GetImage() => Artist.Images.FirstOrDefault()?.Url ?? "anonymous-user.jpg";
+	internal string GetImage() => Artist.Images.FirstOrDefault()?.Url ?? "unknown.jpeg";
 }

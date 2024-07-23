@@ -15,7 +15,7 @@
 		<SelectColumn T="PlaylistDTO" />
 		<TemplateColumn Sortable=false>
 			<CellTemplate>
-				<MudImage Height="50" Width="50" Src=@context.Item.Images.Last().Url />
+				<MudImage Height="50" Width="50" Src=@GetImage(context) />
 			</CellTemplate>
 		</TemplateColumn>
 		<PropertyColumn Property="x => x.Name" Title="Name" SortBy="x => x.Name" />
@@ -59,4 +59,6 @@
 
 		return false;
 	}
+	
+	internal string GetImage(CellContext<PlaylistDTO> c) => c.Item.Images.FirstOrDefault()?.Url ?? "unknown.jpeg";
 }
