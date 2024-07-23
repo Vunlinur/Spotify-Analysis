@@ -32,7 +32,7 @@
     [CascadingParameter]
     MudDialogInstance MudDialog { get; set; }
 
-    string GetImage() => User.Images?.LastOrDefault()?.Url ?? "anonymous-user.jpeg";
+    string GetImage() => User.Images?.LastOrDefault()?.Url ?? StaticResourceMap.UnknownUser;
 
     void Confirm() => MudDialog.Close<bool>(true);
 }
