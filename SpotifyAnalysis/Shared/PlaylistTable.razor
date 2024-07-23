@@ -3,7 +3,7 @@
 @using Data.DTO
 
 
-<MudDataGrid Height="80vh" T="PlaylistDTO" Items="@Playlists" MultiSelection FixedHeader
+<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection FixedHeader
 			 SortMode="SortMode.Multiple" QuickFilter=@Filter SelectedItemsChanged="@SelectedItemsChanged">
 	<ToolBarContent>
 		<MudText Typo="Typo.h6">Tracks</MudText>
@@ -23,6 +23,13 @@
 	</Columns>
 </MudDataGrid>
 
+<style>
+	@*MudDataGrid Style and Class affect different element than Width - which is actually the one we need - hence this hack
+	3/4 * main AppBar + 4/4 * playlist AppBar + 4/4 DataGrid filter bar (each 64px)*@
+	.mud-table-container {
+		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
+	}
+</style>
 
 @code {
 	[Parameter]

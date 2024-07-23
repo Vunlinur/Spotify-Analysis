@@ -30,8 +30,8 @@
     </MudCollapse>
 }
 
-<div id="scroll_area" class="pt-6 px-6" style="height:100%;">
-    <div>
+@if ((artistsSongs ?? genreSongs ?? genres) is not null) {
+    <div class="pt-6 px-6">
         <MudGrid>
             @if (artistsSongs is not null) {
                 <MudItemPieChart Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
@@ -44,13 +44,8 @@
                 <MudItemPieChart Title="Genres general" Elements=genres @ref=chartRef />
             }
         </MudGrid>
-
-        <MudScrollToTop Selector="#scroll_area" VisibleCssClass="visible absolute" HiddenCssClass="invisible">
-            <MudButton Variant="Variant.Outlined" Class="rounded-pill" StartIcon="@Icons.Material.Filled.ArrowUpward">Go to top</MudButton>
-        </MudScrollToTop>
     </div>
-</div>
-
+}
 
 @code {
     private PlaylistTable playlistTable;
