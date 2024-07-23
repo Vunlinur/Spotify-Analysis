@@ -25,9 +25,9 @@ ORDER BY ar.Name, al.Name
 
 
 
---DELETE FROM Users
 --DELETE FROM Images
 --DELETE FROM Playlists
+--DELETE FROM Users
 --DELETE FROM Artists
 --UPDATE Tracks SET AlbumID = NULL
 --DELETE FROM Tracks

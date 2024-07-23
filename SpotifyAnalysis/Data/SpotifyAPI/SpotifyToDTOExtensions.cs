@@ -20,7 +20,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 			return new PlaylistDTO() {
 				ID = fp.Id,
 				Name = fp.Name,
-				Owner = fp.Owner.Id,
+				OwnerID = fp.Owner.Id,
+				OwnerName = fp.Owner.DisplayName,
 				SnapshotID = fp.SnapshotId,
 				TracksTotal = fp.Tracks.Total,
 				Tracks = [],

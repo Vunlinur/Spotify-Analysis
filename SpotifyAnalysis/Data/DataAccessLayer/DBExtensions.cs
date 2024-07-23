@@ -28,7 +28,8 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 
         public static void Update(this PlaylistDTO playlist, FullPlaylist source) {
             playlist.Name = source.Name;
-            playlist.Owner = source.Owner.Id;
+            playlist.OwnerID = source.Owner.Id;
+            playlist.OwnerName = source.Owner.DisplayName;
             playlist.Followers = source.Followers.Total;
             playlist.SnapshotID = source.SnapshotId;
             playlist.TracksTotal = source.Tracks.Total;
