@@ -29,10 +29,5 @@
 	[Parameter]
 	public ArtistDTO Artist { get; set; }
 
-	private const string wikiQuestionMark = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Question_mark_%28black%29.svg/220px-Question_mark_%28black%29.svg.png";
-
-	internal string GetImage() {
-		var image = Artist.Images.FirstOrDefault();
-		return image != null ? image.Url : wikiQuestionMark;
-	}
+	internal string GetImage() => Artist.Images.FirstOrDefault()?.Url ?? "anonymous-user.jpg";
 }
