@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SpotifyAnalysis.Data.DTO;
 using System;
+using System.Collections.Generic;
 using System.IO;
 
 
@@ -29,13 +30,22 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 				.HasMany(u => u.Playlists)
 				.WithMany();
 
-            modelBuilder.Entity<PlaylistDTO>()
-                .HasMany(u => u.Tracks)
-                .WithMany();
-
             modelBuilder.Entity<TrackDTO>()
                 .HasMany(u => u.Artists)
                 .WithMany();
+
+            modelBuilder.Entity<PlaylistDTO>()
+                .HasMany(p => p.Tracks)
+                .WithMany(t => t.Playlists)
+                .UsingEntity<Dictionary<string, object>>(
+                    "PlaylistDTOTrackDTO",  // let's keep the auto convention
+                    j => j.HasOne<TrackDTO>().WithMany().HasForeignKey("TracksID"),
+                    j => j.HasOne<PlaylistDTO>().WithMany().HasForeignKey("PlaylistDTOID"),
+                    j => {
+                        j.HasKey("PlaylistDTOID", "TracksID");
+                        j.Property<string>("PlaylistDTOID");
+                        j.Property<string>("TracksID");
+                    });
         }
 	}
 }

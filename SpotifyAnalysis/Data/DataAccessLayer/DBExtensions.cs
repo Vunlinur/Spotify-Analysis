@@ -55,6 +55,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         public static void Update(this ArtistDTO artist, FullArtist source) {
             artist.Genres = source.Genres;
             artist.Popularity = source.Popularity;
+			artist.Genres = source.Genres;
             artist.Images = source.Images.ToImageDTOs();
         }
 

@@ -17,6 +17,8 @@ namespace SpotifyAnalysis.Data.DTO {
 #nullable enable
         public virtual AlbumDTO? Album { get; set; }
 #nullable restore
+        public virtual List<PlaylistDTO> Playlists { get; set; }
+
         public virtual List<ArtistDTO> Artists { get; set; }
 	}
 }

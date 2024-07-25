@@ -31,7 +31,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
         
         /**
-         * Fethes User data from Spotify API and inserts to the DB.
+         * Fetches User data from Spotify API and inserts to the DB.
          * User Data include:
          * User's profile, User's playlists, playlists' tracks, tracks' artists
          */
