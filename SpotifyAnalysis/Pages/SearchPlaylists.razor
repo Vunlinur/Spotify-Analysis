@@ -1,0 +1,71 @@
+﻿@page "/fetchdata"
+
+@using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.DTO
+@using SpotifyAnalysis.Data.DataAccessLayer
+
+@inject ScopedData data;
+
+@inject HttpClient httpClient
+
+
+<MudDataGrid @ref="dataGrid" MultiSelection="true" Items="@data.UserDTO.Playlists.SelectMany(p => p.Tracks)" Filterable="true"
+             Hideable="true" Groupable="true" GroupExpanded="false" GroupClassFunc="GroupClassFunc">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Periodic Elements</MudText>
+        <MudSpacer />
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.Name" Title="Title" Grouping GroupBy="@_groupBy" />
+        <PropertyColumn Property="x => x.Popularity" Title="Popularity" />
+        <PropertyColumn Property="x => x.Album.Name" Title="Album" />
+        <PropertyColumn Property="x => string.Join(sep, x.Artists)" Title="Album" />
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Element" />
+    </PagerContent>
+</MudDataGrid>
+
+<div class="d-flex flex-wrap mt-4">
+    <MudSwitch T="bool" @bind-Value="_customizeGroupTemplate" Color="@Color.Primary">Customize Group Template</MudSwitch>
+    <MudButton OnClick="@ExpandAllGroups" Color="@Color.Primary">Expand All</MudButton>
+    <MudButton OnClick="@CollapseAllGroups" Color="@Color.Primary">Collapse All</MudButton>
+</div>
+
+
+@code {
+    MudDataGrid<TrackDTO> dataGrid;
+    const string sep = ", ";
+
+    IEnumerable<Element> Elements = new List<Element>();
+    bool _customizeGroupTemplate;
+    static string[] _nonmetals = new string[] { "H", "He", "N", "O", "F", "Ne", "Cl", "Ar", "Kr", "Xe", "Rn", "Br", "C", "P", "Se", "Se", "I" };
+
+    Func<TrackDTO, object> _groupBy = x => {
+        return _nonmetals.Contains("x.Sign") ? "Nonmetal" : "Metal";
+    };
+
+    object GroupBy(TrackDTO track) => data.UserDTO.Playlists.SelectMany(p => p.Tracks);
+
+    private string GroupClassFunc(GroupDefinition<TrackDTO> item) {
+        return item.Grouping.Key?.ToString() == "Nonmetal" || item.Grouping.Key?.ToString() == "Other"
+                ? "mud-theme-warning"
+                : string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync() {
+        //Elements = await httpClient.GetFromJsonAsync<List<Element>>("webapi/periodictable");
+    }
+
+    void ExpandAllGroups() {
+        dataGrid?.ExpandAllGroups();
+    }
+
+    void CollapseAllGroups() {
+        dataGrid?.CollapseAllGroups();
+    }
+
+    void CustomizeByGroupChanged(bool isChecked) {
+        dataGrid.GroupItems();
+    }
+}
