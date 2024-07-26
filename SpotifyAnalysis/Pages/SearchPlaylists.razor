@@ -8,8 +8,8 @@
 
 
 <MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader
-             SortMode="SortMode.Multiple" QuickFilter=@Filter Filterable="true"
-             Groupable="true" GroupExpanded="false" >
+             SortMode="SortMode.Multiple" QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
+             Filterable="true" Groupable="true" GroupExpanded="false" >
     <ToolBarContent>
         <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>
         <MudText Typo="Typo.h6">Find my music</MudText>
@@ -23,15 +23,15 @@
 
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Track.Name" Title="Title" Groupable="false" />
-        <PropertyColumn Property="x => x.Artists" Title="Artists" />
+        <PropertyColumn Property="x => x.Track.Name" Title="Title" HeaderStyle="width: 20%" Groupable="false" />
+        <PropertyColumn Property="x => x.Artists" Title="Artists" HeaderStyle="width: 20%" />
         <PropertyColumn Property="x => x.Track.Album.Name" Title="Album" />
-		<TemplateColumn SortBy="x => x.Track.Popularity" Title="Popularity" Groupable="false" HeaderStyle="width: 10vw">
+		<TemplateColumn SortBy="x => x.Track.Popularity" Title="Popularity" Groupable="false" HeaderStyle="width: 10%">
 			<CellTemplate>
 				<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Track.Popularity) />
 			</CellTemplate>
 		</TemplateColumn>
-        <PropertyColumn Property="x => x.Playlist.Name" Title="Playlist" Grouping />
+        <PropertyColumn Property="x => x.Playlist.Name" Title="Playlist" HeaderStyle="width: 20%" Grouping />
     </Columns>
 </MudDataGrid>
 
