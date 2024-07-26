@@ -1,0 +1,28 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+@inject SpotifyMudTheme SpotifyTheme
+
+<MudText>Here you can <b>search all tracks</b> from your playlists <b>by their title, album or artists</b>, grouped by playlists.</MudText>
+
+<MudText>Helpful when you have a lot of playlists and want to:</MudText>
+
+<MudList>
+    <MudListItem>
+        <MudText>Find a misplaced a song,</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText>Find covers, remasters and different editions,</MudText>
+    </MudListItem>
+    <MudListItem>
+        <MudText>Know which playlists a given artist/album is on.</MudText>
+    </MudListItem>
+</MudList>
+
+<style>
+    b {
+        color: @(SpotifyTheme.PaletteDark.Primary.Value);
+    }
+</style>
+
+@code {
+}
