@@ -23,14 +23,15 @@
 
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Track.Name" Title="Title" Grouping GroupBy="@_groupBy" />
+        <PropertyColumn Property="x => x.Track.Name" Title="Title" Groupable="false" />
+        <PropertyColumn Property="x => x.Artists" Title="Artists" />
+        <PropertyColumn Property="x => x.Track.Album.Name" Title="Album" />
 		<TemplateColumn SortBy="x => x.Track.Popularity" Title="Popularity" Groupable="false" HeaderStyle="width: 10vw">
 			<CellTemplate>
 				<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Track.Popularity) />
 			</CellTemplate>
 		</TemplateColumn>
-        <PropertyColumn Property="x => x.Track.Album.Name" Title="Album" />
-        <PropertyColumn Property="x => x.Artists" Title="Artists" />
+        <PropertyColumn Property="x => x.Playlist.Name" Title="Playlist" Grouping />
     </Columns>
 </MudDataGrid>
 
@@ -54,8 +55,6 @@
     List<TrackPlaylist> tracks;
     string _searchString;
 
-    Func<TrackPlaylist, object> _groupBy = x => x.Playlist.Name;
-
     protected override void OnInitialized() {
         tracks = data.UserDTO?.Playlists.SelectMany(
             p => p.Tracks.Select(t => new TrackPlaylist(t, p))
@@ -73,10 +72,13 @@
         if (p.Track.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
+        if (p.Artists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
         if (p.Track.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (p.Artists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        if (p.Playlist.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
         return false;
