@@ -6,66 +6,75 @@
 
 @inject ScopedData data;
 
-@inject HttpClient httpClient
 
-
-<MudDataGrid @ref="dataGrid" MultiSelection="true" Items="@data.UserDTO.Playlists.SelectMany(p => p.Tracks)" Filterable="true"
-             Hideable="true" Groupable="true" GroupExpanded="false" GroupClassFunc="GroupClassFunc">
+<MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader
+             SortMode="SortMode.Multiple" QuickFilter=@Filter Filterable="true"
+             Groupable="true" GroupExpanded="false" >
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Periodic Elements</MudText>
+        <HelpButton Title="What is this for?">""</HelpButton>
+        <MudText Typo="Typo.h6">Find my music</MudText>
+        <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
+            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
+            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+        </MudButtonGroup>
         <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Name" Title="Title" Grouping GroupBy="@_groupBy" />
-        <PropertyColumn Property="x => x.Popularity" Title="Popularity" />
-        <PropertyColumn Property="x => x.Album.Name" Title="Album" />
-        <PropertyColumn Property="x => string.Join(sep, x.Artists)" Title="Album" />
+        <PropertyColumn Property="x => x.Track.Name" Title="Title" Grouping GroupBy="@_groupBy" />
+        <PropertyColumn Property="x => x.Track.Popularity" Title="Popularity" />
+        <PropertyColumn Property="x => x.Track.Album.Name" Title="Album" />
+        <PropertyColumn Property="x => x.Artists" Title="Artists" />
     </Columns>
-    <PagerContent>
-        <MudDataGridPager T="Element" />
-    </PagerContent>
 </MudDataGrid>
 
-<div class="d-flex flex-wrap mt-4">
-    <MudSwitch T="bool" @bind-Value="_customizeGroupTemplate" Color="@Color.Primary">Customize Group Template</MudSwitch>
-    <MudButton OnClick="@ExpandAllGroups" Color="@Color.Primary">Expand All</MudButton>
-    <MudButton OnClick="@CollapseAllGroups" Color="@Color.Primary">Collapse All</MudButton>
-</div>
+<style>
+	@*MudDataGrid Style and Class affect different element than Width - which is actually the one we need - hence this hack
+	3/4 * main AppBar + 4/4 DataGrid filter bar (each 64px)*@
+	.mud-table-container {
+		max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
+	}
+</style>
 
 
 @code {
-    MudDataGrid<TrackDTO> dataGrid;
-    const string sep = ", ";
-
-    IEnumerable<Element> Elements = new List<Element>();
-    bool _customizeGroupTemplate;
-    static string[] _nonmetals = new string[] { "H", "He", "N", "O", "F", "Ne", "Cl", "Ar", "Kr", "Xe", "Rn", "Br", "C", "P", "Se", "Se", "I" };
-
-    Func<TrackDTO, object> _groupBy = x => {
-        return _nonmetals.Contains("x.Sign") ? "Nonmetal" : "Metal";
-    };
-
-    object GroupBy(TrackDTO track) => data.UserDTO.Playlists.SelectMany(p => p.Tracks);
-
-    private string GroupClassFunc(GroupDefinition<TrackDTO> item) {
-        return item.Grouping.Key?.ToString() == "Nonmetal" || item.Grouping.Key?.ToString() == "Other"
-                ? "mud-theme-warning"
-                : string.Empty;
+    class TrackPlaylist(TrackDTO t, PlaylistDTO p) {
+        public TrackDTO Track = t;
+        public PlaylistDTO Playlist = p;
+        public readonly string Artists = string.Join(", ", t.Artists.Select(a => a.Name));
     }
 
-    protected override async Task OnInitializedAsync() {
-        //Elements = await httpClient.GetFromJsonAsync<List<Element>>("webapi/periodictable");
+    MudDataGrid<TrackPlaylist> dataGrid;
+    List<TrackPlaylist> tracks;
+    string _searchString;
+
+    Func<TrackPlaylist, object> _groupBy = x => x.Playlist.Name;
+
+    protected override void OnInitialized() {
+        tracks = data.UserDTO?.Playlists.SelectMany(
+            p => p.Tracks.Select(t => new TrackPlaylist(t, p))
+        ).ToList();
     }
 
-    void ExpandAllGroups() {
-        dataGrid?.ExpandAllGroups();
-    }
+    void ExpandAll() => dataGrid?.ExpandAllGroups();
 
-    void CollapseAllGroups() {
-        dataGrid?.CollapseAllGroups();
-    }
+    void CollapseAll() => dataGrid?.CollapseAllGroups();
 
-    void CustomizeByGroupChanged(bool isChecked) {
-        dataGrid.GroupItems();
+    bool Filter(TrackPlaylist p) {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (p.Track.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (p.Track.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (p.Artists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
     }
 }

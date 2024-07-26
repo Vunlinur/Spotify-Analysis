@@ -18,9 +18,9 @@
 				<MudImage Height="50" Width="50" Src=@GetImage(context) />
 			</CellTemplate>
 		</TemplateColumn>
-		<PropertyColumn Property="x => x.Name" Title="Name" SortBy="x => x.Name" />
-		<PropertyColumn Property="x => x.OwnerName" Title="Owner" SortBy="x => x.OwnerName" CellStyle="color: grey" />
-		<PropertyColumn Property="x => x.TracksTotal" Title="Tracks" SortBy="x => x.TracksTotal" HeaderStyle="width:100px" />
+		<PropertyColumn Property="x => x.Name" Title="Name" />
+		<PropertyColumn Property="x => x.OwnerName" Title="Owner" CellStyle="color: grey" />
+		<PropertyColumn Property="x => x.TracksTotal" Title="Tracks" HeaderStyle="width:100px" />
 	</Columns>
 </MudDataGrid>
 
