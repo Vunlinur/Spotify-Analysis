@@ -24,7 +24,11 @@
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Track.Name" Title="Title" Grouping GroupBy="@_groupBy" />
-        <PropertyColumn Property="x => x.Track.Popularity" Title="Popularity" />
+		<TemplateColumn SortBy="x => x.Track.Popularity" Title="Popularity" Groupable="false" HeaderStyle="width: 10vw">
+			<CellTemplate>
+				<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Track.Popularity) />
+			</CellTemplate>
+		</TemplateColumn>
         <PropertyColumn Property="x => x.Track.Album.Name" Title="Album" />
         <PropertyColumn Property="x => x.Artists" Title="Artists" />
     </Columns>
