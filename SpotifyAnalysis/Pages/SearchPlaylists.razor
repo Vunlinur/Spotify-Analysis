@@ -4,6 +4,7 @@
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.DataAccessLayer
 
+@inject SpotifyMudTheme SpotifyTheme
 @inject ScopedData data;
 
 
@@ -20,18 +21,36 @@
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Track.Name" Title="Title" HeaderStyle="width: 20%" Groupable="false" />
-        <PropertyColumn Property="x => x.Artists" Title="Artists" HeaderStyle="width: 20%" />
-        <PropertyColumn Property="x => x.Track.Album.Name" Title="Album" />
-		<TemplateColumn SortBy="x => x.Track.Popularity" Title="Popularity" Groupable="false" HeaderStyle="width: 10%">
+        <PropertyColumn Title="Title" Property="x => x.Track.Name" HeaderStyle="width: 20%" Groupable="false" >
+			<CellTemplate>
+				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.Track.ID) >@(context.Item.Track.Name)</MudLink>
+			</CellTemplate>
+		</PropertyColumn>
+
+        <PropertyColumn Title="Artists" Property="x => x.Artists" HeaderStyle="width: 20%" />
+
+        <PropertyColumn Title="Album" Property="x => x.Track.Album.Name" >
+			<CellTemplate>
+				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.Track.Album.ID) >@(context.Item.Track.Album.Name)</MudLink>
+			</CellTemplate>
+            <FilterTemplate>
+
+            </FilterTemplate>
+		</PropertyColumn>
+
+		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable="false" HeaderStyle="width: 10%">
 			<CellTemplate>
 				<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Track.Popularity) />
 			</CellTemplate>
-		</TemplateColumn>
-        <PropertyColumn Property="x => x.Playlist.Name" Title="Playlist" HeaderStyle="width: 20%" Grouping />
+		</PropertyColumn>
+
+        <PropertyColumn Title="Playlist" Property="x => x.Playlist.Name" Grouping HeaderStyle="width: 20%" >
+			<CellTemplate>
+				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.Playlist.ID) >@(context.Item.Playlist.Name)</MudLink>
+			</CellTemplate>
+		</PropertyColumn>
     </Columns>
 </MudDataGrid>
 
@@ -41,6 +60,10 @@
 	.mud-table-container {
 		max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
 	}
+
+    a:hover {
+        color: @(SpotifyTheme.PaletteDark.Primary)
+    }
 </style>
 
 
