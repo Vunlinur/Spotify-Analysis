@@ -29,15 +29,18 @@
 			</CellTemplate>
 		</PropertyColumn>
 
-        <PropertyColumn Title="Artists" Property="x => x.Artists" HeaderStyle="width: 20%" />
+        <PropertyColumn Title="Artists" Property="x => x.Artists" HeaderStyle="width: 20%" >
+			<CellTemplate>
+                @foreach (var artist in context.Item.Track.Artists) {
+                    <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID) >@(artist.Name)</MudLink>
+                }
+			</CellTemplate>
+        </PropertyColumn>
 
         <PropertyColumn Title="Album" Property="x => x.Track.Album.Name" >
 			<CellTemplate>
 				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.Track.Album.ID) >@(context.Item.Track.Album.Name)</MudLink>
 			</CellTemplate>
-            <FilterTemplate>
-
-            </FilterTemplate>
 		</PropertyColumn>
 
 		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable="false" HeaderStyle="width: 10%">
@@ -61,9 +64,14 @@
 		max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
 	}
 
-    a:hover {
-        color: @(SpotifyTheme.PaletteDark.Primary)
+    @*space between artists*@
+    a {
+        padding: 0 8px 0 0;
     }
+
+        a:hover {
+            color: @(SpotifyTheme.PaletteDark.Primary)
+        }
 </style>
 
 
