@@ -43,7 +43,13 @@
 			</CellTemplate>
 		</PropertyColumn>
 
-		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable="false" HeaderStyle="width: 10%">
+   		<PropertyColumn Title="Duration" Property="x => x.Track.DurationMs" Groupable=false Filterable=false HeaderStyle="width: 6%">
+			<CellTemplate>
+                <MudText>@FormatDuration(context)</MudText>
+            </CellTemplate>
+		</PropertyColumn>
+
+		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable=false HeaderStyle="width: 10%">
 			<CellTemplate>
 				<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Track.Popularity) />
 			</CellTemplate>
@@ -90,6 +96,11 @@
         tracks = data.UserDTO?.Playlists.SelectMany(
             p => p.Tracks.Select(t => new TrackPlaylist(t, p))
         ).ToList();
+    }
+
+    string FormatDuration(CellContext<TrackPlaylist> context) {
+        var ts = TimeSpan.FromMilliseconds(context.Item.Track.DurationMs);
+        return ts.ToString(ts.Hours > 0 ? @"h\:mm\:ss" : @"m\:ss");
     }
 
     void ExpandAll() => dataGrid?.ExpandAllGroups();
