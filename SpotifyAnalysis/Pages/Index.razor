@@ -98,13 +98,14 @@
         StateHasChanged();
 
         // Get user data if user not in DB or not updated for a long time
+        UpdateProgressBar(03, "Processing user data");
         using var db = new SpotifyContext();
         var userDTO = await db.Users
             .FirstOrDefaultAsync(u => u.ID == selectedUser.ID);
-        
+
         if (userDTO is null || MinutesSince(userDTO.Updated) > 15)
             await dataFetch.GetData(selectedUser.ID);
-        
+
         UpdateProgressBar(95, null);
         data.UserDTO = await GetUserDTOFromDB(selectedUser.ID);
         UpdateProgressBar(100, "Finished!");

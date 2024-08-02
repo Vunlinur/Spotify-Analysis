@@ -1,7 +1,18 @@
 ﻿@namespace SpotifyAnalysis.Shared
 
+@using SpotifyAnalysis.Data.DTO
+
+@inject ScopedData scope;
+
 <MudNavMenu>
     <MudNavLink Href="/" Icon=@Icons.Material.Filled.Store Match="NavLinkMatch.All">Home</MudNavLink>
     <MudNavLink Href="counter" Icon=@Icons.Material.Filled.LibraryBooks >Library</MudNavLink>
     <MudNavLink Href="fetchdata" Icon=@Icons.Material.Filled.Group >Fetch data</MudNavLink>
 </MudNavMenu>
+
+<style>
+    .mud-nav-link {
+        font-size: large;
+        height: 70px;
+    }
+</style>
