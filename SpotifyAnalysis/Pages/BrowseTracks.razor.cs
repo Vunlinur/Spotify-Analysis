@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace SpotifyAnalysis.Pages {
     delegate bool DurationFilter(TrackPlaylist t, int duration);
 
-    public partial class SearchPlaylists {
+    public partial class BrowseTracks {
         DurationFilter durationFilter = Operators["is"];
         readonly FilterDefinition<TrackPlaylist> filterDefinition = new();
 
