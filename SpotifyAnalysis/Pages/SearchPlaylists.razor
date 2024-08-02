@@ -8,8 +8,8 @@
 @inject ScopedData data;
 
 
-<MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader
-             SortMode="SortMode.Multiple" QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
+<MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader SortMode="SortMode.Multiple"
+             QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive FilterMode=DataGridFilterMode.ColumnFilterMenu
              Filterable="true" Groupable="true" GroupExpanded="false" >
     <ToolBarContent>
         <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>
@@ -43,11 +43,35 @@
 			</CellTemplate>
 		</PropertyColumn>
 
-   		<PropertyColumn Title="Duration" Property="x => x.Track.DurationMs" Groupable=false Filterable=false HeaderStyle="width: 6%">
+   		<PropertyColumn Title="Duration" Property="x => x.Track.DurationMs" Groupable=false HeaderStyle="width: 6%">
 			<CellTemplate>
-                <MudText>@FormatDuration(context)</MudText>
+                <MudText Typo="Typo.body2" >@FormatDuration(context)</MudText>
             </CellTemplate>
-		</PropertyColumn>
+            <FilterTemplate>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudSelect @bind-Value=@durationFilter FullWidth="true" Dense="true" Margin="@Margin.Dense" >
+                            @foreach (var o in Operators) {
+                                <MudSelectItem Value="@o.Value">@o.Key</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudNumericField @bind-Value="Hours" Label="hours" Variant="Variant.Text" Min="0" Max="10" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudNumericField @bind-Value="Minutes" Label="minutes" Variant="Variant.Text" Min="0" Max="59" />
+                    </MudItem>
+                    <MudItem xs="4">
+                        <MudNumericField @bind-Value="Seconds" Label="seconds" Variant="Variant.Text" Min="0" Max="59" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex justify-end">
+                        <MudButton Class="clear-filter-button" OnClick=@(() => ClearFilter(context)) >Clear</MudButton>
+                        <MudButton Class="apply-filter-button" OnClick=@(() => ApplyFilter(context)) Color="@Color.Primary" >Filter</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </FilterTemplate>
+        </PropertyColumn>
 
 		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable=false HeaderStyle="width: 10%">
 			<CellTemplate>
@@ -72,22 +96,20 @@
 
     @*space between artists*@
     a {
-        padding: 0 8px 0 0;
+        padding: 0 10px 0 0;
     }
 
         a:hover {
             color: @(SpotifyTheme.PaletteDark.Primary)
         }
+
+    .mud-popover {
+        max-width: 30vw;
+    }
 </style>
 
 
 @code {
-    class TrackPlaylist(TrackDTO t, PlaylistDTO p) {
-        public TrackDTO Track = t;
-        public PlaylistDTO Playlist = p;
-        public readonly string Artists = string.Join(", ", t.Artists.Select(a => a.Name));
-    }
-
     MudDataGrid<TrackPlaylist> dataGrid;
     List<TrackPlaylist> tracks;
     string _searchString;
@@ -96,11 +118,6 @@
         tracks = data.UserDTO?.Playlists.SelectMany(
             p => p.Tracks.Select(t => new TrackPlaylist(t, p))
         ).ToList();
-    }
-
-    string FormatDuration(CellContext<TrackPlaylist> context) {
-        var ts = TimeSpan.FromMilliseconds(context.Item.Track.DurationMs);
-        return ts.ToString(ts.Hours > 0 ? @"h\:mm\:ss" : @"m\:ss");
     }
 
     void ExpandAll() => dataGrid?.ExpandAllGroups();
