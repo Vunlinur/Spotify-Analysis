@@ -1,0 +1,27 @@
+﻿@namespace SpotifyAnalysis.Shared
+@implements IDisposable
+
+@using SpotifyAnalysis.Data.DTO
+
+@inject SpotifyMudTheme SpotifyTheme
+@inject ScopedData scope
+
+<MudAvatar Size="Size.Small">
+    <MudImage Src=@GetAvatar() />
+</MudAvatar>
+<MudText Typo="Typo.subtitle1" Class="pr-4 pl-2">@GetUserName()</MudText>
+
+@code {
+    protected override void OnInitialized() {
+        base.OnInitialized();
+        scope.UserChanged += Refresh;
+    }
+
+    public void Dispose() => scope.UserChanged -= Refresh;
+
+    string GetAvatar() => scope.UserDTO?.Images?.LastOrDefault()?.Url ?? StaticResourceMap.UnknownUser;
+
+    string GetUserName() => scope.UserDTO?.Name ?? "No user selected";
+
+    async void Refresh(object _) => await InvokeAsync(StateHasChanged);
+}

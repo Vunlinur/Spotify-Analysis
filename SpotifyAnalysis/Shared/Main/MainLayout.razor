@@ -1,11 +1,7 @@
 ﻿@namespace SpotifyAnalysis.Shared
 @inherits LayoutComponentBase
-@implements IDisposable
-
-@using SpotifyAnalysis.Data.DTO
 
 @inject SpotifyMudTheme SpotifyTheme
-@inject ScopedData scope
 
 <MudThemeProvider IsDarkMode=true Theme="SpotifyTheme" />
 <MudDialogProvider />
@@ -15,13 +11,9 @@
     <MudAppBar Color="Color.Primary" Fixed="true" Dense=true Elevation ="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudSpacer />
-        <MudAvatar Size="Size.Small">
-            <MudImage Src=@GetAvatar() />
-        </MudAvatar>
-        <MudText Typo="Typo.subtitle1" Class="pr-4 pl-2">@GetUserName()</MudText>
+        <UserAvatar />
         <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/MudBlazor/MudBlazor" Target="_blank" />
     </MudAppBar>
-
     <MudDrawer Breakpoint=Breakpoint.Sm ClipMode=DrawerClipMode.Always
                Variant="@DrawerVariant.Mini" OpenMiniOnHover="true" @bind-Open="@_open">
         <NavMenu></NavMenu>
@@ -36,17 +28,4 @@
 @code {
     private bool _open;
     private void ToggleDrawer() => _open = !_open;
-
-    protected override void OnInitialized() {
-        base.OnInitialized();
-        scope.UserChanged += Refresh;
-    }
-
-    public void Dispose() => scope.UserChanged -= Refresh;
-
-    async void Refresh(object _) => await InvokeAsync(StateHasChanged);
-
-    string GetAvatar() => scope.UserDTO?.Images?.LastOrDefault()?.Url ?? StaticResourceMap.UnknownUser;
-
-    string GetUserName() => scope.UserDTO?.Name ?? "No user selected";
 }
