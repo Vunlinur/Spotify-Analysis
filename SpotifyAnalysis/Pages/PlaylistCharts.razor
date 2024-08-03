@@ -1,17 +1,10 @@
 ﻿@page "/charts"
 
-@using Microsoft.EntityFrameworkCore
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
-@using SpotifyAnalysis.Data.DataAccessLayer
-@using SpotifyAnalysis.Data.SpotifyAPI
-@using SpotifyAPI.Web
 @using System.Threading
-@using MudBlazor
 @using System.Collections.Concurrent
 
-@inject SpotifyModule spotifyModule;
-@inject SpotifyContext spotifyContext;
 @inject IDialogService dialogService;
 @inject ScopedData data;
 
