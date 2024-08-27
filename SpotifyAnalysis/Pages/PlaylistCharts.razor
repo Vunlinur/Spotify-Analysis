@@ -23,19 +23,12 @@
     </MudCollapse>
 }
 
-@if ((artistsSongs ?? genreSongs ?? genres) is not null) {
+@if (AllTracks is not null) {
     <div class="pt-6 px-6">
         <MudGrid>
-            @if (artistsSongs is not null) {
-                <MudItemPieChart Title="Artists" Elements=artistsSongs @ref=chartRef OnClickCallback="SelectArtist" />
-                <MudItemArtistPane Artist=@selectedArtist />
-            }
-            @if (genreSongs is not null) {
-                <MudItemPieChart Title="Genres" Elements=genreSongs @ref=chartRef />
-            }
-            @if (genres is not null) {
-                <MudItemPieChart Title="Genres general" Elements=genres @ref=chartRef />
-            }
+            <WidgetArtists @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
+            <WidgetGenres @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
+            <WidgetGenresGeneral @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
         </MudGrid>
     </div>
 }
@@ -43,88 +36,32 @@
 @code {
     private PlaylistTable playlistTable;
 
-    private Elements artistsSongs;
-    private Elements genreSongs;
-    private Elements genres;
-
-    List<MudItemPieChart> chartRefs = [];
-    MudItemPieChart chartRef { set { chartRefs.Add(value); } }
+    List<WidgetBase> chartRefs = [];
+    WidgetBase chartRef { set { chartRefs.Add(value); } }
 
     private bool open { get; set; }
     private void TogglePlaylistTable() => open = !open;
 
-
-    IDictionary<string, ArtistDTO> allArtistsDict;
+    IEnumerable<TrackDTO> AllTracks;
+    IDictionary<string, ArtistDTO> ArtistsDict;
     private async Task GenerateCharts() {
         open = false;
         var selectedPlaylistsIds = playlistTable.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
-        var allTracks = data.UserDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
-        allArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(allTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
+        AllTracks = data.UserDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
+        ArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(AllTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
 
-        var genresTask = BuildGenresGeneralAsync(allTracks, allArtistsDict);
-        var genreSongsTask = BuildGenresAsync(allTracks, allArtistsDict);
-        var artistsSongsTask = BuildArtistsAsync(allTracks);
-
-        genres = await genresTask;
-        genreSongs = await genreSongsTask;
-        artistsSongs = await artistsSongsTask;
-
+        await Task.Delay(100);  // TODO fix dirty hack, this prevents a race condition, presumably between the server and the js chart
+        foreach (var chart in chartRefs) 
+            chart.ProcessData();
+        
         await InvokeAsync(StateHasChanged);
         foreach (var chart in chartRefs)
             chart.RefreshChartAsync();
     }
 
-    private async Task<Elements> BuildArtistsAsync(IEnumerable<TrackDTO> allTracks) {
-        Elements BuildArtists() {
-            var artists = new Elements();
-            foreach (var track in allTracks)
-                foreach (var artist in track.Artists)
-                    artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
-            return artists;
-        }
-
-        return await Task.Run(BuildArtists);
-    }
-
-    private async Task<Elements> BuildGenresAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
-        Elements BuildGenres() {
-            var genres = new Elements();
-            foreach (var track in allTracks)
-                foreach (var artist in track.Artists)
-                    foreach (var genre in allArtists[artist.ID].Genres)
-                        genres.Increase(new Element { Label = genre, Quantity = 1 });
-            return genres;
-        }
-
-        return await Task.Run(BuildGenres);
-    }
-
-    static readonly string[] excludes = { "of", "and", "new", "music" };
-    private async Task<Elements> BuildGenresGeneralAsync(IEnumerable<TrackDTO> allTracks, IDictionary<string, ArtistDTO> allArtists) {
-        Elements BuildGenresGeneral() {
-            var genres = new Elements();
-            foreach (var track in allTracks)
-                foreach (var artist in track.Artists)
-                    foreach (var genre in allArtists[artist.ID].Genres)
-                        foreach (string word in genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries))
-                            genres.Increase(new Element { Label = word, Quantity = 1 });
-            foreach (var exclusion in excludes)
-                genres.Extract(exclusion);
-            return genres;
-        }
-
-        return await Task.Run(BuildGenresGeneral);
-    }
-
     private int selectedCount;
     internal void UpdateGenerateButton(int newSelectedCount) {
         selectedCount = newSelectedCount;
-        StateHasChanged();
-    }
-
-    ArtistDTO selectedArtist;
-    internal void SelectArtist(string artistName) {
-        selectedArtist = allArtistsDict.FirstOrDefault(p => p.Value.Name == artistName).Value ?? selectedArtist;
         StateHasChanged();
     }
 }

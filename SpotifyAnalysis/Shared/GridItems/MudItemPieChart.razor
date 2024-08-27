@@ -1,4 +1,6 @@
-﻿@using SpotifyAnalysis.Data
+﻿@namespace SpotifyAnalysis.Shared
+
+@using SpotifyAnalysis.Data
 @using ApexCharts
 
 @*
@@ -39,7 +41,7 @@
     public IEnumerable<Element> Elements { get; set; }
     private Element[] series { get; set; }
     [Parameter]
-    public Action<string> OnClickCallback { get; set; }
+    public Action<Element> OnClickCallback { get; set; }
 
     private ApexChart<Element> chart;
     private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
@@ -114,7 +116,7 @@
     bool invokeCallback = true;
     protected async void OnDataPointSelection(SelectedData<Element> selection) {
         if (OnClickCallback is not null && invokeCallback)
-            OnClickCallback?.Invoke(selection.DataPoint.X.ToString());
+            OnClickCallback?.Invoke(selection.DataPoint.Items.First());
         else {
             int index = selection.DataPointIndex;
             var serie = series[index];

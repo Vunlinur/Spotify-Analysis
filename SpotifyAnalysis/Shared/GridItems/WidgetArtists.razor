@@ -1,0 +1,37 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+@inherits WidgetBase
+
+@using Data.DTO
+@using SpotifyAnalysis.Data
+
+@if (elements is not null) {
+    @CreateChart()
+    <MudItemArtistPane Artist=@selectedArtist />
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<TrackDTO> Tracks { get; set; }
+    [Parameter, EditorRequired]
+    public IDictionary<string, ArtistDTO> ArtistsDict { get; set; }
+    public override string Title { get; } = "Artists";
+
+    protected override Elements BuildElements() {
+        if (Tracks is null) return new Elements();
+
+        var artists = new Elements();
+        foreach (var track in Tracks)
+            foreach (var artist in track.Artists)
+                artists.Increase(new Element { Label = artist.Name, Quantity = 1 });
+        return artists;
+    }
+
+    protected override void OnClickCallbackInternal(Element element) => SelectArtist(element);
+
+    ArtistDTO selectedArtist;
+    void SelectArtist(Element element) {
+        selectedArtist = ArtistsDict.FirstOrDefault(p => p.Value.Name == element.Label).Value ?? selectedArtist;
+        StateHasChanged();
+    }
+}
