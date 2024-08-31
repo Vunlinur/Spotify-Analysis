@@ -46,7 +46,7 @@ namespace SpotifyAnalysis.Pages {
         }
     }
 
-    readonly struct TrackPlaylist(TrackDTO t, PlaylistDTO p) {
+    class TrackPlaylist(TrackDTO t, PlaylistDTO p) {
         public readonly TrackDTO Track = t;
         public readonly PlaylistDTO Playlist = p;
         public readonly string Artists = string.Join(", ", t.Artists.Select(a => a.Name));

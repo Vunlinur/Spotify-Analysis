@@ -4,8 +4,8 @@
 @using Data.DTO
 
 <MudItemBase>
-	<MudDataGrid T="TrackDTO" Items="@Tracks" FixedHeader Height="500px"
-				 SortMode="SortMode.Multiple" QuickFilter=@Filter>
+	<MudDataGrid T="TrackView" Items="@TrackViews" FixedHeader Height="500px"
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
 			<MudText Typo="Typo.h6">Tracks</MudText>
 			<MudSpacer />
@@ -13,34 +13,48 @@
 						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
 		</ToolBarContent>
 		<Columns>
-			<PropertyColumn Property="x => x.Name" Title="Name" HeaderStyle="width:30%" />
-			<PropertyColumn Property="x => Artists(x)" Title="Artists" />
-			<PropertyColumn Property="x => x.Album.Name" Title="Album" HeaderStyle="width:30%" />
+			<PropertyColumn Property="x => x.track.Name" Title="Name" HeaderStyle="width:30%" />
+			<PropertyColumn Property="x => x.artists" Title="Artists" />
+			<PropertyColumn Property="x => x.track.Album.Name" Title="Album" HeaderStyle="width:30%" />
 		</Columns>
 	</MudDataGrid>
 </MudItemBase>
 
 @code {
 	[Parameter]
-	public IEnumerable<TrackDTO> Tracks { get; set; } = [];
+	public IEnumerable<TrackDTO> Tracks { get; set; }
+
+	protected IEnumerable<TrackView> TrackViews = [];
+
+	protected override void OnParametersSet() {
+		if (Tracks is not null)
+			TrackViews = Tracks.Select(t => new TrackView(t));
+	}
 
 	string _searchString;
-
-	string Artists(TrackDTO t) => string.Join(", ", t.Artists.Select(a => a.Name));
-
-	bool Filter(TrackDTO t) {
+	bool Filter(TrackView t) {
 		if (string.IsNullOrWhiteSpace(_searchString))
 			return true;
 
-		if (Artists(t).Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+		if (t.track.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
 			return true;
 
-		if (t.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+		if (t.artists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
 			return true;
 
-		if (string.Concat(t.Artists).Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+		if (t.track.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
 			return true;
 
 		return false;
+	}
+
+	public class TrackView {
+		public TrackDTO track;
+		public readonly string artists;
+
+		public TrackView(TrackDTO track) {
+			this.track = track;
+			artists = string.Join(", ", track.Artists.Select(a => a.Name));
+		}
 	}
 }

@@ -6,9 +6,9 @@
 <MudItemBase>
 	@if (Artist?.Genres is not null) {
 		<MudStack Row=true Class="full-height" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
-			<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch">
+			<MudStack Justify="Justify.SpaceBetween" AlignItems="AlignItems.Stretch" Style="flex-grow: .6">
 				<MudText Typo="Typo.h6">@Artist.Name</MudText>
-				<MudDataGrid Items="@Artist.Genres" Style="width: 300px" Dense=true >
+				<MudDataGrid Items="@Artist.Genres" Dense=true >
 					<Columns>
 						<PropertyColumn Property="x => x" Title="Genres:" HeaderStyle="font-size: 16px ;width: 120px" />
 					</Columns>
