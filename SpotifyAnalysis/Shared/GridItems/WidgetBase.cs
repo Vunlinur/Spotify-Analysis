@@ -9,6 +9,7 @@ namespace SpotifyAnalysis.Shared {
 
         protected Elements elements;
         protected MudItemPieChart chart;
+        protected Action<Element> onClickCallback;
 
         public void ProcessData() {
             elements = BuildElements();
@@ -24,15 +25,13 @@ namespace SpotifyAnalysis.Shared {
             //await InvokeAsync(StateHasChanged);
         }
 
-        protected abstract void OnClickCallbackInternal(Element element);
-
         protected abstract Elements BuildElements();
 
         protected RenderFragment CreateChart() => builder => {
             builder.OpenComponent(0, typeof(MudItemPieChart));
             builder.AddAttribute(1, nameof(MudItemPieChart.Title), Title);
             builder.AddAttribute(2, nameof(MudItemPieChart.Elements), elements);
-            builder.AddAttribute(3, nameof(MudItemPieChart.OnClickCallback), OnClickCallbackInternal);
+            builder.AddAttribute(3, nameof(MudItemPieChart.OnClickCallback), onClickCallback);
             builder.AddComponentReferenceCapture(4, o => chart = o as MudItemPieChart);
             builder.CloseComponent();
         };
