@@ -7,6 +7,7 @@
 
 @if (elements is not null) {
     @CreateChart()
+    <MudItemTracksPane Tracks=@genreTracks />
 }
 
 @code {
@@ -25,5 +26,16 @@
                 foreach (var genre in ArtistsDict[artist.ID].Genres)
                     genres.Increase(new Element { Label = genre, Quantity = 1 });
         return genres;
+    }
+
+    public WidgetGenres() {
+        onClickCallback = FindGenreTracks;
+    }
+
+    IEnumerable<TrackDTO> genreTracks;
+    void FindGenreTracks(Element element) {
+        var genreArtists = ArtistsDict.Select(a => a.Value).Where(a => a.Genres.Contains(element.Label));
+        genreTracks = Tracks.Where(t => t.Artists.Intersect(genreArtists).Any());
+        StateHasChanged();
     }
 }

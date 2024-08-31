@@ -1,0 +1,46 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+@using MudBlazor
+@using Data.DTO
+
+<MudItemBase>
+	<MudDataGrid T="TrackDTO" Items="@Tracks" FixedHeader Height="500px"
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter>
+		<ToolBarContent>
+			<MudText Typo="Typo.h6">Tracks</MudText>
+			<MudSpacer />
+			<MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+		</ToolBarContent>
+		<Columns>
+			<PropertyColumn Property="x => x.Name" Title="Name" HeaderStyle="width:30%" />
+			<PropertyColumn Property="x => Artists(x)" Title="Artists" />
+			<PropertyColumn Property="x => x.Album.Name" Title="Album" HeaderStyle="width:30%" />
+		</Columns>
+	</MudDataGrid>
+</MudItemBase>
+
+@code {
+	[Parameter]
+	public IEnumerable<TrackDTO> Tracks { get; set; } = [];
+
+	string _searchString;
+
+	string Artists(TrackDTO t) => string.Join(", ", t.Artists.Select(a => a.Name));
+
+	bool Filter(TrackDTO t) {
+		if (string.IsNullOrWhiteSpace(_searchString))
+			return true;
+
+		if (Artists(t).Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (t.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (string.Concat(t.Artists).Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		return false;
+	}
+}
