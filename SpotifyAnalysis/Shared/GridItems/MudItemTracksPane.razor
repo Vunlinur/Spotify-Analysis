@@ -7,9 +7,7 @@
 	<MudDataGrid T="TrackView" Items="@TrackViews" FixedHeader Height="500px"
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
-			@if (!string.IsNullOrEmpty(TitleSuffix)) {
-				<MudText Typo="Typo.h6">Tracks - @TitleSuffix</MudText>
-			}
+			<MudText Typo="Typo.h6">@Title()</MudText>
 			<MudSpacer />
 			<MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
 						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -19,7 +17,7 @@
 			<PropertyColumn Property="x => x.artists" Title="Artists" />
 			<PropertyColumn Property="x => x.track.Album.Name" Title="Album" />
 			@if (ShowGenres) {
-				<PropertyColumn Property="x => x.genres" Title="Album" />
+				<PropertyColumn Property="x => x.genres" Title="Genres" />
 			}
 		</Columns>
 	</MudDataGrid>
@@ -39,6 +37,8 @@
 		if (Tracks is not null)
 			TrackViews = Tracks.Select(t => new TrackView(t));
 	}
+
+	string Title() => string.IsNullOrEmpty(TitleSuffix) ? "Tracks" : "Tracks - " + TitleSuffix;
 
 	string _searchString;
 	bool Filter(TrackView t) {
