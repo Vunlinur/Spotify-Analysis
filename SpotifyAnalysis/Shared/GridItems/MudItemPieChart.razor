@@ -11,26 +11,26 @@
 *@
 
 <MudItemBase>
-        <MudInputLabel Class="mudItemTitle">@Title</MudInputLabel>
-        <ApexChart TItem="Element"
-                   Options="options"
-                   OnDataPointSelection=OnDataPointSelection
-                   @ref="chart">
+    <MudText Typo="Typo.h6">@Title</MudText>
+    <ApexChart TItem="Element"
+                Options="options"
+                OnDataPointSelection=OnDataPointSelection
+                @ref="chart">
 
-            <ApexPointSeries TItem="Element"
-                             Items="series"
-                             SeriesType="SeriesType.Donut"
-                             XValue="@(e => e.Label)"
-                             YValue="@(e => e.Quantity)"/>
-        </ApexChart>
+        <ApexPointSeries TItem="Element"
+                            Items="series"
+                            SeriesType="SeriesType.Donut"
+                            XValue="@(e => e.Label)"
+                            YValue="@(e => e.Quantity)"/>
+    </ApexChart>
 
-        @if (OnClickCallback is not null) {
-            <MudStack Row=true Justify="Justify.Center" AlignItems="AlignItems.Center">
-                <MudInputLabel >Toggle series</MudInputLabel>
-                <MudSwitch @bind-Value="@invokeCallback" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small" />
-                <MudInputLabel>Get details</MudInputLabel>
-            </MudStack>
-        }
+    @if (OnClickCallback is not null) {
+        <MudStack Row=true Justify="Justify.Center" AlignItems="AlignItems.Center">
+            <MudInputLabel >Toggle series</MudInputLabel>
+            <MudSwitch @bind-Value="@invokeCallback" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small" />
+            <MudInputLabel>Get details</MudInputLabel>
+        </MudStack>
+    }
 </MudItemBase>
 
 

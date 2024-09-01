@@ -1,0 +1,74 @@
+﻿@namespace SpotifyAnalysis.Shared
+
+@using MudBlazor
+@using Data.DTO
+
+<MudItemBase>
+	<MudDataGrid T="TrackView" Items="@TrackViews" FixedHeader Height="500px"
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
+		<ToolBarContent>
+			<MudText Typo="Typo.h6">@Title()</MudText>
+			<MudSpacer />
+			<MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+		</ToolBarContent>
+		<Columns>
+			<PropertyColumn Property="x => x.track.Name" Title="Name" />
+			<PropertyColumn Property="x => x.artists" Title="Artists" />
+			<PropertyColumn Property="x => x.track.Album.Name" Title="Album" />
+			@if (ShowGenres) {
+				<PropertyColumn Property="x => x.genres" Title="Genres" />
+			}
+		</Columns>
+	</MudDataGrid>
+</MudItemBase>
+
+@code {
+	[Parameter, EditorRequired]
+	public IEnumerable<TrackDTO> Tracks { get; set; }
+	[Parameter, EditorRequired]
+	public string TitleSuffix { get; set; }
+	[Parameter]
+	public bool ShowGenres { get; set; }
+
+	protected IEnumerable<TrackView> TrackViews = [];
+
+	protected override void OnParametersSet() {
+		if (Tracks is not null)
+			TrackViews = Tracks.Select(t => new TrackView(t));
+	}
+
+	string Title() => string.IsNullOrEmpty(TitleSuffix) ? "Tracks" : "Tracks - " + TitleSuffix;
+
+	string _searchString;
+	bool Filter(TrackView t) {
+		if (string.IsNullOrWhiteSpace(_searchString))
+			return true;
+
+		if (t.track.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (t.artists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (t.track.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (ShowGenres && t.genres.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		return false;
+	}
+
+	public class TrackView {
+		public TrackDTO track;
+		public readonly string artists;
+		public readonly string genres;
+
+		public TrackView(TrackDTO track) {
+			this.track = track;
+			artists = string.Join(", ", track.Artists.Select(a => a.Name));
+			genres = string.Join(", ", track.Artists.SelectMany(a => a.Genres).Distinct());
+		}
+	}
+}

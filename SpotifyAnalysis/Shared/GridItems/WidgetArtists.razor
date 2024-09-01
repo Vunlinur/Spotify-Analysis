@@ -27,7 +27,9 @@
         return artists;
     }
 
-    protected override void OnClickCallbackInternal(Element element) => SelectArtist(element);
+    public WidgetArtists() {
+        onClickCallback = SelectArtist;
+    }
 
     ArtistDTO selectedArtist;
     void SelectArtist(Element element) {
