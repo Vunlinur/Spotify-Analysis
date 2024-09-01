@@ -7,7 +7,7 @@
 
 @if (elements is not null) {
     @CreateChart()
-    <MudItemTracksPane Tracks=@genreTracks />
+    <MudItemTracksPane Tracks=@genreTracks TitleSuffix=@genreName />
 }
 
 @code {
@@ -32,9 +32,11 @@
         onClickCallback = FindGenreTracks;
     }
 
+    string genreName;
     IEnumerable<TrackDTO> genreTracks;
     void FindGenreTracks(Element element) {
-        var genreArtists = ArtistsDict.Select(a => a.Value).Where(a => a.Genres.Contains(element.Label));
+        genreName = element.Label;
+        var genreArtists = ArtistsDict.Select(a => a.Value).Where(a => a.Genres.Contains(genreName));
         genreTracks = Tracks.Where(t => t.Artists.Intersect(genreArtists).Any());
         StateHasChanged();
     }
