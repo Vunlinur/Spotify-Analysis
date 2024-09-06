@@ -1,0 +1,142 @@
+﻿@page "/duplicates"
+
+@using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.DTO
+@using System.Threading
+@using System.Collections.Concurrent
+@using System.Linq.Expressions
+
+@inject IDialogService dialogService;
+@inject ScopedData data;
+
+
+<MudAppBar Color="Color.Surface" Fixed="false" Style="position: fixed; width: -webkit-fill-available; width: -moz-available;">
+    <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
+    <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{playlistTable?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
+    <MudSpacer />
+    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="@(selectedCount == 0)">Find duplicates</MudButton>
+</MudAppBar>
+<div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
+
+@if (data.UserDTO is not null) {
+    <MudCollapse Expanded=@open>
+        <PlaylistTable @ref="playlistTable" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
+    </MudCollapse>
+}
+
+<MudDataGrid T="TrackPlaylists" @ref="dataGrid" Items="@duplicates" FixedHeader
+             QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
+             Filterable="true" Groupable="false" GroupExpanded="true">
+    <ToolBarContent>
+        <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>
+        <MudText Typo="Typo.h6">Browse tracks</MudText>
+        <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
+            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
+            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+        </MudButtonGroup>
+        <MudSpacer />
+        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Title="Title" Property="x => x.Track.Name" HeaderStyle="width: 20%" Groupable=true>
+            <CellTemplate>
+                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.Track.ID)>@(context.Item.Track.Name)</MudLink>
+            </CellTemplate>
+        </PropertyColumn>
+
+        <PropertyColumn Title="Artists" Property="x => x.Track.Artists" HeaderStyle="width: 20%" GroupBy="x => x.Track.Artists[0].Name" Groupable=true>
+            <CellTemplate>
+                @foreach (var artist in context.Item.Track.Artists) {
+                    <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+
+        <PropertyColumn Title="Album" Property="x => x.Track.Album.Name" Groupable=true>
+            <CellTemplate>
+                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.Track.Album.ID)>@(context.Item.Track.Album.Name)</MudLink>
+            </CellTemplate>
+        </PropertyColumn>
+
+        @foreach (var playlist in playlistsWDuplicates ?? []) {
+            <PropertyColumn Title=@playlist.Name Property=@(x => x.Playlists.Contains(playlist)) >
+                <CellTemplate>
+                    @if (context.Item.Playlists.Contains(playlist)) {
+                        <MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.CheckBox" Color="Color.Error" />
+                    } else {
+                        <MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.CheckBoxOutlineBlank" Color="Color.Success" />
+                    }
+                </CellTemplate>
+            </PropertyColumn>
+        }
+    </Columns>
+</MudDataGrid>
+
+<style>
+    .sortable-column-header {
+
+    }
+</style>
+
+
+@code {
+    PlaylistTable playlistTable;
+    MudDataGrid<TrackPlaylists> dataGrid;
+
+    private bool open { get; set; }
+    private void TogglePlaylistTable() => open = !open;
+
+    List<TrackPlaylists> duplicates = [];
+    List<PlaylistDTO> playlistsWDuplicates = [];
+    private async Task FindDuplicates() {
+        open = false;
+        var selectedPlaylists = playlistTable.GetSelectedPlaylists();
+
+        Dictionary<TrackDTO, TrackPlaylists> duplicatesDict = [];
+        foreach (var playlist in selectedPlaylists)
+            foreach (var track in playlist.Tracks) {
+                if (!duplicatesDict.ContainsKey(track))
+                    duplicatesDict.Add(track, new(track));
+                duplicatesDict[track].Playlists.Add(playlist);
+            }
+
+        // Remove the tracks of which only one occurrence was found
+        duplicates = duplicatesDict
+                     .Select(kv => kv.Value)
+                     .Where(tp => tp.Playlists.Count > 1)
+                     .ToList();
+
+        // Take only playlists that contain at least 1 dupe
+        playlistsWDuplicates = duplicates
+                               .SelectMany(tp => tp.Playlists)
+                               .Distinct()
+                               .ToList();
+    }
+
+    private int selectedCount;
+    internal void UpdateGenerateButton(int newSelectedCount) {
+        selectedCount = newSelectedCount;
+        StateHasChanged();
+    }
+
+    void ExpandAll() => dataGrid?.ExpandAllGroups();
+
+    void CollapseAll() => dataGrid?.CollapseAllGroups();
+
+    string _searchString;
+    bool Filter(TrackPlaylists p) {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (p.Track.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+    class TrackPlaylists(TrackDTO trackDTO) {
+        public TrackDTO Track = trackDTO;
+        public List<PlaylistDTO> Playlists = [];
+    }
+}

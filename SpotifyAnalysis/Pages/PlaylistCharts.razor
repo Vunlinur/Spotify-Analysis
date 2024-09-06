@@ -46,8 +46,7 @@
     IDictionary<string, ArtistDTO> ArtistsDict;
     private async Task GenerateCharts() {
         open = false;
-        var selectedPlaylistsIds = playlistTable.GetSelectedPlaylists().Select(p => p.ID).ToHashSet();
-        AllTracks = data.UserDTO.Playlists.Where(p => selectedPlaylistsIds.Contains(p.ID)).SelectMany(p => p.Tracks);
+        AllTracks = playlistTable.GetSelectedPlaylists().SelectMany(p => p.Tracks);
         ArtistsDict = new ConcurrentDictionary<string, ArtistDTO>(AllTracks.SelectMany(t => t.Artists).DistinctBy(t => t.ID).ToDictionary(a => a.ID, a => a));
 
         await Task.Delay(100);  // TODO fix dirty hack, this prevents a race condition, presumably between the server and the js chart
