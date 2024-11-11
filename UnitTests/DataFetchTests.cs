@@ -30,7 +30,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData_GetsOneTrack() {
+        public async Task GetData_GetOneTrack() {
             // Arrange
             var testUser = Stubs.PublicUser();
             var testArtist = Stubs.FullArtist();
@@ -39,13 +39,13 @@ namespace UnitTests {
             var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack]);
 
-            mockUserProfile.Setup(m => m(It.IsAny<string>()))
+            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult(testUser));
 
-            mockPublicPlaylists.Setup(m => m(It.IsAny<string>()))
+            mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
 
-            mockPlaylist.Setup(m => m(It.IsAny<string>()))
+            mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
                 .Returns(Task.FromResult(testPlaylist));
 
             mockTracks.Setup(m => m(It.IsAny<Paging<PlaylistTrack<IPlayableItem>>>()))
@@ -65,16 +65,17 @@ namespace UnitTests {
                 mockArtists.Object,
                 mockProgressBar.Object
             );
-            await dataFetch.GetData("test_user");
+            await dataFetch.GetData(testUser.Id);
 
             // Assert - verify the track, album, and artist were loaded into the database
             var playlists = await dbContext.Playlists
                 .Include(p => p.Tracks).ThenInclude(t => t.Album)
                 .Include(p => p.Tracks).ThenInclude(t => t.Artists)
                 .ToArrayAsync();
-            Assert.AreEqual(1, playlists.Length);
+            Assert.AreEqual(1, playlists.Count());
             var playlist = playlists.FirstOrDefault();
             Assert.AreEqual(testPlaylist.Name, playlist.Name);
+            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
             Assert.AreEqual(1, playlist.Tracks.Count);
             var track = playlist.Tracks.FirstOrDefault();
             Assert.IsNotNull(track);
