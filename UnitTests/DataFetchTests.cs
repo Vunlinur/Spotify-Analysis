@@ -30,7 +30,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData_OneTrack() {
+        public async Task GetData_1Track() {
             // Arrange
             var testUser = Stubs.PublicUser();
             var testArtist = Stubs.FullArtist();
