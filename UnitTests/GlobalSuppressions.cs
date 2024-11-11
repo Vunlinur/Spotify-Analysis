@@ -5,4 +5,9 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Assertion", "NUnit2005:Consider using Assert.That(actual, Is.EqualTo(expected)) instead of Assert.AreEqual(expected, actual)", Justification = "<Pending>", Scope = "member", Target = "~M:UnitTests.Tests.GetData_GetsOneTrack~System.Threading.Tasks.Task")]
+[assembly: SuppressMessage("Assertion",
+    "NUnit2005:Consider using Assert.That(actual, Is.EqualTo(expected)) instead of Assert.AreEqual(expected, actual)",
+    Justification = "Lowers readability", Scope = "module")]
+[assembly: SuppressMessage("Assertion",
+    "NUnit2019:Consider using Assert.That(expr, Is.Not.Null) instead of Assert.IsNotNull(expr)",
+    Justification = "<Pending>", Scope = "module")]
