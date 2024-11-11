@@ -181,7 +181,7 @@ namespace UnitTests {
             mockTracks.Setup(m => m(It.IsAny<Paging<PlaylistTrack<IPlayableItem>>>()))
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
             mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
-                .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist }));
+                .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
             mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
 
             // Act
@@ -260,6 +260,77 @@ namespace UnitTests {
                 mockArtists.Object,
                 mockProgressBar.Object
             );
+            await dataFetch.GetData(testUser.Id);
+
+            // Assert
+            var albums = await dbContext.Albums.ToListAsync();
+            var artists = await dbContext.Artists.ToListAsync();
+            var tracks = await dbContext.Tracks.ToListAsync();
+            var playlists = await dbContext.Playlists
+                .Include(p => p.Tracks).ThenInclude(t => t.Album)
+                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
+                .ToListAsync();
+            Assert.AreEqual(1, albums.Count);
+            Assert.AreEqual(1, artists.Count);
+            Assert.AreEqual(2, tracks.Count);
+            Assert.AreEqual(1, playlists.Count);
+            var playlist = playlists.FirstOrDefault();
+            Assert.AreEqual(testPlaylist.Id, playlist.ID);
+            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
+            Assert.AreEqual(2, playlist.Tracks.Count);
+            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
+            Assert.IsNotNull(track);
+            Assert.AreEqual(testTrack.Id, track.ID);
+            Assert.AreEqual(testAlbum.Id, track.Album.ID);
+            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
+            Assert.AreEqual(1, track.Artists.Count);
+            Assert.AreEqual(1, track.Playlists.Count);
+            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
+            Assert.IsNotNull(track);
+            Assert.AreEqual(testTrack2.Id, track.ID);
+            Assert.AreEqual(testAlbum.Id, track.Album.ID);
+            Assert.AreEqual(1, track.Artists.Count);
+            Assert.AreEqual(1, track.Playlists.Count);
+            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
+        }
+
+        [Test]
+        public async Task GetData2Passes_2TracksSameArtistSameAlbums() {
+            // Arrange
+            var testArtist = Stubs.FullArtist();
+            var testSimpleArtist = Stubs.SimpleArtist();
+            var testAlbum = Stubs.SimpleAlbum([testSimpleArtist]);
+            var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
+            var testTrack2 = Stubs.FullTrack([testSimpleArtist], testAlbum, 2);
+
+            var testUser = Stubs.PublicUser();
+            var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
+
+            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
+                .Returns(Task.FromResult(testUser));
+            mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
+                .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
+            mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
+                .Returns(Task.FromResult(testPlaylist));
+            mockTracks.SetupSequence(m => m(It.IsAny<Paging<PlaylistTrack<IPlayableItem>>>()))
+                .Returns(Task.FromResult(new List<FullTrack> { testTrack }))
+                .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
+            mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
+                .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
+            mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
+
+            // Act
+            var dataFetch = new DataFetch(
+                mockUserProfile.Object,
+                mockPublicPlaylists.Object,
+                mockPlaylist.Object,
+                mockTracks.Object,
+                mockArtists.Object,
+                mockProgressBar.Object
+            );
+            await dataFetch.GetData(testUser.Id);
+            testPlaylist.Tracks = Stubs.PagingFromTracks([testTrack, testTrack2]);
+            testPlaylist.SnapshotId = "new snapshot";
             await dataFetch.GetData(testUser.Id);
 
             // Assert

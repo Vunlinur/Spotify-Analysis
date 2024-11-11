@@ -19,12 +19,15 @@ namespace UnitTests {
                 Name = $"Test Playlist {id}",
                 Owner = owner,
                 SnapshotId = $"snapshot{id}",
-                Tracks = new Paging<PlaylistTrack<IPlayableItem>> {
-                    Items = tracks.Select(t => new PlaylistTrack<IPlayableItem> { Track = t }).ToList(),
-                    Total = tracks.Count(),
-                },
+                Tracks = PagingFromTracks(tracks),
                 Followers = new Followers { Total = id },
                 Images = Images()
+            };
+
+        public static Paging<PlaylistTrack<IPlayableItem>> PagingFromTracks(IEnumerable<FullTrack> tracks) =>
+            new() {
+                Items = tracks.Select(t => new PlaylistTrack<IPlayableItem> { Track = t }).ToList(),
+                Total = tracks.Count(),
             };
 
         public static FullTrack FullTrack(List<SimpleArtist> artists, SimpleAlbum album, int id = 0) =>
