@@ -4,7 +4,7 @@ using SpotifyAnalysis.Data.DataAccessLayer;
 using SpotifyAPI.Web;
 
 namespace UnitTests {
-    public class DataFetchTests {
+    public class GetDataTests {
         private Mock<GetUserProfileDelegate> mockUserProfile;
         private Mock<GetUsersPublicPlaylistsDelegate> mockPublicPlaylists;
         private Mock<GetPlaylistAsyncDelegate> mockPlaylist;
@@ -30,7 +30,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData_1Track() {
+        public async Task Add_1Track() {
             // Arrange
             var testUser = Stubs.PublicUser();
             var testArtist = Stubs.FullArtist();
@@ -87,7 +87,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData_2DifferentTracks() {
+        public async Task Add_2DifferentTracks() {
             // Arrange
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
@@ -157,7 +157,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData_2TracksSameArtistDiffAlbums() {
+        public async Task Add_2TracksSameArtistDiffAlbums() {
             // Arrange
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
@@ -225,7 +225,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData_2TracksSameArtistSameAlbums() {
+        public async Task Add_2TracksSameArtistSameAlbums() {
             // Arrange
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
@@ -291,7 +291,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task GetData2Passes_2TracksSameArtistSameAlbums() {
+        public async Task Update_2TracksSameArtistSameAlbums() {
             // Arrange
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
