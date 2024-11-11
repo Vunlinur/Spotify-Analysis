@@ -49,7 +49,6 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack }));
             mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
-            mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
 
             // Act
             var dataFetch = new DataFetch(
@@ -113,7 +112,6 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
             mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist2 }));
-            mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
 
             // Act
             var dataFetch = new DataFetch(
@@ -182,7 +180,6 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
             mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
-            mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
 
             // Act
             var dataFetch = new DataFetch(
@@ -249,7 +246,6 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
             mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist }));
-            mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
 
             // Act
             var dataFetch = new DataFetch(
@@ -317,7 +313,6 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
             mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
-            mockProgressBar.Setup(m => m(It.IsAny<float>(), It.IsAny<string>()));
 
             // Act
             var dataFetch = new DataFetch(
