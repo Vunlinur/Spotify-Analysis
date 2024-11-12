@@ -204,7 +204,7 @@ namespace UnitTests {
             Assert.AreEqual(1, artists.Count);
             Assert.AreEqual(2, tracks.Count);
             Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists.FirstOrDefault();
+            var playlist = playlists[0];
             Assert.AreEqual(testPlaylist.Id, playlist.ID);
             Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
             Assert.AreEqual(2, playlist.Tracks.Count);
@@ -212,16 +212,16 @@ namespace UnitTests {
             Assert.IsNotNull(track);
             Assert.AreEqual(testTrack.Id, track.ID);
             Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
             Assert.AreEqual(1, track.Artists.Count);
+            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
             Assert.AreEqual(1, track.Playlists.Count);
             track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
             Assert.IsNotNull(track);
             Assert.AreEqual(testTrack2.Id, track.ID);
             Assert.AreEqual(testAlbum2.Id, track.Album.ID);
             Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(1, track.Playlists.Count);
             Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
+            Assert.AreEqual(1, track.Playlists.Count);
         }
 
         [Test]
@@ -270,7 +270,7 @@ namespace UnitTests {
             Assert.AreEqual(1, artists.Count);
             Assert.AreEqual(2, tracks.Count);
             Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists.FirstOrDefault();
+            var playlist = playlists[0];
             Assert.AreEqual(testPlaylist.Id, playlist.ID);
             Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
             Assert.AreEqual(2, playlist.Tracks.Count);
@@ -278,16 +278,16 @@ namespace UnitTests {
             Assert.IsNotNull(track);
             Assert.AreEqual(testTrack.Id, track.ID);
             Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
             Assert.AreEqual(1, track.Artists.Count);
+            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
             Assert.AreEqual(1, track.Playlists.Count);
             track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
             Assert.IsNotNull(track);
             Assert.AreEqual(testTrack2.Id, track.ID);
             Assert.AreEqual(testAlbum.Id, track.Album.ID);
             Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(1, track.Playlists.Count);
             Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
+            Assert.AreEqual(1, track.Playlists.Count);
         }
 
         [Test]
