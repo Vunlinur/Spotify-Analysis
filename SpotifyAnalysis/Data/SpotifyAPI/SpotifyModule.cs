@@ -77,7 +77,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		 */
 		public async Task<List<FullTrack>> GetTracksAsync(Paging<PlaylistTrack<IPlayableItem>> paging) {
 			var allPlayableItems = await SpotifyClient.PaginateAll(paging);
-			return allPlayableItems.ToFullTracks().Where(t => t.Id is not null).ToList();  // ID is null when track is local
+			return PlayableItemTo<FullTrack>(allPlayableItems).Where(t => t.Id is not null).ToList();  // ID is null when track is local
         }
 
         /**
@@ -86,6 +86,12 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         public async Task<List<FullArtist>> GetArtistsAsync(IList<string> ids) {
             var artistsResponse = await SpotifyClient.Artists.GetSeveral(new ArtistsRequest(ids));
             return artistsResponse.Artists;
+        }
+
+        private static IEnumerable<T> PlayableItemTo<T>(IEnumerable<PlaylistTrack<IPlayableItem>> playableItems) where T : IPlayableItem {
+            foreach (PlaylistTrack<IPlayableItem> item in playableItems)
+                if (item.Track is T track)
+                    yield return track;
         }
     }
 }
