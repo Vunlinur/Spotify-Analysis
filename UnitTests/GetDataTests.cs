@@ -300,14 +300,18 @@ namespace UnitTests {
             var testTrack2 = Stubs.FullTrack([testSimpleArtist], testAlbum, 2);
 
             var testUser = Stubs.PublicUser();
-            var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
+            var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack]);
+            var testPlaylist2 = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
+            testPlaylist2.SnapshotId = "new snapshot";
 
             mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult(testUser));
-            mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
-            mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
-                .Returns(Task.FromResult(testPlaylist));
+            mockPublicPlaylists.SetupSequence(m => m(It.Is<string>(s => s == testUser.Id)))
+                .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]))
+                .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist2]));
+            mockPlaylist.SetupSequence(m => m(It.Is<string>(s => s == testPlaylist.Id)))
+                .Returns(Task.FromResult(testPlaylist))
+                .Returns(Task.FromResult(testPlaylist2));
             mockTracks.SetupSequence(m => m(It.IsAny<Paging<PlaylistTrack<IPlayableItem>>>()))
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack }))
                 .Returns(Task.FromResult(new List<FullTrack> { testTrack, testTrack2 }));
@@ -324,8 +328,6 @@ namespace UnitTests {
                 mockProgressBar.Object
             );
             await dataFetch.GetData(testUser.Id);
-            testPlaylist.Tracks = Stubs.PagingFromTracks([testTrack, testTrack2]);
-            testPlaylist.SnapshotId = "new snapshot";
             await dataFetch.GetData(testUser.Id);
 
             // Assert
