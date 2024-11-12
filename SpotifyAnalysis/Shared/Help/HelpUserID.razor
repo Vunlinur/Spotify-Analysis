@@ -2,7 +2,7 @@
 
 @inject SpotifyMudTheme SpotifyTheme
 
-<MudList>
+<MudList T="string">
     <MudListItem>
         <MudText>1. <b>Open Spotify</b> on your desktop or mobile device.</MudText>
     </MudListItem>
@@ -14,7 +14,7 @@
 <MudStack Row>
     <MudStack>
         <MudText Typo="Typo.h6" Align=Align.Center Style="color: grey;" >Desktop</MudText>
-        <MudList>
+        <MudList T="string">
             <MudListItem>
                 <MudText>3. <b>Copy link to the profile</b> by right-clicking on the user name.</MudText>
             </MudListItem>
@@ -25,7 +25,7 @@
 
     <MudStack>
         <MudText Typo="Typo.h6" Align=Align.Center Style="color: grey;">Mobile</MudText>
-        <MudList>
+        <MudList T="string">
             <MudListItem>
                 <MudText>3. <b>Open the profile's menu</b> by clicking the three dots underneath the profile name.</MudText>
             </MudListItem>

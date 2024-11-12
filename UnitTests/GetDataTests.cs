@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using SpotifyAnalysis.Data.DataAccessLayer;
-using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
+using NUnit.Framework.Legacy;
 
 namespace UnitTests {
     public class GetDataTests {
@@ -51,19 +51,19 @@ namespace UnitTests {
             );
 
         private void AssertDbSetCounts(int playlistCount, int trackCount, int artistCount, int albumCount) {
-            Assert.AreEqual(playlistCount, dbContext.Playlists.Count());
-            Assert.AreEqual(trackCount, dbContext.Tracks.Count());
-            Assert.AreEqual(artistCount, dbContext.Artists.Count());
-            Assert.AreEqual(albumCount, dbContext.Albums.Count());
+            ClassicAssert.AreEqual(playlistCount, dbContext.Playlists.Count());
+            ClassicAssert.AreEqual(trackCount, dbContext.Tracks.Count());
+            ClassicAssert.AreEqual(artistCount, dbContext.Artists.Count());
+            ClassicAssert.AreEqual(albumCount, dbContext.Albums.Count());
         }
 
         private void AssertPlaylistData(FullPlaylist testPlaylist, int expectedTrackCount) {
             var playlist = dbContext.Playlists
                 .Include(t => t.Tracks)
                 .FirstOrDefault(p => p.ID == testPlaylist.Id);
-            Assert.IsNotNull(playlist);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(expectedTrackCount, playlist.Tracks.Count);
+            ClassicAssert.IsNotNull(playlist);
+            ClassicAssert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
+            ClassicAssert.AreEqual(expectedTrackCount, playlist.Tracks.Count);
         }
 
         private void AssertTrackData(FullTrack testTrack, string albumID, string[] artistIDs) {
@@ -71,9 +71,9 @@ namespace UnitTests {
                 .Include(t => t.Album)
                 .Include(t => t.Artists)
                 .FirstOrDefault(p => p.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(albumID, track.Album.ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            ClassicAssert.IsNotNull(track);
+            ClassicAssert.AreEqual(albumID, track.Album.ID);
+            ClassicAssert.AreEqual(1, track.Playlists.Count);
             CollectionAssert.AreEquivalent(artistIDs, track.Artists.Select(a => a.ID));
         }
 
@@ -304,7 +304,7 @@ namespace UnitTests {
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
-            Assert.NotNull(dbContext.Artists.FirstOrDefault(a => a.ID == testVariousArtist.Id));
+            ClassicAssert.NotNull(dbContext.Artists.FirstOrDefault(a => a.ID == testVariousArtist.Id));
         }
 
         [Test]
@@ -544,7 +544,7 @@ namespace UnitTests {
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
-            Assert.NotNull(dbContext.Artists.FirstOrDefault(a => a.ID == testVariousArtist.Id));
+            ClassicAssert.NotNull(dbContext.Artists.FirstOrDefault(a => a.ID == testVariousArtist.Id));
         }
 
         [TearDown]
