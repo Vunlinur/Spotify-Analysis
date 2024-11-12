@@ -14,10 +14,16 @@ namespace UnitTests {
 
         private SpotifyContext dbContext;
 
-        [SetUp]
-        public void Setup() {
+        private PublicUser testUser;
+
+        [OneTimeSetUp]
+        public void OneTimeSetup() {
             // Configure in-memory database for testing
             SpotifyContext.Configurator = Stubs.ConfigureInMemory;
+        }
+
+        [SetUp]
+        public void Setup() {
             dbContext = new SpotifyContext();
 
             // Initialize mock delegates
@@ -27,20 +33,31 @@ namespace UnitTests {
             mockTracks = new Mock<GetTracksAsyncDelegate>();
             mockArtists = new Mock<GetArtistsAsyncDelegate>();
             mockProgressBar = new Mock<UpdateProgressBarDelegate>();
+
+            testUser = Stubs.PublicUser();
+            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
+                .Returns(Task.FromResult(testUser));
         }
+
+        private DataFetch CreateDataFetch() =>
+            new(
+                mockUserProfile.Object,
+                mockPublicPlaylists.Object,
+                mockPlaylist.Object,
+                mockTracks.Object,
+                mockArtists.Object,
+                mockProgressBar.Object
+            );
 
         [Test]
         public async Task Add_1Track() {
             // Arrange
-            var testUser = Stubs.PublicUser();
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
             var testAlbum = Stubs.SimpleAlbum([testSimpleArtist]);
             var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack]);
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
             mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
@@ -51,14 +68,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
 
             // Assert
@@ -99,11 +109,8 @@ namespace UnitTests {
             var testAlbum2 = Stubs.SimpleAlbum([testSimpleArtist2], 2);
             var testTrack2 = Stubs.FullTrack([testSimpleArtist2], testAlbum2, 2);
 
-            var testUser = Stubs.PublicUser();
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
             mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
@@ -114,14 +121,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist2 }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
 
             // Assert
@@ -167,11 +167,8 @@ namespace UnitTests {
             var testAlbum2 = Stubs.SimpleAlbum([testSimpleArtist], 2);
             var testTrack2 = Stubs.FullTrack([testSimpleArtist], testAlbum2, 2);
 
-            var testUser = Stubs.PublicUser();
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
             mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
@@ -182,14 +179,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
 
             // Assert
@@ -232,12 +222,8 @@ namespace UnitTests {
             var testAlbum = Stubs.SimpleAlbum([testSimpleArtist]);
             var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
             var testTrack2 = Stubs.FullTrack([testSimpleArtist], testAlbum, 2);
-
-            var testUser = Stubs.PublicUser();
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
             mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
@@ -248,14 +234,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
 
             // Assert
@@ -302,11 +281,8 @@ namespace UnitTests {
             var testSimpleArtist2 = Stubs.SimpleArtist(2);
             var testTrack2 = Stubs.FullTrack([testSimpleArtist2], testAlbum, 2);
 
-            var testUser = Stubs.PublicUser();
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
             mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
@@ -317,14 +293,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist2 }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
 
             // Assert
@@ -373,11 +342,8 @@ namespace UnitTests {
             var testSimpleArtist2 = Stubs.SimpleArtist(2);
             var testTrack2 = Stubs.FullTrack([testSimpleArtist2], testAlbum, 2);
 
-            var testUser = Stubs.PublicUser();
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
             mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
@@ -388,14 +354,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist, testArtist2 }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
 
             // Assert
@@ -439,13 +398,10 @@ namespace UnitTests {
             var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
             var testTrack2 = Stubs.FullTrack([testSimpleArtist], testAlbum, 2);
 
-            var testUser = Stubs.PublicUser();
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack]);
             var testPlaylist2 = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
             testPlaylist2.SnapshotId = "new snapshot";
 
-            mockUserProfile.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
-                .Returns(Task.FromResult(testUser));
             mockPublicPlaylists.SetupSequence(m => m(It.Is<string>(s => s == testUser.Id)))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]))
                 .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist2]));
@@ -459,14 +415,7 @@ namespace UnitTests {
                 .Returns(Task.FromResult(new List<FullArtist> { testArtist }));
 
             // Act
-            var dataFetch = new DataFetch(
-                mockUserProfile.Object,
-                mockPublicPlaylists.Object,
-                mockPlaylist.Object,
-                mockTracks.Object,
-                mockArtists.Object,
-                mockProgressBar.Object
-            );
+            var dataFetch = CreateDataFetch();
             await dataFetch.GetData(testUser.Id);
             await dataFetch.GetData(testUser.Id);
 
