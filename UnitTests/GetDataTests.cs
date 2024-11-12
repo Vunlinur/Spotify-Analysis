@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using SpotifyAnalysis.Data.DataAccessLayer;
+using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
 
 namespace UnitTests {
@@ -49,6 +50,33 @@ namespace UnitTests {
                 mockProgressBar.Object
             );
 
+        private void AssertDbSetCounts(int playlistCount, int trackCount, int artistCount, int albumCount) {
+            Assert.AreEqual(playlistCount, dbContext.Playlists.Count());
+            Assert.AreEqual(trackCount, dbContext.Tracks.Count());
+            Assert.AreEqual(artistCount, dbContext.Artists.Count());
+            Assert.AreEqual(albumCount, dbContext.Albums.Count());
+        }
+
+        private void AssertPlaylistData(FullPlaylist testPlaylist, int expectedTrackCount) {
+            var playlist = dbContext.Playlists
+                .Include(t => t.Tracks)
+                .FirstOrDefault(p => p.ID == testPlaylist.Id);
+            Assert.IsNotNull(playlist);
+            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
+            Assert.AreEqual(expectedTrackCount, playlist.Tracks.Count);
+        }
+
+        private void AssertTrackData(FullTrack testTrack, string albumID, string[] artistIDs) {
+            var track = dbContext.Tracks
+                .Include(t => t.Album)
+                .Include(t => t.Artists)
+                .FirstOrDefault(p => p.ID == testTrack.Id);
+            Assert.IsNotNull(track);
+            Assert.AreEqual(albumID, track.Album.ID);
+            Assert.AreEqual(1, track.Playlists.Count);
+            CollectionAssert.AreEquivalent(artistIDs, track.Artists.Select(a => a.ID));
+        }
+
         [Test]
         public async Task Add_1Track() {
             // Arrange
@@ -72,28 +100,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(1, albums.Count);
-            Assert.AreEqual(1, artists.Count);
-            Assert.AreEqual(1, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(1, playlist.Tracks.Count);
-            var track = playlist.Tracks[0];
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 1, 1, 1);
+            AssertPlaylistData(testPlaylist, 1);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+
         }
 
         [Test]
@@ -125,35 +135,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(2, albums.Count);
-            Assert.AreEqual(2, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum2.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist2.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 2, 2, 2);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum2.Id, [testArtist2.Id]);
         }
 
         [Test]
@@ -183,35 +168,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(2, albums.Count);
-            Assert.AreEqual(1, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum2.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 2, 1, 2);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum2.Id, [testArtist.Id]);
         }
 
         [Test]
@@ -238,35 +198,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(1, albums.Count);
-            Assert.AreEqual(1, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 2, 1, 1);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum.Id, [testArtist.Id]);
         }
 
         [Test]
@@ -274,13 +209,12 @@ namespace UnitTests {
             // Arrange
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
-            var testAlbum = Stubs.SimpleAlbum([testSimpleArtist]);
-            var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
-
             var testArtist2 = Stubs.FullArtist(2);
             var testSimpleArtist2 = Stubs.SimpleArtist(2);
-            var testTrack2 = Stubs.FullTrack([testSimpleArtist2], testAlbum, 2);
 
+            var testAlbum = Stubs.SimpleAlbum([testSimpleArtist]);
+            var testTrack = Stubs.FullTrack([testSimpleArtist], testAlbum);
+            var testTrack2 = Stubs.FullTrack([testSimpleArtist2], testAlbum, 2);
             var testPlaylist = Stubs.FullPlaylist(testUser, [testTrack, testTrack2]);
 
             mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
@@ -297,35 +231,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(1, albums.Count);
-            Assert.AreEqual(2, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist2.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 2, 2, 1);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
         }
 
         [Test]
@@ -355,35 +264,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(1, albums.Count);
-            Assert.AreEqual(2, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist2.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 2, 2, 1);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
         }
 
         [Test]
@@ -416,35 +300,11 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(1, albums.Count);
-            Assert.AreEqual(3, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists[0];
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(testArtist2.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Playlists.Count);
+            AssertDbSetCounts(1, 2, 3, 1);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
+            Assert.NotNull(dbContext.Artists.FirstOrDefault(a => a.ID == testVariousArtist.Id));
         }
 
         [Test]
@@ -478,35 +338,10 @@ namespace UnitTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            var albums = await dbContext.Albums.ToListAsync();
-            var artists = await dbContext.Artists.ToListAsync();
-            var tracks = await dbContext.Tracks.ToListAsync();
-            var playlists = await dbContext.Playlists
-                .Include(p => p.Tracks).ThenInclude(t => t.Album)
-                .Include(p => p.Tracks).ThenInclude(t => t.Artists)
-                .ToListAsync();
-            Assert.AreEqual(1, albums.Count);
-            Assert.AreEqual(1, artists.Count);
-            Assert.AreEqual(2, tracks.Count);
-            Assert.AreEqual(1, playlists.Count);
-            var playlist = playlists.FirstOrDefault();
-            Assert.AreEqual(testPlaylist.Id, playlist.ID);
-            Assert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
-            Assert.AreEqual(2, playlist.Tracks.Count);
-            var track = playlist.Tracks.First(t => t.ID == testTrack.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(1, track.Playlists.Count);
-            track = playlist.Tracks.First(t => t.ID == testTrack2.Id);
-            Assert.IsNotNull(track);
-            Assert.AreEqual(testTrack2.Id, track.ID);
-            Assert.AreEqual(testAlbum.Id, track.Album.ID);
-            Assert.AreEqual(1, track.Artists.Count);
-            Assert.AreEqual(1, track.Playlists.Count);
-            Assert.AreEqual(testArtist.Id, track.Artists[0].ID);
+            AssertDbSetCounts(1, 2, 1, 1);
+            AssertPlaylistData(testPlaylist, 2);
+            AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
+            AssertTrackData(testTrack2, testAlbum.Id, [testArtist.Id]);
         }
 
         [TearDown]
