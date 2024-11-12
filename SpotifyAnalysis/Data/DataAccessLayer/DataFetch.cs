@@ -39,10 +39,11 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
             try {
                 // TODO optimize await order
                 updateProgressBar?.Invoke(5, "Processing user data");
-                var allUserPlaylists = (await getUsersPublicPlaylistsAsync(userID)).ToPlaylistDTOs();
-                var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
+                var allUserPlaylistsTask = getUsersPublicPlaylistsAsync(userID);
                 using var db = new SpotifyContext();
                 UserDTO user = await GetOrAddUser(db, userID);
+                var allUserPlaylists = (await allUserPlaylistsTask).ToPlaylistDTOs();
+                var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
                 updateProgressBar?.Invoke(10, "Processing playlists");
                 await ProcessPlaylists(db, user, allUserPlaylists);
