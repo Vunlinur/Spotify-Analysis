@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 
 
-namespace SpotifyAnalysis.Data.DataAccessLayer {
+namespace SpotifyAnalysis.Data.Database {
     public class SpotifyContext : DbContext {
         public static Action<DbContextOptionsBuilder> Configurator { get; set; } = ConfigureSqlServer;
 

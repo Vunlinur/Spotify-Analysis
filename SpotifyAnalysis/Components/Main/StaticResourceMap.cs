@@ -1,4 +1,4 @@
-﻿namespace SpotifyAnalysis.Shared {
+﻿namespace SpotifyAnalysis.Components {
     public static class StaticResourceMap {
         public const string UnknownUser = "anonymous-user.jpeg";
         public const string UnknownResource = "unknown.jpeg";

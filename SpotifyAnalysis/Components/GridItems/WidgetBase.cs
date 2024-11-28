@@ -3,7 +3,7 @@ using SpotifyAnalysis.Data;
 using System;
 using System.Threading.Tasks;
 
-namespace SpotifyAnalysis.Shared {
+namespace SpotifyAnalysis.Components {
     public abstract class WidgetBase : ComponentBase {
         public abstract string Title { get; }
 

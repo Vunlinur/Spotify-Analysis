@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SpotifyAnalysis.Data.DataAccessLayer {
+namespace SpotifyAnalysis.Data.Database {
     public static class DBExtensions {
 		public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this IEnumerable<TEnt> current, IEnumerable<TEnt> source, Func<TEnt, TKey> keySelector) where TEnt : class {
 			var existingKeys = current.Select(keySelector).ToHashSet();

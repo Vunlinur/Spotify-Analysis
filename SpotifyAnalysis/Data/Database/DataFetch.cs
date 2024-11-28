@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 
-namespace SpotifyAnalysis.Data.DataAccessLayer {
+namespace SpotifyAnalysis.Data.Database {
     public delegate Task<PublicUser> GetUserProfileDelegate(string userID);
     public delegate Task<IList<FullPlaylist>> GetUsersPublicPlaylistsDelegate(string userID);
     public delegate Task<FullPlaylist> GetPlaylistAsyncDelegate(string playlistId);

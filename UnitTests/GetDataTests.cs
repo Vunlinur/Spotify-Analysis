@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Moq;
-using SpotifyAnalysis.Data.DataAccessLayer;
+using SpotifyAnalysis.Data.Database;
 using SpotifyAPI.Web;
 using NUnit.Framework.Legacy;
 
