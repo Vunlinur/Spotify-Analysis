@@ -151,31 +151,48 @@ namespace SpotifyAnalysis.Data.Database {
         private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
             dtos.Playlists.UpdateOrAdd(fullPlaylist, out PlaylistDTO playlist);
 
-            if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID))
+            if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID)) {
                 dtos.User.Playlists.Add(playlist);
+            }
 
             foreach (var fullTrack in fullTracks) {
-                foreach (var simpleArtist in fullTrack.Artists)
-                    dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+                ProcessTrackArtists(fullTrack, dtos);
+                ProcessTrackAlbum(fullTrack, dtos, out AlbumDTO album);
+                ProcessSingleTrack(fullTrack, playlist, dtos, album);
+            }
+        }
+
+        private static void ProcessTrackArtists(FullTrack fullTrack, DTOAggregate dtos) {
+            foreach (var simpleArtist in fullTrack.Artists)
+                dtos.Artists.UpdateOrAdd(simpleArtist, out _);
 
                 foreach (var simpleArtist in fullTrack.Album.Artists) // TODO Artists here sometimes happen to be null!
-                    dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+                dtos.Artists.UpdateOrAdd(simpleArtist, out _);
+        }
 
-                if (!dtos.Albums.UpdateOrAdd(fullTrack.Album, out AlbumDTO album)) {
-                    var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
-                    album.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-                }
-
-                if (!dtos.Tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
-                    track.Album = album;
-                    var artistIds = fullTrack.Artists.Select(a => a.Id);
-                    track.Artists = dtos.Artists.Where(a => artistIds.Contains(a.Key)).Select(p => p.Value).ToList();
-                }
-
-                // TODO remove tracks which have been removed
-                if (!playlist.Tracks.Any(t => t.ID == track.ID))
-                    playlist.Tracks.Add(track);
+        private static void ProcessTrackAlbum(FullTrack fullTrack, DTOAggregate dtos, out AlbumDTO album) {
+            if (!dtos.Albums.UpdateOrAdd(fullTrack.Album, out album)) {
+                var artistIds = fullTrack.Album.Artists.Select(a => a.Id);
+                album.Artists = dtos.Artists
+                    .Where(a => artistIds.Contains(a.Key))
+                    .Select(a => a.Value)
+                    .ToList();
             }
+        }
+
+        private static void ProcessSingleTrack(FullTrack fullTrack, PlaylistDTO playlist, DTOAggregate dtos, AlbumDTO album) {
+            if (!dtos.Tracks.UpdateOrAdd(fullTrack, out TrackDTO track)) {
+                track.Album = album;
+                var artistIds = fullTrack.Artists.Select(a => a.Id);
+                track.Artists = dtos.Artists
+                    .Where(a => artistIds.Contains(a.Key))
+                    .Select(a => a.Value)
+                    .ToList();
+            }
+            
+            // TODO remove tracks which have been removed
+            if (!playlist.Tracks.Any(t => t.ID == track.ID))
+                playlist.Tracks.Add(track);
         }
 
         private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
