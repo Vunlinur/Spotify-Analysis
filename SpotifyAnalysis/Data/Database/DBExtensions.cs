@@ -9,7 +9,9 @@ namespace SpotifyAnalysis.Data.Database {
     public static class DBExtensions {
 		public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this IEnumerable<TEnt> current, IEnumerable<TEnt> source, Func<TEnt, TKey> keySelector) where TEnt : class {
 			var existingKeys = current.Select(keySelector).ToHashSet();
-			return source.Where(e => !existingKeys.Contains(keySelector(e)));
+			foreach (TEnt element in source)
+				if (!existingKeys.Contains(keySelector(element)))
+					yield return element;
 		}
 
 		public static bool UpdateOrAdd(this IDictionary<string, PlaylistDTO> dict, FullPlaylist source, out PlaylistDTO outPlaylist) {
