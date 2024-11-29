@@ -52,26 +52,10 @@ namespace SpotifyAnalysis.Data.Database {
                 // Create tasks to process each playlist ID asynchronously
                 var dtoAggregate = await AggregateDTOsAsync(db, playlistsToUpdate, user);
                 updateProgressBar?.Invoke(20, "Processing tracks");
-                float progressBase = 20, progressDelta = (60 - progressBase) / playlistsToUpdate.Count();
-                List<Task> tasks = [];
-                foreach (PlaylistDTO playlist in playlistsToUpdate)
-                    tasks.Add(
-                        Task.Run(() => GetAndProcessPlaylistDataAsync(playlist, dtoAggregate))
-                        .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
-                    );
-                await Task.WhenAll(tasks);
+                await ProcessPlaylistsTracksAsync(playlistsToUpdate, dtoAggregate);
 
                 updateProgressBar?.Invoke(60, "Processing artists");
-                var newArtistsIds = db.Artists.FindNewEntities(dtoAggregate.Artists.Values, p => p.ID).Select(a => a.ID).ToList();
-                IEnumerable<List<string>> chunks = DivideArtistsRequests(newArtistsIds);
-                progressBase = 60; progressDelta = (90 - progressBase) / chunks.Count();
-                tasks = [];
-                foreach (List<string> chunk in chunks)
-                    tasks.Add(
-                        Task.Run(() => GetAndProcessArtistsAsync(chunk, dtoAggregate))
-                        .ContinueWith(t => updateProgressBar?.Invoke(progressBase += progressDelta, null))
-                    );
-                await Task.WhenAll(tasks);
+                await ProcessArtistsAsync(db, dtoAggregate);
 
                 updateProgressBar?.Invoke(90, "Saving data");
                 await db.SaveChangesAsync();
@@ -112,6 +96,31 @@ namespace SpotifyAnalysis.Data.Database {
                 db.RemoveRange(stalePlaylists);
                 await db.SaveChangesAsync();
             }
+        }
+
+        private async Task ProcessPlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsToUpdate, DTOAggregate dtoAggregate) {
+            float progressBase = 20, progressDelta = (60 - progressBase) / playlistsToUpdate.Count();
+            var tasks = playlistsToUpdate.Select(playlist =>
+                Task.Run(() => GetAndProcessPlaylistDataAsync(playlist, dtoAggregate))
+                .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+            );
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task ProcessArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
+            var newArtistsIds = db.Artists
+                .FindNewEntities(dtoAggregate.Artists.Values, p => p.ID)
+                .Select(a => a.ID)
+                .ToList();
+
+            var chunks = DivideArtistsRequests(newArtistsIds);
+            float progressBase = 60, progressDelta = (90 - progressBase) / chunks.Count();
+            var tasks = chunks.Select(chunk =>
+                Task.Run(() => GetAndProcessArtistsAsync(chunk, dtoAggregate))
+                .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+            );
+
+            await Task.WhenAll(tasks);
         }
 
         private class DTOAggregate {
