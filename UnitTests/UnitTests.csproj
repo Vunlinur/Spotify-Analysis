@@ -7,9 +7,11 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <StartupObject>UnitTests.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
