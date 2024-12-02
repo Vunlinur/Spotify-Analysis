@@ -2,6 +2,7 @@
 using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAPI.Web;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,18 +15,23 @@ namespace SpotifyAnalysis.Data.Database {
 					yield return element;
 		}
 
-		public static bool UpdateOrAdd(this IDictionary<string, PlaylistDTO> dict, FullPlaylist source, out PlaylistDTO outPlaylist) {
-			bool found = dict.TryGetValue(source.Id, out PlaylistDTO playlist);
-			if (!found) {
-				// this shouldn't really happen as we should already have
-				// all the playlists in the db before adding their details
-				playlist = source.ToPlaylistDTO();
-				dict.Add(playlist.ID, playlist);
-			}
-			else
-				playlist.Update(source);
-			outPlaylist = playlist;
-			return found;
+		public static bool UpdateOrAdd(this ConcurrentDictionary<string, PlaylistDTO> dict, FullPlaylist source, out PlaylistDTO dto) {
+            bool found = false;
+            dto = dict.AddOrUpdate(
+                source.Id,
+                id => {
+                    // this shouldn't really happen as we should already have
+                    // all the playlists in the db before adding their details
+                    found = false;
+                    return source.ToPlaylistDTO();
+                },
+                (id, existing) => {
+                    found = true;
+                    existing.Update(source);
+                    return existing;
+                }
+            );
+            return found;
         }
 
         public static void Update(this PlaylistDTO playlist, FullPlaylist source) {
@@ -38,16 +44,21 @@ namespace SpotifyAnalysis.Data.Database {
             playlist.Images = source.Images.ToImageDTOs();
         }
 
-        public static bool UpdateOrAdd(this IDictionary<string, ArtistDTO> dict, SimpleArtist source, out ArtistDTO outArtist) {
-			bool found = dict.TryGetValue(source.Id, out ArtistDTO artist);
-			if (!found) {
-				artist = source.ToArtistDTO();
-				dict.Add(artist.ID, artist);
-			}
-			else
-				artist.Update(source);
-			outArtist = artist;
-			return found;
+        public static bool UpdateOrAdd(this ConcurrentDictionary<string, ArtistDTO> dict, SimpleArtist source, out ArtistDTO dto) {
+            bool found = false;
+            dto = dict.AddOrUpdate(
+                source.Id,
+                id => {
+                    found = false;
+                    return source.ToArtistDTO();
+                },
+                (id, existing) => {
+                    found = true;
+                    existing.Update(source);
+                    return existing;
+                }
+            );
+            return found;
         }
 
         public static void Update(this ArtistDTO artist, SimpleArtist source) {
@@ -61,17 +72,22 @@ namespace SpotifyAnalysis.Data.Database {
             artist.Images = source.Images.ToImageDTOs();
         }
 
-        public static bool UpdateOrAdd(this IDictionary<string, AlbumDTO> dict, SimpleAlbum source, out AlbumDTO outAlbum) {
-			bool found = dict.TryGetValue(source.Id, out AlbumDTO album);
-			if (!found) {
-				album = source.ToAlbumDTO();
-				dict.Add(album.ID, album);
-			}
-			else
-                album.Update(source);
-            outAlbum = album;
-			return found;
-		}
+        public static bool UpdateOrAdd(this ConcurrentDictionary<string, AlbumDTO> dict, SimpleAlbum source, out AlbumDTO dto) {
+            bool found = false;
+            dto = dict.AddOrUpdate(
+                source.Id,
+                id => {
+                    found = false;
+                    return source.ToAlbumDTO();
+                },
+                (id, existing) => {
+                    found = true;
+                    existing.Update(source);
+                    return existing;
+                }
+            );
+            return found;
+        }
 
         public static void Update(this AlbumDTO album, SimpleAlbum source) {
             album.Name = source.Name;
@@ -80,16 +96,21 @@ namespace SpotifyAnalysis.Data.Database {
             album.Images = source.Images.ToImageDTOs();
         }
 
-        public static bool UpdateOrAdd(this IDictionary<string, TrackDTO> dict, FullTrack source, out TrackDTO outTrack) {
-			bool found = dict.TryGetValue(source.Id, out TrackDTO track);
-			if (!found) {
-				track = source.ToTrackDTO();
-				dict.Add(track.ID, track);
-			}
-			else
-				track.Update(source);
-			outTrack = track;
-			return found;
+        public static bool UpdateOrAdd(this ConcurrentDictionary<string, TrackDTO> dict, FullTrack source, out TrackDTO dto) {
+            bool found = false;
+            dto = dict.AddOrUpdate(
+                source.Id,
+                id => {
+                    found = false;
+                    return source.ToTrackDTO();
+                },
+                (id, existing) => {
+                    found = true;
+                    existing.Update(source);
+                    return existing;
+                }
+            );
+            return found;
         }
 
         public static void Update(this TrackDTO track, FullTrack source) {
