@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Linq;
 using System;
 using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 
 namespace SpotifyAnalysis.Data.Database {
@@ -83,7 +82,7 @@ namespace SpotifyAnalysis.Data.Database {
             return user;
         }
 
-        #endregion
+        #endregion USER
 
         #region PLAYLISTS
 
@@ -111,7 +110,7 @@ namespace SpotifyAnalysis.Data.Database {
             await db.SaveChangesAsync();
         }
 
-        #endregion
+        #endregion PLAYLISTS
 
         #region DATA TREE
 
@@ -136,12 +135,27 @@ namespace SpotifyAnalysis.Data.Database {
             ProcessDataTree(fullPlaylist, fullTracks, dtoAggregate);
         }
 
+        /**
+         * <summary>
+         * Processes a hierarchical "data tree" of Spotify data from leaves to the root, adding
+         * Artists -> Albums -> Tracks -> Playlists to the DTOAggregate structure while maintaining dependencies.
+         * </summary>
+         * 
+         * <param name="fullPlaylist">The root playlist containing metadata and track references.</param>
+         * <param name="fullTracks">Tracks within the playlist, each referencing album and artists.</param>
+         * <param name="dtos">An in-memory repository for deduplicating and linking playlists, tracks, albums, and artists.</param>
+         * 
+         * <remarks>
+         * Entities are processed in dependency order:
+         * 1. **Artists**: Added first to allowing albums and tracks to reference them correctly later.
+         * 2. **Albums**: Added next, linked to artists.
+         * 3. **Tracks**: Added next, referencing albums and artists, then linked to the playlist.
+         * 4. **Playlist**: Added to the User.
+         * This ensures proper relationships between entities and avoids dependency issues during processing.
+         * DTOAggregate helps with de-duplication.
+         * </remarks>
+         */
         private static void ProcessDataTree(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
-            if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
-                playlist.Update(fullPlaylist);
-
-            AddPlaylistToUser(dtos.User, playlist);
-
             foreach (var fullTrack in fullTracks) {
                 foreach (var simpleArtist in fullTrack.Artists)
                     if (dtos.GetOrAddArtist(simpleArtist, out ArtistDTO artist))
@@ -164,13 +178,13 @@ namespace SpotifyAnalysis.Data.Database {
                     track.Artists = dtos.GetArtists(fullTrack.Artists);
                 }
 
-                AddTrackToPlaylist(track, playlist);
-            }
-        }
+                if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
+                    playlist.Update(fullPlaylist);
 
-        public static void AddPlaylistToUser(UserDTO user, PlaylistDTO playlist) {
-            if (!user.Playlists.Any(p => p.ID == playlist.ID))
-                user.Playlists.Add(playlist);
+                AddTrackToPlaylist(track, playlist);
+
+                AddPlaylistToUser(dtos.User, playlist);
+            }
         }
 
         public static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
@@ -178,7 +192,12 @@ namespace SpotifyAnalysis.Data.Database {
                 playlist.Tracks.Add(track);
         }
 
-        #endregion
+        public static void AddPlaylistToUser(UserDTO user, PlaylistDTO playlist) {
+            if (!user.Playlists.Any(p => p.ID == playlist.ID))
+                user.Playlists.Add(playlist);
+        }
+
+        #endregion DATA TREE
 
         #region ARTISTS
 
@@ -209,6 +228,6 @@ namespace SpotifyAnalysis.Data.Database {
             return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
         }
 
-        #endregion
+        #endregion ARTISTS
     }
 }
