@@ -101,10 +101,5 @@ namespace SpotifyAnalysis.Data.Database {
                 .Select(a => a.Value)
                 .ToList();
         }
-
-        public void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
-            if (!playlist.Tracks.Any(t => t.ID == track.ID))
-                playlist.Tracks.Add(track);
-        }
     }
 }
