@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SpotifyAnalysis.Data.DTO;
+using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAPI.Web;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -28,40 +29,86 @@ namespace SpotifyAnalysis.Data.Database {
         }
 
         public PlaylistDTO UpdatePlaylist(FullPlaylist fullPlaylist) {
-            Playlists.UpdateOrAdd(fullPlaylist, out PlaylistDTO playlist);
-            return playlist;
+            PlaylistDTO dto = Playlists.AddOrUpdate(
+                fullPlaylist.Id,
+                id => {
+                    // this shouldn't really happen as we should already have
+                    // all the playlists in the db before adding their details
+                    return fullPlaylist.ToPlaylistDTO();
+                },
+                (id, existing) => {
+                    existing.Update(fullPlaylist);
+                    return existing;
+                }
+            );
+            return dto;
         }
 
-        public ArtistDTO UpdateArtist(SimpleArtist sourceArtist) {
-            Artists.UpdateOrAdd(sourceArtist, out ArtistDTO artist);
-            return artist;
+        public ArtistDTO UpdateArtist(SimpleArtist simpleArtist) {
+            ArtistDTO dto = Artists.AddOrUpdate(
+                simpleArtist.Id,
+                id => {
+                    return simpleArtist.ToArtistDTO();
+                },
+                (id, existing) => {
+                    existing.Update(simpleArtist);
+                    return existing;
+                }
+            );
+            return dto;
         }
 
         public AlbumDTO UpdateAlbum(SimpleAlbum album) {
-            if (!Albums.UpdateOrAdd(album, out AlbumDTO dtoAlbum)) {
+            bool created = false;
+            AlbumDTO dto = Albums.AddOrUpdate(
+                album.Id,
+                id => {
+                    created = true;
+                    return album.ToAlbumDTO();
+                },
+                (id, existing) => {
+                    existing.Update(album);
+                    return existing;
+                }
+            );
+
+            if (created) {
                 var artistIds = album.Artists?.Select(a => a.Id) ?? [];
-                dtoAlbum.Artists = Artists
+                dto.Artists = Artists
                     .Where(a => artistIds.Contains(a.Key))
                     .Select(a => a.Value)
                     .ToList();
             }
-            return dtoAlbum;
+            return dto;
         }
 
         public TrackDTO UpdateTrack(FullTrack track, AlbumDTO album, PlaylistDTO playlist) {
-            if (!Tracks.UpdateOrAdd(track, out TrackDTO dtoTrack)) {
-                dtoTrack.Album = album;
+            bool created = false;
+            TrackDTO dto = Tracks.AddOrUpdate(
+                track.Id,
+                id => {
+                    created = true;
+                    return track.ToTrackDTO();
+                },
+                (id, existing) => {
+                    existing.Update(track);
+                    return existing;
+                }
+            );
+
+            if (created) {
+                dto.Album = album;
                 var artistIds = track.Artists.Select(a => a.Id);
-                dtoTrack.Artists = Artists
+                dto.Artists = Artists
                     .Where(a => artistIds.Contains(a.Key))
                     .Select(a => a.Value)
                     .ToList();
             }
 
-            if (!playlist.Tracks.Any(t => t.ID == dtoTrack.ID)) {
-                playlist.Tracks.Add(dtoTrack);
+            if (!playlist.Tracks.Any(t => t.ID == dto.ID)) {
+                playlist.Tracks.Add(dto);
             }
-            return dtoTrack;
+            return dto;
         }
     }
 }
