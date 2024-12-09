@@ -28,7 +28,7 @@ namespace SpotifyAnalysis.Data.Database {
             };
         }
 
-        public bool UpdatePlaylist(FullPlaylist fullPlaylist, out PlaylistDTO entity) {
+        public bool GetOrAddPlaylist(FullPlaylist fullPlaylist, out PlaylistDTO entity) {
             bool found = false;
             entity = Playlists.AddOrUpdate(
                 fullPlaylist.Id,
@@ -39,14 +39,13 @@ namespace SpotifyAnalysis.Data.Database {
                 },
                 (id, existing) => {
                     found = true;
-                    existing.Update(fullPlaylist);
                     return existing;
                 }
             );
             return found;
         }
 
-        public bool UpdateOrAddArtist(SimpleArtist simpleArtist, out ArtistDTO entity) {
+        public bool GetOrAddArtist(SimpleArtist simpleArtist, out ArtistDTO entity) {
             bool found = false;
             entity = Artists.AddOrUpdate(
                 simpleArtist.Id,
@@ -55,14 +54,13 @@ namespace SpotifyAnalysis.Data.Database {
                 },
                 (id, existing) => {
                     found = true;
-                    existing.Update(simpleArtist);
                     return existing;
                 }
             );
             return found;
         }
 
-        public bool UpdateAlbum(SimpleAlbum album, out AlbumDTO entity) {
+        public bool GetOrAddAlbum(SimpleAlbum album, out AlbumDTO entity) {
             bool found = false;
             entity = Albums.AddOrUpdate(
                 album.Id,
@@ -71,14 +69,13 @@ namespace SpotifyAnalysis.Data.Database {
                 },
                 (id, existing) => {
                     found = true;
-                    existing.Update(album);
                     return existing;
                 }
             );
             return found;
         }
 
-        public bool UpdateOrAddTrack(FullTrack track, out TrackDTO entity) {
+        public bool GetOrAddTrack(FullTrack track, out TrackDTO entity) {
             bool found = false;
             entity = Tracks.AddOrUpdate(
                 track.Id,
@@ -87,7 +84,6 @@ namespace SpotifyAnalysis.Data.Database {
                 },
                 (id, existing) => {
                     found = true;
-                    existing.Update(track);
                     return existing;
                 }
             );

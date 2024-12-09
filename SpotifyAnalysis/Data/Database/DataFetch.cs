@@ -142,27 +142,40 @@ namespace SpotifyAnalysis.Data.Database {
         }
 
         private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
-            dtos.UpdatePlaylist(fullPlaylist, out PlaylistDTO playlist);
+            if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
+                playlist.Update(fullPlaylist);
 
-            if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID))
-                dtos.User.Playlists.Add(playlist);
+            AddPlaylistToUser(dtos.User, playlist);
 
             foreach (var fullTrack in fullTracks) {
                 foreach (var simpleArtist in fullTrack.Artists)
-                    dtos.UpdateOrAddArtist(simpleArtist, out _);
+                    if (dtos.GetOrAddArtist(simpleArtist, out ArtistDTO artist))
+                        artist.Update(simpleArtist);
+
                 foreach (var simpleArtist in fullTrack.Album.Artists ?? [])
-                    dtos.UpdateOrAddArtist(simpleArtist, out _);
-                var albumFound = dtos.UpdateAlbum(fullTrack.Album, out AlbumDTO album);
-                if (!albumFound) {
+                    if (dtos.GetOrAddArtist(simpleArtist, out ArtistDTO artist))
+                        artist.Update(simpleArtist);
+
+                if (dtos.GetOrAddAlbum(fullTrack.Album, out AlbumDTO album)) {
+                    album.Update(fullTrack.Album);
+                } else {
                     album.Artists = dtos.GetArtists(fullTrack.Album.Artists);
                 }
-                var trackFound = dtos.UpdateOrAddTrack(fullTrack, out TrackDTO track);
-                if (!trackFound) {
+
+                if (dtos.GetOrAddTrack(fullTrack, out TrackDTO track)) {
+                    track.Update(fullTrack);
+                } else {
                     track.Album = album;
                     track.Artists = dtos.GetArtists(fullTrack.Artists);
                 }
+
                 AddTrackToPlaylist(track, playlist);
             }
+        }
+
+        public static void AddPlaylistToUser(UserDTO user, PlaylistDTO playlist) {
+            if (!user.Playlists.Any(p => p.ID == playlist.ID))
+                user.Playlists.Add(playlist);
         }
 
         public static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
