@@ -3,18 +3,13 @@
 @using SpotifyAnalysis.Data
 @using ApexCharts
 
-@*
-    Currently it is impossible to distinguish whether the clicks are coming from the legend or from the chart:
-    https://github.com/apexcharts/Blazor-ApexCharts/issues/442
-    So the solution is to toggle data series by default, but if callback is provided, we show a switch
-    to call that callback instead.
-*@
 
 <MudItemBase>
     <MudText Typo="Typo.h6">@Title</MudText>
     <ApexChart TItem="Element"
                 Options="options"
                 OnDataPointSelection=OnDataPointSelection
+                OnLegendClicked=OnLegendClicked
                 @ref="chart">
 
         <ApexPointSeries TItem="Element"
@@ -23,14 +18,6 @@
                             XValue="@(e => e.Label)"
                             YValue="@(e => e.Quantity)"/>
     </ApexChart>
-
-    @if (OnClickCallback is not null) {
-        <MudStack Row=true Justify="Justify.Center" AlignItems="AlignItems.Center">
-            <MudInputLabel >Toggle series</MudInputLabel>
-            <MudSwitch @bind-Value="@invokeCallback" Color="MudBlazor.Color.Primary" Size="MudBlazor.Size.Small" />
-            <MudInputLabel>Get details</MudInputLabel>
-        </MudStack>
-    }
 </MudItemBase>
 
 
@@ -112,16 +99,29 @@
         }
     }
 
+    bool legendClicked = false;
+    /**
+     * A hack to distinguish whether the clicks are coming from the legend or from the chart:
+     * https://github.com/apexcharts/Blazor-ApexCharts/issues/442
+     */
+    private void OnLegendClicked(LegendClicked<Element> data) {
+        legendClicked = true;
+    }
+
     int[] quantities;
-    bool invokeCallback = true;
     protected async void OnDataPointSelection(SelectedData<Element> selection) {
-        if (OnClickCallback is not null && invokeCallback)
-            OnClickCallback?.Invoke(selection.DataPoint.Items.First());
-        else {
+        if (OnClickCallback is null)
+            return;
+
+        if (legendClicked) {
             int index = selection.DataPointIndex;
             var serie = series[index];
             serie.Quantity = serie.Quantity == 0 ? quantities[index] : 0;
             await chart.UpdateSeriesAsync();
         }
+        else
+            OnClickCallback?.Invoke(selection.DataPoint.Items.First());
+        
+        legendClicked = false;
     }
 }
