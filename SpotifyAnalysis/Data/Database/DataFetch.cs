@@ -106,22 +106,6 @@ namespace SpotifyAnalysis.Data.Database {
             await Task.WhenAll(tasks);
         }
 
-        private async Task ProcessArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
-            var newArtistsIds = db.Artists
-                .FindNewEntities(dtoAggregate.Artists.Values, p => p.ID)
-                .Select(a => a.ID)
-                .ToList();
-
-            var chunks = DivideArtistsRequests(newArtistsIds);
-            float progressBase = 60, progressDelta = (90 - progressBase) / chunks.Count();
-            var tasks = chunks.Select(chunk =>
-                Task.Run(() => GetAndProcessArtistsAsync(chunk, dtoAggregate))
-                .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
-            );
-
-            await Task.WhenAll(tasks);
-        }
-
         /**
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
@@ -132,12 +116,6 @@ namespace SpotifyAnalysis.Data.Database {
             if (fullPlaylist.SnapshotId != playlist.SnapshotID)
                 fullTracks = await getTracksAsync(fullPlaylist.Tracks);
             ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
-        }
-
-        private async Task GetAndProcessArtistsAsync(List<string> ids, DTOAggregate dtoAggregate) {
-            var fullArtists = await getArtistsAsync(ids);
-            foreach (var artist in fullArtists)
-                dtoAggregate.Artists[artist.Id].Update(artist);
         }
 
         private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
@@ -180,6 +158,28 @@ namespace SpotifyAnalysis.Data.Database {
         public static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
             if (!playlist.Tracks.Any(t => t.ID == track.ID))
                 playlist.Tracks.Add(track);
+        }
+
+        private async Task ProcessArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
+            var newArtistsIds = db.Artists
+                .FindNewEntities(dtoAggregate.Artists.Values, p => p.ID)
+                .Select(a => a.ID)
+                .ToList();
+
+            var chunks = DivideArtistsRequests(newArtistsIds);
+            float progressBase = 60, progressDelta = (90 - progressBase) / chunks.Count();
+            var tasks = chunks.Select(chunk =>
+                Task.Run(() => GetAndProcessArtistsAsync(chunk, dtoAggregate))
+                .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+            );
+
+            await Task.WhenAll(tasks);
+        }
+
+        private async Task GetAndProcessArtistsAsync(List<string> ids, DTOAggregate dtoAggregate) {
+            var fullArtists = await getArtistsAsync(ids);
+            foreach (var artist in fullArtists)
+                dtoAggregate.Artists[artist.Id].Update(artist);
         }
 
         private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
