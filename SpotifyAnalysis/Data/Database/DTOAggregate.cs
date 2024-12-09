@@ -28,8 +28,9 @@ namespace SpotifyAnalysis.Data.Database {
             };
         }
 
-        public PlaylistDTO UpdatePlaylist(FullPlaylist fullPlaylist) {
-            PlaylistDTO dto = Playlists.AddOrUpdate(
+        public bool UpdatePlaylist(FullPlaylist fullPlaylist, out PlaylistDTO entity) {
+            bool found = false;
+            entity = Playlists.AddOrUpdate(
                 fullPlaylist.Id,
                 id => {
                     // this shouldn't really happen as we should already have
@@ -37,78 +38,82 @@ namespace SpotifyAnalysis.Data.Database {
                     return fullPlaylist.ToPlaylistDTO();
                 },
                 (id, existing) => {
+                    found = true;
                     existing.Update(fullPlaylist);
                     return existing;
                 }
             );
-            return dto;
+            return found;
         }
 
-        public ArtistDTO UpdateArtist(SimpleArtist simpleArtist) {
-            ArtistDTO dto = Artists.AddOrUpdate(
+        public bool UpdateArtist(SimpleArtist simpleArtist, out ArtistDTO entity) {
+            bool found = false;
+            entity = Artists.AddOrUpdate(
                 simpleArtist.Id,
                 id => {
                     return simpleArtist.ToArtistDTO();
                 },
                 (id, existing) => {
+                    found = true;
                     existing.Update(simpleArtist);
                     return existing;
                 }
             );
-            return dto;
+            return found;
         }
 
-        public AlbumDTO UpdateAlbum(SimpleAlbum album) {
-            bool created = false;
-            AlbumDTO dto = Albums.AddOrUpdate(
+        public bool UpdateAlbum(SimpleAlbum album, out AlbumDTO entity) {
+            bool found = false;
+            entity = Albums.AddOrUpdate(
                 album.Id,
                 id => {
-                    created = true;
                     return album.ToAlbumDTO();
                 },
                 (id, existing) => {
+                    found = true;
                     existing.Update(album);
                     return existing;
                 }
             );
 
-            if (created) {
+            if (!found) {
                 var artistIds = album.Artists?.Select(a => a.Id) ?? [];
-                dto.Artists = Artists
+                entity.Artists = Artists
                     .Where(a => artistIds.Contains(a.Key))
                     .Select(a => a.Value)
                     .ToList();
             }
-            return dto;
+            return found;
         }
 
-        public TrackDTO UpdateTrack(FullTrack track, AlbumDTO album, PlaylistDTO playlist) {
-            bool created = false;
-            TrackDTO dto = Tracks.AddOrUpdate(
+        public bool UpdateTrack(FullTrack track, AlbumDTO album, PlaylistDTO playlist, out TrackDTO entity) {
+            bool found = false;
+            entity = Tracks.AddOrUpdate(
                 track.Id,
                 id => {
-                    created = true;
                     return track.ToTrackDTO();
                 },
                 (id, existing) => {
+                    found = true;
                     existing.Update(track);
                     return existing;
                 }
             );
 
-            if (created) {
-                dto.Album = album;
+            if (!found) {
+                entity.Album = album;
                 var artistIds = track.Artists.Select(a => a.Id);
-                dto.Artists = Artists
+                entity.Artists = Artists
                     .Where(a => artistIds.Contains(a.Key))
                     .Select(a => a.Value)
                     .ToList();
             }
 
-            if (!playlist.Tracks.Any(t => t.ID == dto.ID)) {
-                playlist.Tracks.Add(dto);
+            var entityID = entity.ID;
+            if (!playlist.Tracks.Any(t => t.ID == entityID)) {
+                playlist.Tracks.Add(entity);
             }
-            return dto;
+            return found;
         }
     }
 }

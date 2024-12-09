@@ -142,27 +142,26 @@ namespace SpotifyAnalysis.Data.Database {
         }
 
         private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
-            PlaylistDTO playlist = dtos.UpdatePlaylist(fullPlaylist);
+            dtos.UpdatePlaylist(fullPlaylist, out PlaylistDTO playlist);
 
             if (!dtos.User.Playlists.Any(p => p.ID == playlist.ID)) {
                 dtos.User.Playlists.Add(playlist);
             }
 
-            AlbumDTO album;
             foreach (var fullTrack in fullTracks) {
                 ProcessTrackArtists(fullTrack, dtos);
-                album = dtos.UpdateAlbum(fullTrack.Album);
-                dtos.UpdateTrack(fullTrack, album, playlist);
+                dtos.UpdateAlbum(fullTrack.Album, out AlbumDTO album);
+                dtos.UpdateTrack(fullTrack, album, playlist, out _);
             }
         }
 
         private static void ProcessTrackArtists(FullTrack fullTrack, DTOAggregate dtos) {
             foreach (var simpleArtist in fullTrack.Artists)
-                dtos.UpdateArtist(simpleArtist);
+                dtos.UpdateArtist(simpleArtist, out _);
 
             if (fullTrack.Album.Artists is not null)
                 foreach (var simpleArtist in fullTrack.Album.Artists)
-                    dtos.UpdateArtist(simpleArtist);
+                    dtos.UpdateArtist(simpleArtist, out _);
         }
 
         private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
