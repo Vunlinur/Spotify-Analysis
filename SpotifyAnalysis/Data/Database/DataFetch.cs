@@ -138,7 +138,7 @@ namespace SpotifyAnalysis.Data.Database {
         /**
          * <summary>
          * Processes a hierarchical "data tree" of Spotify data from leaves to the root, adding
-         * Artists -> Albums -> Tracks -> Playlists to the DTOAggregate structure while maintaining dependencies.
+         * Playlists and Artists -> Albums -> Tracks to the DTOAggregate structure while maintaining dependencies.
          * </summary>
          * 
          * <param name="fullPlaylist">The root playlist containing metadata and track references.</param>
@@ -147,54 +147,53 @@ namespace SpotifyAnalysis.Data.Database {
          * 
          * <remarks>
          * Entities are processed in dependency order:
-         * 1. **Artists**: Added first to allowing albums and tracks to reference them correctly later.
-         * 2. **Albums**: Added next, linked to artists.
-         * 3. **Tracks**: Added next, referencing albums and artists, then linked to the playlist.
-         * 4. **Playlist**: Added to the User.
+         * 1. **Playlist**: Added to the User.
+         * 2. **Artists**: Added first to allow albums and tracks to reference them correctly later.
+         * 3. **Albums**: Added next, linked to artists.
+         * 4. **Tracks**: Added next, referencing albums and artists, then linked to the playlist.
          * This ensures proper relationships between entities and avoids dependency issues during processing.
          * DTOAggregate helps with de-duplication.
          * </remarks>
          */
         private static void ProcessDataTree(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
+            if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
+                playlist.Update(fullPlaylist);
+
+            AddPlaylistToUser(dtos.User, playlist);
+
             foreach (var fullTrack in fullTracks) {
-                foreach (var simpleArtist in fullTrack.Artists)
-                    if (dtos.GetOrAddArtist(simpleArtist, out ArtistDTO artist))
-                        artist.Update(simpleArtist);
+                UpdateOrAddArtists(fullTrack.Artists, dtos);
+                UpdateOrAddArtists(fullTrack.Album.Artists, dtos);
 
-                foreach (var simpleArtist in fullTrack.Album.Artists ?? [])
-                    if (dtos.GetOrAddArtist(simpleArtist, out ArtistDTO artist))
-                        artist.Update(simpleArtist);
-
-                if (dtos.GetOrAddAlbum(fullTrack.Album, out AlbumDTO album)) {
+                if (dtos.GetOrAddAlbum(fullTrack.Album, out AlbumDTO album))
                     album.Update(fullTrack.Album);
-                } else {
+                else
                     album.Artists = dtos.GetArtists(fullTrack.Album.Artists);
-                }
 
-                if (dtos.GetOrAddTrack(fullTrack, out TrackDTO track)) {
+                if (dtos.GetOrAddTrack(fullTrack, out TrackDTO track))
                     track.Update(fullTrack);
-                } else {
+                else {
                     track.Album = album;
                     track.Artists = dtos.GetArtists(fullTrack.Artists);
                 }
 
-                if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
-                    playlist.Update(fullPlaylist);
-
                 AddTrackToPlaylist(track, playlist);
-
-                AddPlaylistToUser(dtos.User, playlist);
             }
-        }
-
-        public static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
-            if (!playlist.Tracks.Any(t => t.ID == track.ID))
-                playlist.Tracks.Add(track);
         }
 
         public static void AddPlaylistToUser(UserDTO user, PlaylistDTO playlist) {
             if (!user.Playlists.Any(p => p.ID == playlist.ID))
                 user.Playlists.Add(playlist);
+        }
+        private static void UpdateOrAddArtists(List<SimpleArtist> artists, DTOAggregate dtos) {
+            foreach (var artist in artists ?? [])
+                if (dtos.GetOrAddArtist(artist, out ArtistDTO artistDTO))
+                    artistDTO.Update(artist);
+        }
+
+        public static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
+            if (!playlist.Tracks.Any(t => t.ID == track.ID))
+                playlist.Tracks.Add(track);
         }
 
         #endregion DATA TREE

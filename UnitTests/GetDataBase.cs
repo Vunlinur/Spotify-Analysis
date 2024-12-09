@@ -99,11 +99,12 @@ namespace UnitTests {
                 .Select(i => Stubs.SimpleAlbum(data.SimpleArtists.Take(1 + i % 2).ToList(), i))
                 .ToList();
 
+            int trackCount = 1000;
             // Step 2: Generate 100 playlists, each with 1,000 tracks
             for (int p = 0; p < 100; p++) {
                 var tracks = new List<FullTrack>();
-                int trackOffset = 1000 * p - (p * 10);  // Add 1000 for each playlist, 10 tracks overlapping
-                for (int t = trackOffset; t < trackOffset + 1000; t++) {
+                int trackOffset = trackCount * p - (p * 10);  // Add trackCount tracks for each playlist, 10 tracks overlapping
+                for (int t = trackOffset; t < trackOffset + trackCount; t++) {
                     // Assign an album and a subset of artists
                     var album = data.Albums[t % data.Albums.Count];
                     var trackArtists = data.SimpleArtists.Skip(t % data.SimpleArtists.Count).Take(1 + t % 2).ToList();
