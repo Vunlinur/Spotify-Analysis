@@ -149,20 +149,23 @@ namespace SpotifyAnalysis.Data.Database {
             }
 
             foreach (var fullTrack in fullTracks) {
-                ProcessTrackArtists(fullTrack, dtos);
-                dtos.UpdateAlbum(fullTrack.Album, out AlbumDTO album);
-                dtos.UpdateTrack(fullTrack, album, playlist, out _);
+                foreach (var simpleArtist in fullTrack.Artists)
+                    dtos.UpdateOrAddArtist(simpleArtist, out _);
+                foreach (var simpleArtist in fullTrack.Album.Artists ?? [])
+                    dtos.UpdateOrAddArtist(simpleArtist, out _);
+                var albumFound = dtos.UpdateAlbum(fullTrack.Album, out AlbumDTO album);
+                if (!albumFound) {
+                    dtos.UpdateAlbumArtists(album, fullTrack.Album);
+                }
+                var trackFound = dtos.UpdateOrAddTrack(fullTrack, out TrackDTO track);
+                if (!trackFound) {
+                    track.Album = album;
+                    dtos.UpdateTracksArtists(track, fullTrack);
+                    dtos.AddTrackToPlaylist(track, playlist);
+                }
             }
         }
 
-        private static void ProcessTrackArtists(FullTrack fullTrack, DTOAggregate dtos) {
-            foreach (var simpleArtist in fullTrack.Artists)
-                dtos.UpdateArtist(simpleArtist, out _);
-
-            if (fullTrack.Album.Artists is not null)
-                foreach (var simpleArtist in fullTrack.Album.Artists)
-                    dtos.UpdateArtist(simpleArtist, out _);
-        }
 
         private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
             ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions

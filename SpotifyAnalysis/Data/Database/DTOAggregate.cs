@@ -46,7 +46,7 @@ namespace SpotifyAnalysis.Data.Database {
             return found;
         }
 
-        public bool UpdateArtist(SimpleArtist simpleArtist, out ArtistDTO entity) {
+        public bool UpdateOrAddArtist(SimpleArtist simpleArtist, out ArtistDTO entity) {
             bool found = false;
             entity = Artists.AddOrUpdate(
                 simpleArtist.Id,
@@ -75,18 +75,10 @@ namespace SpotifyAnalysis.Data.Database {
                     return existing;
                 }
             );
-
-            if (!found) {
-                var artistIds = album.Artists?.Select(a => a.Id) ?? [];
-                entity.Artists = Artists
-                    .Where(a => artistIds.Contains(a.Key))
-                    .Select(a => a.Value)
-                    .ToList();
-            }
             return found;
         }
 
-        public bool UpdateTrack(FullTrack track, AlbumDTO album, PlaylistDTO playlist, out TrackDTO entity) {
+        public bool UpdateOrAddTrack(FullTrack track, out TrackDTO entity) {
             bool found = false;
             entity = Tracks.AddOrUpdate(
                 track.Id,
@@ -99,21 +91,28 @@ namespace SpotifyAnalysis.Data.Database {
                     return existing;
                 }
             );
-
-            if (!found) {
-                entity.Album = album;
-                var artistIds = track.Artists.Select(a => a.Id);
-                entity.Artists = Artists
-                    .Where(a => artistIds.Contains(a.Key))
-                    .Select(a => a.Value)
-                    .ToList();
-            }
-
-            var entityID = entity.ID;
-            if (!playlist.Tracks.Any(t => t.ID == entityID)) {
-                playlist.Tracks.Add(entity);
-            }
             return found;
+        }
+
+        public void UpdateTracksArtists(TrackDTO track, FullTrack fullTrack) {
+            var artistIds = fullTrack.Artists.Select(a => a.Id);
+            track.Artists = Artists
+                .Where(a => artistIds.Contains(a.Key))
+                .Select(a => a.Value)
+                .ToList();
+        }
+
+        public void UpdateAlbumArtists(AlbumDTO album, SimpleAlbum fullAlbum) {
+            var artistIds = fullAlbum.Artists?.Select(a => a.Id) ?? [];
+            album.Artists = Artists
+                .Where(a => artistIds.Contains(a.Key))
+                .Select(a => a.Value)
+                .ToList();
+        }
+
+        public void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
+            if (!playlist.Tracks.Any(t => t.ID == track.ID))
+                playlist.Tracks.Add(track);
         }
     }
 }
