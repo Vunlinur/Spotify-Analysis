@@ -47,9 +47,9 @@ namespace SpotifyAnalysis.Data.Database {
                 updateProgressBar?.Invoke(10, "Processing playlists");
                 await AddNewPlaylistsAsync(db, user, allUserPlaylists);
                 await RemoveOldPlaylistsAsync(db, user, allUserPlaylists);
-                var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
+                await db.SaveChangesAsync();
 
-                // Create tasks to process each playlist ID asynchronously
+                var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
                 var dtoAggregate = await DTOAggregate.AggregateAsync(db, playlistsToUpdate, user);
                 updateProgressBar?.Invoke(20, "Processing tracks");
                 await ProcessPlaylistDataTreesAsync(playlistsToUpdate, dtoAggregate);
@@ -78,7 +78,6 @@ namespace SpotifyAnalysis.Data.Database {
                 await db.AddAsync(user);
             }
             user.Updated = DateTime.Now;
-            await db.SaveChangesAsync();
             return user;
         }
 
@@ -93,7 +92,6 @@ namespace SpotifyAnalysis.Data.Database {
             var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
             foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshotID so that it gets eligible for an update later
             user.Playlists.AddRange(newPlaylists);
-            await db.SaveChangesAsync();
         }
 
         /**
@@ -107,7 +105,6 @@ namespace SpotifyAnalysis.Data.Database {
                 return;
             
             db.RemoveRange(stalePlaylists);
-            await db.SaveChangesAsync();
         }
 
         #endregion PLAYLISTS
@@ -185,6 +182,7 @@ namespace SpotifyAnalysis.Data.Database {
             if (!user.Playlists.Any(p => p.ID == playlist.ID))
                 user.Playlists.Add(playlist);
         }
+
         private static void UpdateOrAddArtists(List<SimpleArtist> artists, DTOAggregate dtos) {
             foreach (var artist in artists ?? [])
                 if (dtos.GetOrAddArtist(artist, out ArtistDTO artistDTO))
@@ -209,22 +207,24 @@ namespace SpotifyAnalysis.Data.Database {
             var chunks = DivideArtistsRequests(newArtistsIds);
             float progressBase = 60, progressDelta = (90 - progressBase) / chunks.Count();
             var tasks = chunks.Select(chunk =>
-                Task.Run(() => GetAndProcessArtistsAsync(chunk, dtoAggregate))
-                .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
-            );
+                Task.Run(
+                    () => getArtistsAsync(chunk)
+                    .ContinueWith(async fullArtists => UpdateOrAddArtists(await fullArtists, dtoAggregate))
+                    .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+            ));
 
             await Task.WhenAll(tasks);
-        }
-
-        private async Task GetAndProcessArtistsAsync(List<string> ids, DTOAggregate dtoAggregate) {
-            var fullArtists = await getArtistsAsync(ids);
-            foreach (var artist in fullArtists)
-                dtoAggregate.Artists[artist.Id].Update(artist);
         }
 
         private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
             ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions
             return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
+        }
+
+        private static void UpdateOrAddArtists(List<FullArtist> fullArtists, DTOAggregate dtos) {
+            foreach (var artist in fullArtists)
+                if (dtos.GetOrAddArtist(artist, out ArtistDTO artistDTO))
+                    artistDTO.Update(artist);
         }
 
         #endregion ARTISTS
