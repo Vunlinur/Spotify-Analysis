@@ -87,15 +87,14 @@ namespace SpotifyAnalysis.Data.Database {
             var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
             foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshotID so that it gets eligible for an update later
             user.Playlists.AddRange(newPlaylists);
-            await db.SaveChangesAsync();
 
             // TODO playlist can be referenced by other users, check if the playlist has no other users first
             // Remove orphan playlists from db
             var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID)).ToList();
-            if (stalePlaylists.Count > 0) {
+            if (stalePlaylists.Count > 0)
                 db.RemoveRange(stalePlaylists);
-                await db.SaveChangesAsync();
-            }
+
+            await db.SaveChangesAsync();
         }
 
         private async Task ProcessPlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsToUpdate, DTOAggregate dtoAggregate) {
