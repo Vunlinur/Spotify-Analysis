@@ -2,6 +2,7 @@
 using SpotifyAnalysis.Data.DTO;
 using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAPI.Web;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,67 +29,37 @@ namespace SpotifyAnalysis.Data.Database {
             };
         }
 
-        public bool GetOrAddPlaylist(FullPlaylist fullPlaylist, out PlaylistDTO entity) {
-            bool found = false;
-            entity = Playlists.AddOrUpdate(
+        public bool GetOrAddPlaylist(FullPlaylist fullPlaylist, out PlaylistDTO entity) =>
+            GetOrAddEntity(
+                Playlists,
                 fullPlaylist.Id,
-                id => {
-                    // this shouldn't really happen as we should already have
-                    // all the playlists in the db before adding their details
-                    return fullPlaylist.ToPlaylistDTO();
-                },
-                (id, existing) => {
-                    found = true;
-                    return existing;
-                }
+                id => fullPlaylist.ToPlaylistDTO(),
+                out entity
             );
-            return found;
-        }
 
-        public bool GetOrAddArtist(SimpleArtist simpleArtist, out ArtistDTO entity) {
-            bool found = false;
-            entity = Artists.AddOrUpdate(
+        public bool GetOrAddArtist(SimpleArtist simpleArtist, out ArtistDTO entity) =>
+            GetOrAddEntity(
+                Artists,
                 simpleArtist.Id,
-                id => {
-                    return simpleArtist.ToArtistDTO();
-                },
-                (id, existing) => {
-                    found = true;
-                    return existing;
-                }
+                id => simpleArtist.ToArtistDTO(),
+                out entity
             );
-            return found;
-        }
 
-        public bool GetOrAddAlbum(SimpleAlbum album, out AlbumDTO entity) {
-            bool found = false;
-            entity = Albums.AddOrUpdate(
+        public bool GetOrAddAlbum(SimpleAlbum album, out AlbumDTO entity) =>
+            GetOrAddEntity(
+                Albums,
                 album.Id,
-                id => {
-                    return album.ToAlbumDTO();
-                },
-                (id, existing) => {
-                    found = true;
-                    return existing;
-                }
+                id => album.ToAlbumDTO(),
+                out entity
             );
-            return found;
-        }
 
-        public bool GetOrAddTrack(FullTrack track, out TrackDTO entity) {
-            bool found = false;
-            entity = Tracks.AddOrUpdate(
+        public bool GetOrAddTrack(FullTrack track, out TrackDTO entity) =>
+            GetOrAddEntity(
+                Tracks,
                 track.Id,
-                id => {
-                    return track.ToTrackDTO();
-                },
-                (id, existing) => {
-                    found = true;
-                    return existing;
-                }
+                id => track.ToTrackDTO(),
+                out entity
             );
-            return found;
-        }
 
         public List<ArtistDTO> GetArtists(List<SimpleArtist> simpleArtists) {
             var artistIds = simpleArtists?.Select(a => a.Id) ?? [];
@@ -96,6 +67,21 @@ namespace SpotifyAnalysis.Data.Database {
                 .Where(a => artistIds.Contains(a.Key))
                 .Select(a => a.Value)
                 .ToList();
+        }
+
+        private static bool GetOrAddEntity<TEntity>(ConcurrentDictionary<string, TEntity> dictionary, 
+            string key, Func<string, TEntity> createEntity, out TEntity entity)
+        {
+            bool found = false;
+            entity = dictionary.AddOrUpdate(
+                key,
+                id => createEntity(id),
+                (id, existing) => {
+                    found = true;
+                    return existing;
+                }
+            );
+            return found;
         }
     }
 }
