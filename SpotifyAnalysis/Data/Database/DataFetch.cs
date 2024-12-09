@@ -46,16 +46,17 @@ namespace SpotifyAnalysis.Data.Database {
                 var snapshotIDs = allUserPlaylists.ToDictionary(p => p.ID, p => p.SnapshotID);
 
                 updateProgressBar?.Invoke(10, "Processing playlists");
-                await ProcessPlaylistsAsync(db, user, allUserPlaylists);
+                await AddNewPlaylistsAsync(db, user, allUserPlaylists);
+                await RemoveOldPlaylistsAsync(db, user, allUserPlaylists);
                 var playlistsToUpdate = user.Playlists.Where(p => snapshotIDs[p.ID] != p.SnapshotID);
 
                 // Create tasks to process each playlist ID asynchronously
                 var dtoAggregate = await DTOAggregate.AggregateAsync(db, playlistsToUpdate, user);
                 updateProgressBar?.Invoke(20, "Processing tracks");
-                await ProcessPlaylistsTracksAsync(playlistsToUpdate, dtoAggregate);
+                await ProcessPlaylistDataTreesAsync(playlistsToUpdate, dtoAggregate);
 
                 updateProgressBar?.Invoke(60, "Processing artists");
-                await ProcessArtistsAsync(db, dtoAggregate);
+                await GetNewArtistsAsync(db, dtoAggregate);
 
                 updateProgressBar?.Invoke(90, "Saving data");
                 await db.SaveChangesAsync();
@@ -65,6 +66,8 @@ namespace SpotifyAnalysis.Data.Database {
                 throw;
             }
         }
+
+        #region USER
 
         /**
          * Gets a User from the DB by ID, or creates a new one and inserts.
@@ -80,27 +83,42 @@ namespace SpotifyAnalysis.Data.Database {
             return user;
         }
 
+        #endregion
+
+        #region PLAYLISTS
+
         /**
-         * Assigns new Playlists to the User and readies them for Track update later. Removes orphaned Playlists.
+         * Assigns new Playlists to the User and readies them for Track update later.
          */
-        private static async Task ProcessPlaylistsAsync(SpotifyContext db, UserDTO user, IList<PlaylistDTO> allUserPlaylists) {
+        private static async Task AddNewPlaylistsAsync(SpotifyContext db, UserDTO user, IList<PlaylistDTO> allUserPlaylists) {
             var newPlaylists = db.Playlists.FindNewEntities(allUserPlaylists, p => p.ID);
             foreach (var playlist in newPlaylists) playlist.SnapshotID = ""; // Don't save the snapshotID so that it gets eligible for an update later
             user.Playlists.AddRange(newPlaylists);
-
-            // TODO playlist can be referenced by other users, check if the playlist has no other users first
-            // Remove orphan playlists from db
-            var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID)).ToList();
-            if (stalePlaylists.Count > 0)
-                db.RemoveRange(stalePlaylists);
-
             await db.SaveChangesAsync();
         }
 
-        private async Task ProcessPlaylistsTracksAsync(IEnumerable<PlaylistDTO> playlistsToUpdate, DTOAggregate dtoAggregate) {
+        /**
+         * Removes orphaned Playlists.
+         */
+        private static async Task RemoveOldPlaylistsAsync(SpotifyContext db, UserDTO user, IList<PlaylistDTO> allUserPlaylists) {
+            // TODO playlist can be referenced by other users, check if the playlist has no other users first
+            // Remove orphan playlists from db
+            var stalePlaylists = user.Playlists.Where(p => !allUserPlaylists.Any(aup => aup.ID == p.ID)).ToList();
+            if (stalePlaylists.Count == 0)
+                return;
+            
+            db.RemoveRange(stalePlaylists);
+            await db.SaveChangesAsync();
+        }
+
+        #endregion
+
+        #region DATA TREE
+
+        private async Task ProcessPlaylistDataTreesAsync(IEnumerable<PlaylistDTO> playlistsToUpdate, DTOAggregate dtoAggregate) {
             float progressBase = 20, progressDelta = (60 - progressBase) / playlistsToUpdate.Count();
             var tasks = playlistsToUpdate.Select(playlist =>
-                Task.Run(() => GetAndProcessPlaylistDataAsync(playlist, dtoAggregate))
+                Task.Run(() => GetAndProcessPlaylistDataTreeAsync(playlist, dtoAggregate))
                 .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
             );
             await Task.WhenAll(tasks);
@@ -110,15 +128,15 @@ namespace SpotifyAnalysis.Data.Database {
 		 * Get full details of the items of multiple playlists with given IDs.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-playlists-tracks
 		 */
-        private async Task GetAndProcessPlaylistDataAsync(PlaylistDTO playlist, DTOAggregate dtoAggregate) {
+        private async Task GetAndProcessPlaylistDataTreeAsync(PlaylistDTO playlist, DTOAggregate dtoAggregate) {
             FullPlaylist fullPlaylist = await getPlaylistAsync(playlist.ID);
             List<FullTrack> fullTracks = [];
             if (fullPlaylist.SnapshotId != playlist.SnapshotID)
                 fullTracks = await getTracksAsync(fullPlaylist.Tracks);
-            ProcessTracks(fullPlaylist, fullTracks, dtoAggregate);
+            ProcessDataTree(fullPlaylist, fullTracks, dtoAggregate);
         }
 
-        private static void ProcessTracks(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
+        private static void ProcessDataTree(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
             if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
                 playlist.Update(fullPlaylist);
 
@@ -160,7 +178,11 @@ namespace SpotifyAnalysis.Data.Database {
                 playlist.Tracks.Add(track);
         }
 
-        private async Task ProcessArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
+        #endregion
+
+        #region ARTISTS
+
+        private async Task GetNewArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
             var newArtistsIds = db.Artists
                 .FindNewEntities(dtoAggregate.Artists.Values, p => p.ID)
                 .Select(a => a.ID)
@@ -186,5 +208,7 @@ namespace SpotifyAnalysis.Data.Database {
             ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions
             return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
         }
+
+        #endregion
     }
 }
