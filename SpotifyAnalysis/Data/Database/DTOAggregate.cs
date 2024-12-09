@@ -94,17 +94,9 @@ namespace SpotifyAnalysis.Data.Database {
             return found;
         }
 
-        public void UpdateTracksArtists(TrackDTO track, FullTrack fullTrack) {
-            var artistIds = fullTrack.Artists.Select(a => a.Id);
-            track.Artists = Artists
-                .Where(a => artistIds.Contains(a.Key))
-                .Select(a => a.Value)
-                .ToList();
-        }
-
-        public void UpdateAlbumArtists(AlbumDTO album, SimpleAlbum fullAlbum) {
-            var artistIds = fullAlbum.Artists?.Select(a => a.Id) ?? [];
-            album.Artists = Artists
+        public List<ArtistDTO> GetArtists(List<SimpleArtist> simpleArtists) {
+            var artistIds = simpleArtists?.Select(a => a.Id) ?? [];
+                return Artists
                 .Where(a => artistIds.Contains(a.Key))
                 .Select(a => a.Value)
                 .ToList();

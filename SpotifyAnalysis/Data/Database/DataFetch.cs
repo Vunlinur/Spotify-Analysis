@@ -155,17 +155,16 @@ namespace SpotifyAnalysis.Data.Database {
                     dtos.UpdateOrAddArtist(simpleArtist, out _);
                 var albumFound = dtos.UpdateAlbum(fullTrack.Album, out AlbumDTO album);
                 if (!albumFound) {
-                    dtos.UpdateAlbumArtists(album, fullTrack.Album);
+                    album.Artists = dtos.GetArtists(fullTrack.Album.Artists);
                 }
                 var trackFound = dtos.UpdateOrAddTrack(fullTrack, out TrackDTO track);
                 if (!trackFound) {
                     track.Album = album;
-                    dtos.UpdateTracksArtists(track, fullTrack);
+                    track.Artists = dtos.GetArtists(fullTrack.Artists);
                     dtos.AddTrackToPlaylist(track, playlist);
                 }
             }
         }
-
 
         private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
             ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions
