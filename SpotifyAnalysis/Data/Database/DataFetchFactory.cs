@@ -1,7 +1,7 @@
 ﻿using SpotifyAnalysis.Data.SpotifyAPI;
 
 
-namespace SpotifyAnalysis.Data.DataAccessLayer {
+namespace SpotifyAnalysis.Data.Database {
     public static class DataFetchFactory {
         public static DataFetch GetDefault(SpotifyModule spotifyModule, UpdateProgressBarDelegate updateProgressBar)
             => new(

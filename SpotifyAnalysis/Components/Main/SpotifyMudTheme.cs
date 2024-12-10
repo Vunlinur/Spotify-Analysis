@@ -1,6 +1,6 @@
 ﻿using MudBlazor;
 
-namespace SpotifyAnalysis.Shared {
+namespace SpotifyAnalysis.Components {
 	public class SpotifyMudTheme : MudTheme {
         public SpotifyMudTheme() {
 			PaletteDark = new PaletteDark() {

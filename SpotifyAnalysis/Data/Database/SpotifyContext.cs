@@ -7,8 +7,10 @@ using System.Collections.Generic;
 using System.IO;
 
 
-namespace SpotifyAnalysis.Data.DataAccessLayer {
+namespace SpotifyAnalysis.Data.Database {
     public class SpotifyContext : DbContext {
+        public static Action<DbContextOptionsBuilder> Configurator { get; set; } = ConfigureSqlServer;
+
         public DbSet<AlbumDTO> Albums { get; set; }
         public DbSet<ArtistDTO> Artists { get; set; }
         public DbSet<ImageDTO> Images { get; set; }
@@ -20,9 +22,7 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
 			if (options.IsConfigured)
 				return;
 
-			IConfigurationRoot configuration = Program.PrepareConfig();
-            options.UseSqlServer(configuration.GetConnectionString("SpotifyDB"));
-			options.LogTo(Console.WriteLine, LogLevel.Information);
+            Configurator(options);
         }
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder) {
@@ -47,5 +47,11 @@ namespace SpotifyAnalysis.Data.DataAccessLayer {
                         j.Property<string>("TracksID");
                     });
         }
-	}
+
+        protected static void ConfigureSqlServer(DbContextOptionsBuilder options) {
+            IConfigurationRoot configuration = Program.PrepareConfig();
+            options.UseSqlServer(configuration.GetConnectionString("SpotifyDB"));
+            options.LogTo(Console.WriteLine, LogLevel.Information);
+        }
+    }
 }
