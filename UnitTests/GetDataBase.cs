@@ -61,6 +61,7 @@ namespace UnitTests {
                 .Include(t => t.Tracks)
                 .FirstOrDefault(p => p.ID == testPlaylist.Id);
             ClassicAssert.IsNotNull(playlist);
+            ClassicAssert.AreEqual(testPlaylist.Name, playlist.Name);
             ClassicAssert.AreEqual(testPlaylist.Owner.Id, playlist.OwnerID);
             ClassicAssert.AreEqual(expectedTrackCount, playlist.Tracks.Count);
         }
