@@ -4,13 +4,13 @@ using SpotifyAPI.Web;
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 
-namespace UnitTests {
+namespace Tests.GetDataTests {
     [MemoryDiagnoser]
     public class GetDataBenchmark : GetDataBase {
 
         private DataFetch? dataFetch;
         private MockData? data;
-        
+
         [GlobalSetup]
         public void GlobalSetup() {
             OneTimeSetup();

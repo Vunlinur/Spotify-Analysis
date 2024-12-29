@@ -3,8 +3,9 @@ using Moq;
 using SpotifyAnalysis.Data.Database;
 using SpotifyAPI.Web;
 using NUnit.Framework.Legacy;
+using UnitTests;
 
-namespace UnitTests {
+namespace Tests.GetDataTests {
     public class GetDataBase {
         protected Mock<GetUserProfileDelegate> mockUserProfile;
         protected Mock<GetUsersPublicPlaylistsDelegate> mockPublicPlaylists;
@@ -104,7 +105,7 @@ namespace UnitTests {
             // Step 2: Generate 100 playlists, each with 1,000 tracks
             for (int p = 0; p < 100; p++) {
                 var tracks = new List<FullTrack>();
-                int trackOffset = trackCount * p - (p * 10);  // Add trackCount tracks for each playlist, 10 tracks overlapping
+                int trackOffset = trackCount * p - p * 10;  // Add trackCount tracks for each playlist, 10 tracks overlapping
                 for (int t = trackOffset; t < trackOffset + trackCount; t++) {
                     // Assign an album and a subset of artists
                     var album = data.Albums[t % data.Albums.Count];
