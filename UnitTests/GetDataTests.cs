@@ -7,6 +7,54 @@ using NUnit.Framework.Legacy;
 namespace UnitTests {
     public class GetDataTests : GetDataBase {
         [Test]
+        public async Task Add_Playlist() {
+            // Arrange
+            var testPlaylist = Stubs.FullPlaylist(testUser, []);
+
+            mockPublicPlaylists.Setup(m => m(It.Is<string>(s => s == testUser.Id)))
+                .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]));
+            mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
+                .Returns(Task.FromResult(testPlaylist));
+            mockTracks.Setup(m => m(It.IsAny<Paging<PlaylistTrack<IPlayableItem>>>()))
+                .Returns(Task.FromResult(new List<FullTrack> { }));
+            mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
+                .Returns(Task.FromResult(new List<FullArtist> { }));
+
+            // Act
+            var dataFetch = CreateDataFetch();
+            await dataFetch.GetData(testUser.Id);
+
+            // Assert
+            AssertDbSetCounts(1, 0, 0, 0);
+            AssertPlaylistData(testPlaylist, 0);
+        }
+
+        [Test]
+        public async Task Remove_Playlist() {
+            // Arrange
+            var testPlaylist = Stubs.FullPlaylist(testUser, []);
+
+            mockPublicPlaylists.SetupSequence(m => m(It.Is<string>(s => s == testUser.Id)))
+                .Returns(Task.FromResult<IList<FullPlaylist>>([testPlaylist]))
+                .Returns(Task.FromResult<IList<FullPlaylist>>([]));
+            mockPlaylist.Setup(m => m(It.Is<string>(s => s == testPlaylist.Id)))
+                .Returns(Task.FromResult(testPlaylist));
+            mockTracks.Setup(m => m(It.IsAny<Paging<PlaylistTrack<IPlayableItem>>>()))
+                .Returns(Task.FromResult(new List<FullTrack> { }));
+            mockArtists.Setup(m => m(It.IsAny<IList<string>>()))
+                .Returns(Task.FromResult(new List<FullArtist> { }));
+
+            // Act
+            var dataFetch = CreateDataFetch();
+            await dataFetch.GetData(testUser.Id);
+            await dataFetch.GetData(testUser.Id);
+
+            // Assert
+            AssertDbSetCounts(0, 0, 0, 0);
+        }
+
+
+        [Test]
         public async Task Add_1Track() {
             // Arrange
             var testArtist = Stubs.FullArtist();
@@ -503,7 +551,7 @@ namespace UnitTests {
         }
 
         [Test]
-        public async Task RenamePlaylist() {
+        public async Task Rename_Playlist() {
             // Arrange
             var testArtist = Stubs.FullArtist();
             var testSimpleArtist = Stubs.SimpleArtist();
