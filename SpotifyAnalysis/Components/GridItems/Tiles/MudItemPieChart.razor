@@ -28,8 +28,10 @@
 
     private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
         Theme = new Theme {
-            Mode = Mode.Dark,
             Palette = PaletteType.Palette5
+        },
+        Chart = new Chart {
+            Height = "90%"
         },
         Legend = new Legend {
             Width = 250,

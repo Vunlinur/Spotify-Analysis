@@ -24,3 +24,7 @@
 .full-width {
     width: 100%;
 }
+
+svg > foreignObject { /* MudBlazor pie chart legend */
+    height: 100%;
+}
