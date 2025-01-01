@@ -1,0 +1,35 @@
+﻿@namespace SpotifyAnalysis.Components
+@using ApexCharts
+
+@inherits WidgetBase
+
+@using Data.DTO
+@using SpotifyAnalysis.Data
+
+@if (elements is not null) {
+    @CreateChart(typeof(MudItemAreaChart))
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<TrackDTO> Tracks { get; set; }
+    public override string Title { get; } = "Release years";
+
+    protected override Elements BuildElements() {
+        var elements = new Elements();
+        if (Tracks is null)
+            return elements;
+
+        // initialize the whole range
+        int startYear = 1950;
+        var years = Enumerable.Range(startYear, DateTime.Now.Year - startYear).Select(y => y.ToString());
+        foreach (string year in years)
+            elements.Increase(new Element { Label = year, Quantity = 0 });
+
+        foreach (var track in Tracks)
+            elements.Increase(new Element { Label = track.Album.ReleaseDate.Substring(0,4), Quantity = 1 });
+
+        // remove 0000
+        return elements;
+    }
+}

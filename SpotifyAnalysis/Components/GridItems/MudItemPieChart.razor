@@ -3,6 +3,8 @@
 @using SpotifyAnalysis.Data
 @using ApexCharts
 
+@inherits ChartBase
+
 
 <MudItemBase>
     <MudText Typo="Typo.h6">@Title</MudText>
@@ -22,19 +24,12 @@
 
 
 @code {
-    [Parameter]
-    public string Title { get; set; }
-    [Parameter]
-    public IEnumerable<Element> Elements { get; set; }
     private Element[] series { get; set; }
-    [Parameter]
-    public Action<Element> OnClickCallback { get; set; }
 
-    private ApexChart<Element> chart;
     private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
-        Title = new Title {
-            Align = ApexCharts.Align.Center,
-                Style = new TitleStyle { Color = "#fff", FontSize = "18px" }
+        Theme = new Theme {
+            Mode = Mode.Dark,
+            Palette = PaletteType.Palette5
         },
         Legend = new Legend {
             Width = 250,
@@ -55,20 +50,9 @@
         }
     };
 
-    public async Task RefreshChartAsync() {
-        if (chart is null)
-            return;
-        ProcessElements();
-        await chart.UpdateSeriesAsync(false);
-        await chart.UpdateOptionsAsync(false, false, true);
-    }
-
     protected string other = "Other";
-    protected override void OnInitialized() {
-        ProcessElements();
-    }
 
-    protected void ProcessElements() {
+    protected override void ProcessElements() {
         Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels. Also Change Append to Prepend
 
         //MergeBelowDegree(360f);

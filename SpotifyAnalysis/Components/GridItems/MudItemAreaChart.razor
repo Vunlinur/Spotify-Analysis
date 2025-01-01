@@ -1,0 +1,51 @@
+﻿@namespace SpotifyAnalysis.Components
+
+@using SpotifyAnalysis.Data
+@using ApexCharts
+
+@inherits ChartBase
+
+
+<MudItemBase>
+    <MudText Typo="Typo.h6">@Title</MudText>
+    <ApexChart TItem="Element"
+                Options="options"
+                OnDataPointSelection=OnDataPointSelection
+                @ref="chart">
+
+        <ApexPointSeries TItem="Element"
+                         Items="series"
+                         SeriesType="@SeriesType.Area"
+                         Name="test name"
+                         XValue=@(e => e.Label)
+                         YValue=@(e => e.Quantity)/>
+    </ApexChart>
+</MudItemBase>
+
+
+@code {
+    private Element[] series { get; set; }
+
+    private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
+        Theme = new Theme {
+            Mode = Mode.Dark,
+            Palette = PaletteType.Palette5
+        },
+        Legend = new Legend {
+            Width = 250,
+            FontSize = "15",
+            OnItemClick = new LegendOnItemClick { ToggleDataSeries = true }, // doesn't do anything for pie
+            Labels = new LegendLabels { Colors = ["#fff"] }
+        },
+        PlotOptions = new PlotOptions {
+            Area = new PlotOptionsArea { }
+        }
+    };
+
+    protected override void ProcessElements() {
+        series = Elements.ToArray();
+    }
+
+    protected async void OnDataPointSelection(SelectedData<Element> selection) {
+    }
+}
