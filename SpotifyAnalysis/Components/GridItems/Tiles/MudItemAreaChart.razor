@@ -16,7 +16,7 @@
         <ApexPointSeries TItem="Element"
                          Items="series"
                          SeriesType="@SeriesType.Area"
-                         Name="test name"
+                         Name="amount"
                          XValue=@(e => e.Label)
                          YValue=@(e => e.Quantity)/>
     </ApexChart>
@@ -31,11 +31,8 @@
             Mode = Mode.Dark,
             Palette = PaletteType.Palette5
         },
-        Legend = new Legend {
-            Width = 250,
-            FontSize = "15",
-            OnItemClick = new LegendOnItemClick { ToggleDataSeries = true }, // doesn't do anything for pie
-            Labels = new LegendLabels { Colors = ["#fff"] }
+        Chart = new Chart {
+            Height = "90%"
         },
         PlotOptions = new PlotOptions {
             Area = new PlotOptionsArea { }
