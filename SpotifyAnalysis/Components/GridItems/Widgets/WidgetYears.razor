@@ -8,6 +8,7 @@
 
 @if (elements is not null) {
     @CreateChart(typeof(MudItemAreaChart))
+    <MudItemTracksPane Tracks=@selectedTracks TitleSuffix=@year />
 }
 
 @code {
@@ -15,21 +16,35 @@
     public IEnumerable<TrackDTO> Tracks { get; set; }
     public override string Title { get; } = "Release years";
 
+    List<List<TrackDTO>> trackList;
     protected override Elements BuildElements() {
         var elements = new Elements();
         if (Tracks is null)
             return elements;
 
-        int[] timeline = new int[DateTime.Now.Year];
+        trackList = Enumerable.Range(0, DateTime.Now.Year).Select(_ => new List<TrackDTO>()).ToList();
+
         foreach (var track in Tracks)
-            timeline[int.Parse(track.Album.ReleaseDate.Substring(0, 4))]++;
+            trackList[int.Parse(track.Album.ReleaseDate.Substring(0, 4))].Add(track);
 
-        timeline[0] = 0;  // Some albums have 0000 as release year - remove these
+        trackList[0].Clear();  // Some albums have 0000 as release year - remove these
 
-        int minYear = Math.Min(timeline.Select((e, index) => (e, index)).FirstOrDefault(t => t.e > 0).index, 2000);
-        for (int i = minYear; i < timeline.Length; i++)
-            elements.Increase(new() { Label = i.ToString(), Quantity = timeline[i] });
+        int minYear = Math.Min(trackList.Select((e, index) => (e, index)).FirstOrDefault(t => t.e.Count > 0).index, 2000);
+        for (int i = minYear; i < trackList.Count; i++)
+            elements.Increase(new() { Label = i.ToString(), Quantity = trackList[i].Count });
 
         return elements;
+    }
+
+    public WidgetYears() {
+        onClickCallback = FindTracks;
+    }
+
+    string year;
+    IEnumerable<TrackDTO> selectedTracks;
+    void FindTracks(Element element) {
+        year = element.Label;
+        selectedTracks = trackList[int.Parse(year)];
+        StateHasChanged();
     }
 }

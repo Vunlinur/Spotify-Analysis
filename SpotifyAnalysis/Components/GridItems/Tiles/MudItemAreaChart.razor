@@ -44,5 +44,6 @@
     }
 
     protected async void OnDataPointSelection(SelectedData<Element> selection) {
+        OnClickCallback?.Invoke(selection.DataPoint.Items.First());
     }
 }
