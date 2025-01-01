@@ -21,7 +21,7 @@
             return elements;
 
         // initialize the whole range
-        int startYear = 1950;
+        int startYear = 1900;
         var years = Enumerable.Range(startYear, DateTime.Now.Year - startYear).Select(y => y.ToString());
         foreach (string year in years)
             elements.Increase(new Element { Label = year, Quantity = 0 });
