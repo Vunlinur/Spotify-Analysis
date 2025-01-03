@@ -152,10 +152,6 @@
             .ThenInclude(p => p.Tracks)
             .ThenInclude(t => t.Album)
 
-            .Include(u => u.Playlists)
-            .ThenInclude(p => p.Tracks)
-            .ThenInclude(t => t.Playlists)
-
             .FirstAsync(u => u.ID == userID);
     }
 }
