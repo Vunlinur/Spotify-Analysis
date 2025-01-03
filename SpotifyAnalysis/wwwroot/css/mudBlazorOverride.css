@@ -15,6 +15,15 @@
     animation-duration: .2s !important
 }
 
+.mud-grid-item > * .mud-toolbar {
+    --mud-internal-toolbar-height: !important; /* Fix a bug where toolbar gradually grows and reduce padding */
+    padding-bottom: 8px; /* Make up for the lost padding */
+}
+
+svg > foreignObject { /* ApexCharts pie chart legend */
+    height: 100% !important
+}
+
 /* full custom */
 
 .full-height {
@@ -23,8 +32,4 @@
 
 .full-width {
     width: 100%;
-}
-
-svg > foreignObject { /* ApexCharts pie chart legend */
-    height: 100% !important
 }

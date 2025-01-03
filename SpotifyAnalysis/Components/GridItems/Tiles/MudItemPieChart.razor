@@ -7,7 +7,13 @@
 
 
 <MudItemBase>
-    <MudText Typo="Typo.h6">@Title</MudText>
+    <MudToolBar>
+        <MudText Typo="Typo.h6">@Title</MudText>
+        <MudSpacer />
+        <MudMenu Icon="@Icons.Material.Outlined.Settings" Size=@MudBlazor.Size.Small AnchorOrigin=Origin.BottomCenter Dense="true" AriaLabel="Options">
+            <MudMenuItem OnClick="ShowAllSlices">Show all slices</MudMenuItem>
+        </MudMenu>
+    </MudToolBar>
     <ApexChart TItem="Element"
                 Options="options"
                 OnDataPointSelection=OnDataPointSelection
@@ -24,7 +30,9 @@
 
 
 @code {
-    private Element[] series { get; set; }
+    protected Element[] series { get; set; }
+    protected int[] quantities;
+    protected const string other = "Other";
 
     private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
         Theme = new Theme {
@@ -51,8 +59,6 @@
             }
         }
     };
-
-    protected string other = "Other";
 
     protected override void ProcessElements() {
         Elements = Elements.OrderByDescending(e => e.Quantity);   // Descending because of how Mud displays labels. Also Change Append to Prepend
@@ -94,20 +100,24 @@
         legendClicked = true;
     }
 
-    int[] quantities;
     protected async void OnDataPointSelection(SelectedData<Element> selection) {
-        if (OnClickCallback is null)
-            return;
-
         if (legendClicked) {
+            OnClickCallback?.Invoke(selection.DataPoint.Items.First());
+            legendClicked = false;
+        }
+        else {
+            // toggle slice
             int index = selection.DataPointIndex;
             var serie = series[index];
             serie.Quantity = serie.Quantity == 0 ? quantities[index] : 0;
             await chart.UpdateSeriesAsync();
         }
-        else
-            OnClickCallback?.Invoke(selection.DataPoint.Items.First());
-        
-        legendClicked = false;
+    }
+
+    protected async void ShowAllSlices() {
+        for (int i = 0; i < quantities.Length; i++)
+            if (series[i].Quantity == 0)
+                series[i].Quantity = quantities[i];
+        await chart.UpdateSeriesAsync();
     }
 }
