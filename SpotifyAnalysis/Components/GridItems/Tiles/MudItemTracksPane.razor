@@ -5,7 +5,8 @@
 
 <MudItemBase>
 	<MudDataGrid T="TrackView" Items="@TrackViews" FixedHeader Height="500px"
-				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter ColumnResizeMode="ResizeMode.Column"
+				 ColumnsPanelReordering Hideable Filterable Groupable FilterMode="DataGridFilterMode.Simple" ShowMenuIcon="true">
 		<ToolBarContent>
 			<MudText Typo="Typo.h6">@Title()</MudText>
 			<MudSpacer />
@@ -13,23 +14,31 @@
 						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
 		</ToolBarContent>
 		<Columns>
-			<PropertyColumn Property="x => x.track.Name" Title="Name" />
-			<PropertyColumn Property="x => x.artists" Title="Artists" />
-			<PropertyColumn Property="x => x.track.Album.Name" Title="Album" />
-			@if (ShowGenres) {
-				<PropertyColumn Property="x => x.genres" Title="Genres" />
-			}
+			<PropertyColumn Property="x => x.track.Name"		Title="Name"		Hidden="!ShowColumns.HasFlag(Column.Name)" Groupable="false" />
+			<PropertyColumn Property="x => x.artists"			Title="Artists"		Hidden="!ShowColumns.HasFlag(Column.Artists)" />
+			<PropertyColumn Property="x => x.track.Album.Name"	Title="Album"		Hidden="!ShowColumns.HasFlag(Column.Album)" />
+			<PropertyColumn Property="x => x.playlists"			Title="Playlists"	Hidden="!ShowColumns.HasFlag(Column.Playlists)" />
+			<PropertyColumn Property="x => x.genres"			Title="Genres"		Hidden="!ShowColumns.HasFlag(Column.Genres)" />
 		</Columns>
 	</MudDataGrid>
 </MudItemBase>
 
 @code {
+	[Flags]
+	public enum Column {
+		Name = 1,
+		Artists = 2,
+		Album = 4,
+		Playlists = 8,
+		Genres = 16
+	}
+
 	[Parameter, EditorRequired]
 	public IEnumerable<TrackDTO> Tracks { get; set; }
 	[Parameter, EditorRequired]
 	public string TitleSuffix { get; set; }
 	[Parameter]
-	public bool ShowGenres { get; set; }
+	public Column ShowColumns { get; set; } = Column.Name|Column.Artists|Column.Album;
 
 	protected IEnumerable<TrackView> TrackViews = [];
 
@@ -54,21 +63,26 @@
 		if (t.track.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
 			return true;
 
-		if (ShowGenres && t.genres.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+		if (t.genres.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (t.playlists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
 			return true;
 
 		return false;
 	}
 
-	public class TrackView {
+	protected class TrackView {
 		public TrackDTO track;
 		public readonly string artists;
 		public readonly string genres;
+		public readonly string playlists;
 
 		public TrackView(TrackDTO track) {
 			this.track = track;
 			artists = string.Join(", ", track.Artists.Select(a => a.Name));
 			genres = string.Join(", ", track.Artists.SelectMany(a => a.Genres).Distinct());
+			playlists = string.Join(", ", track.Playlists.Select(a => a.Name));
 		}
 	}
 }

@@ -25,6 +25,6 @@
     width: 100%;
 }
 
-svg > foreignObject { /* MudBlazor pie chart legend */
-    height: 100%;
+svg > foreignObject { /* ApexCharts pie chart legend */
+    height: 100% !important
 }

@@ -5,10 +5,11 @@
 
 @using Data.DTO
 @using SpotifyAnalysis.Data
+@using static SpotifyAnalysis.Components.MudItemTracksPane.Column
 
 @if (elements is not null) {
     @CreateChart(typeof(MudItemAreaChart))
-    <MudItemTracksPane Tracks=@selectedTracks TitleSuffix=@year />
+    <MudItemTracksPane Tracks=@selectedTracks TitleSuffix=@year ShowColumns="Name|Artists|Playlists" />
 }
 
 @code {
