@@ -1,4 +1,6 @@
-﻿.mud-button-outlined:hover {
+﻿/* MudBlazor overrides */
+
+.mud-button-outlined:hover {
     border-color: white;
 }
 
@@ -20,11 +22,13 @@
     padding-bottom: 8px; /* Make up for the lost padding */
 }
 
-svg > foreignObject { /* ApexCharts pie chart legend */
+/* ApexCharts overrides */
+
+svg > foreignObject { /* pie chart legend */
     height: 100% !important
 }
 
-/* full custom */
+/* Custom */
 
 .full-height {
     height: 100%;
