@@ -126,7 +126,7 @@
         return null;
     }
 
-    static int MinutesSince(DateTime since) => DateTime.Now.Subtract(since).Minutes;
+    static int MinutesSince(DateTime since) => (int) DateTime.Now.Subtract(since).TotalMinutes;
 
     private async Task<DialogResult> OpenDialogAsync(UserDTO userDto) {
         var options = new DialogOptions { CloseOnEscapeKey = true };
