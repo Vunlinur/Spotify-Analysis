@@ -8,7 +8,16 @@ using static SpotifyAPI.Web.Scopes;
 
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
-	public class SpotifyClientScoped : IUserContainer {
+    /// <summary>
+    /// Manages a scoped SpotifyClient instance for user-specific API interactions.
+    /// This client is initialized using Spotify's Authorization Code Flow (OAuth), enabling access to the user's
+    /// private playlists, libraries, and other user-specific data.
+    /// </summary>
+    /// <remarks>
+    /// This class also maintains the authenticated user's profile information (`UserDTO`) and triggers 
+    /// a `UserChanged` event whenever the authenticated user context is updated.
+    /// </remarks>
+    public class SpotifyClientScoped : IUserContainer {
         public UserDTO UserDTO {
             get => user;
             set => UserChanged?.Invoke(user = value);

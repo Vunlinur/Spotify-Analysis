@@ -4,7 +4,16 @@ using SpotifyAPI.Web;
 
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
-	public class SpotifyClientStatic {
+    /// <summary>
+    /// Provides a static SpotifyClient instance for general server API interactions without user-specific context.
+    /// This client is initialized using Spotify's Client Credentials Flow and is suitable for operations
+    /// that do not require user authentication, such as retrieving public data.
+    /// </summary>
+    /// <remarks>
+    /// The client is initialized during application startup with credentials retrieved from configuration.
+    /// Ensure `ClientId` and `ClientSecret` are correctly configured in the application secrets or settings.
+    /// </remarks>
+    public class SpotifyClientStatic {
 		public SpotifyClient SpotifyClient { get; set; }
 
         public SpotifyClientStatic() {
