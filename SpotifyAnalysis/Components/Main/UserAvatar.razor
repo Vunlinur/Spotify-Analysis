@@ -1,27 +1,39 @@
 ﻿@namespace SpotifyAnalysis.Components
 @implements IDisposable
 
-@using SpotifyAnalysis.Data.DTO
+@using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.SpotifyAPI
 
-@inject SpotifyMudTheme SpotifyTheme
-@inject ScopedData scope
 
-<MudAvatar Size="Size.Small">
-    <MudImage Src=@GetAvatar() />
-</MudAvatar>
-<MudText Typo="Typo.subtitle1" Class="pr-4 pl-2">@GetUserName()</MudText>
+<MudButton Variant=Variant.Outlined OnClick=@OnClick>
+    <MudText Class="pr-2">@Descriptor</MudText>
+    <MudAvatar Size="Size.Small">
+        <MudImage Src=@GetAvatar() />
+    </MudAvatar>
+    <MudText Typo="Typo.subtitle1" Class="pl-2">@GetUserName()</MudText>
+</MudButton>
+
 
 @code {
+    [Parameter, EditorRequired]
+    public string Descriptor { get; set; }
+    [Parameter, EditorRequired]
+    public string DefaultText { get; set; }
+    [Parameter, EditorRequired]
+    public IUserContainer UserContainer { get; set; }
+    [Parameter]
+    public EventCallback OnClick { get; set; }
+
     protected override void OnInitialized() {
         base.OnInitialized();
-        scope.UserChanged += Refresh;
+        UserContainer.UserChanged += Refresh;
     }
 
-    public void Dispose() => scope.UserChanged -= Refresh;
+    public void Dispose() => UserContainer.UserChanged -= Refresh;
 
-    string GetAvatar() => scope.UserDTO?.Images?.LastOrDefault()?.Url ?? StaticResourceMap.UnknownUser;
+    string GetAvatar() => UserContainer.UserDTO?.Images?.LastOrDefault()?.Url ?? StaticResourceMap.UnknownUser;
 
-    string GetUserName() => scope.UserDTO?.Name ?? "No user selected";
+    string GetUserName() => UserContainer.UserDTO?.Name ?? DefaultText;
 
     async void Refresh(object _) => await InvokeAsync(StateHasChanged);
 }

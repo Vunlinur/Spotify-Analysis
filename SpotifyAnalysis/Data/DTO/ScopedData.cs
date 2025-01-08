@@ -1,7 +1,7 @@
 ﻿using System;
 
 namespace SpotifyAnalysis.Data.DTO {
-	public class ScopedData {
+	public class ScopedData : IUserContainer {
         public event Action<UserDTO> UserChanged;
 
         public UserDTO UserDTO {

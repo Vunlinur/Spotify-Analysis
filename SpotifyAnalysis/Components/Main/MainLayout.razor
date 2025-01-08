@@ -1,7 +1,13 @@
 ﻿@namespace SpotifyAnalysis.Components
 @inherits LayoutComponentBase
 
+@using SpotifyAnalysis.Data.DTO
+@using SpotifyAnalysis.Data.SpotifyAPI
+
 @inject SpotifyMudTheme SpotifyTheme
+@inject ScopedData scope
+@inject SpotifyClientScoped clientScoped
+@inject NavigationManager navigationManager
 
 <MudThemeProvider IsDarkMode=true Theme="SpotifyTheme" />
 <MudPopoverProvider />
@@ -12,7 +18,10 @@
     <MudAppBar Color="Color.Primary" Fixed="true" Dense=true Elevation ="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudSpacer />
-        <UserAvatar />
+        <MudButtonGroup Variant=Variant.Outlined Style="--mud-default-borderradius: 9999px">
+            <UserAvatar OnClick=@(_ => navigationManager.NavigateTo("/")) Descriptor="inspecting:" UserContainer=@scope DefaultText="No user selected" />
+            <UserAvatar OnClick=clientScoped.InitializeSpotifyClient Descriptor="as:" UserContainer=@clientScoped DefaultText="Not logged in" />
+        </MudButtonGroup>
         <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/Vunlinur/Spotify-Analysis" Target="_blank" />
     </MudAppBar>
     <MudDrawer Breakpoint=Breakpoint.Sm ClipMode=DrawerClipMode.Always

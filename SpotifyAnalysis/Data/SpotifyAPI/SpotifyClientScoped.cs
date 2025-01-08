@@ -8,7 +8,7 @@ using static SpotifyAPI.Web.Scopes;
 
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
-	public class SpotifyClientScoped {
+	public class SpotifyClientScoped : IUserContainer {
         public UserDTO UserDTO {
             get => user;
             set => UserChanged?.Invoke(user = value);
