@@ -8,6 +8,9 @@
 @inject ScopedData data;
 
 
+@if (tracks is null)
+    return;
+
 <MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader SortMode="SortMode.Multiple"
              QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive FilterMode=DataGridFilterMode.ColumnFilterMenu
              Filterable="true" Groupable="true" GroupExpanded="false" >
