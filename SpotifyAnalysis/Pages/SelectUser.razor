@@ -7,7 +7,7 @@
 @using System.Text.RegularExpressions
 
 @inject IDialogService DialogService
-@inject SpotifyModule spotifyModule;
+@inject SpotifyModuleFactory spotifyModuleFactory;
 @inject ScopedData data;
 
 <MudContainer MaxWidth="MaxWidth.Medium">
@@ -59,7 +59,6 @@
 
     protected override void OnInitialized() {
         base.OnInitialized();
-        dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
         selectedUser = data.UserDTO ?? new UserDTO();
     }
 
@@ -74,6 +73,9 @@
         var id = SanitizeUserID(input);
         if (string.IsNullOrWhiteSpace(id))
             return "Input must be either a User ID, URI or URL";
+
+        var spotifyModule = spotifyModuleFactory.GetModule();
+        dataFetch = DataFetchFactory.GetDefault(spotifyModule, UpdateProgressBar);
 
         var publicUser = await spotifyModule.GetUserProfile(id);
         if (publicUser is null)

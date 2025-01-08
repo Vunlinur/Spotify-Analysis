@@ -1,48 +1,23 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
-using SpotifyAPI.Web;
-using System;
+﻿using SpotifyAPI.Web;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace SpotifyAnalysis.Data.SpotifyAPI {
+    /// <summary>
+    /// A collection of thin Spotify API abstractions.
+    /// </summary>
+    /// <param name="spotifyClient">A SpotifyClient to use for connecting. Can be logged in or not.</param>
+    public class SpotifyModule(SpotifyClient spotifyClient) {
+		private readonly SpotifyClient SpotifyClient = spotifyClient;
 
-
-	public class SpotifyModule {
-		private SpotifyClient SpotifyClient;
-
-
-		public SpotifyModule() {
-			InitializeSpotifyClient();
-		}
-
-		private void InitializeSpotifyClient() {
-			var config = SpotifyClientConfig.CreateDefault();
-
-			var credentials = new ClientCredentialsRequest(
-				Program.Config.GetValue<string>("ClientId"),
-				Program.Config.GetValue<string>("ClientSecret")
-			);
-
-			try {
-				// TODO handle server errors like Error SQL80001: An expression of non-boolean type specified in a context where a condition is expected.
-				var response = new OAuthClient(config).RequestToken(credentials);
-				response.Wait(); // Async await did not return with an error but timed out instead: TODO test when API's down
-				SpotifyClient = new SpotifyClient(config.WithToken(response.Result.AccessToken));
-			}
-			catch (SecurityTokenExpiredException) {
-				throw; // TODO refresh token
-			}
-		}
-
-		/**
+        /**
 		 * Get public profile information about a Spotify user.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-users-profile
 		 */
-		public async Task<PublicUser> GetUserProfile(string userID) {
+        public async Task<PublicUser> GetUserProfile(string userID) {
 			try {
 	            return await SpotifyClient.UserProfile.Get(userID);
             }
@@ -59,7 +34,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		 * https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
 		 */
 		public async Task<IList<FullPlaylist>> GetUsersPublicPlaylistsAsync(string userID) {
-			var playlistsPages = await SpotifyClient.Playlists.GetUsers(userID);
+			var playlistsPages = await SpotifyClient.Playlists.GetUsers(userID);  // Returns also priv playlists when queried for the logged-in user
             return await SpotifyClient.PaginateAll(playlistsPages);
 		}
 

@@ -31,9 +31,9 @@ namespace SpotifyAnalysis {
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 			services.AddMudServices();
-			services.AddSingleton<SpotifyModule>();
-			services.AddSingleton<SpotifyMudTheme>();
-			services.AddScoped<ScopedData>();
+            services.AddSpotifyAPI();
+            services.AddSingleton<SpotifyMudTheme>();
+            services.AddScoped<ScopedData>();
 			services.AddTransient<SpotifyContext>();
 		}
 

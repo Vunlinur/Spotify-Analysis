@@ -21,8 +21,8 @@ JOIN Artists ar ON adt.ArtistsID = ar.ID
 --WHERE p.Name LIKE '%test%'
 ORDER BY ar.Name, al.Name
 
-
-
+UPDATE Users SET Updated = '2020' WHERE ID = '11ek5k7fhea9otrb7k2ecizzb'
+UPDATE Playlists SET SnapshotID = '' WHERE ID = '7D8pgfx10524cS2i6kuKgo'
 
 
 --DELETE FROM Images

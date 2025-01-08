@@ -6,17 +6,27 @@ using System.Linq;
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
     public static class SpotifyToDTOExtensions {
-		public static UserDTO ToUserDTO(this PublicUser pu) {
+        public static UserDTO ToUserDTO(this PublicUser pu) {
             return new UserDTO() {
                 ID = pu.Id,
                 Name = pu.DisplayName,
-				Updated = DateTime.Now,
-				Playlists = [],
-				Images = pu.Images.ToImageDTOs()
-			};
-		}
+                Updated = DateTime.Now,
+                Playlists = [],
+                Images = pu.Images.ToImageDTOs()
+            };
+        }
 
-		public static PlaylistDTO ToPlaylistDTO(this FullPlaylist fp) {
+        public static UserDTO ToUserDTO(this PrivateUser pu) {
+            return new UserDTO() {
+                ID = pu.Id,
+                Name = pu.DisplayName,
+                Updated = DateTime.Now,
+                Playlists = [],
+                Images = pu.Images.ToImageDTOs()
+            };
+        }
+
+        public static PlaylistDTO ToPlaylistDTO(this FullPlaylist fp) {
 			return new PlaylistDTO() {
 				ID = fp.Id,
 				Name = fp.Name,
