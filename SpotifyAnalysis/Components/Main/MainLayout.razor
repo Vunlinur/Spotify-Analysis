@@ -5,7 +5,7 @@
 @using SpotifyAnalysis.Data.SpotifyAPI
 
 @inject SpotifyMudTheme SpotifyTheme
-@inject ScopedData scope
+@inject ScopedData appState
 @inject SpotifyClientScoped clientScoped
 @inject NavigationManager navigationManager
 
@@ -19,13 +19,13 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudSpacer />
         <MudButtonGroup Variant=Variant.Outlined Style="--mud-default-borderradius: 9999px">
-            <UserAvatar OnClick=@(_ => navigationManager.NavigateTo("/")) Descriptor="inspecting:" UserContainer=@scope DefaultText="No user selected" />
+            <UserAvatar OnClick=@(_ => navigationManager.NavigateTo("/")) Descriptor="inspecting:" UserContainer=@appState DefaultText="No user selected" />
             <UserAvatar OnClick=clientScoped.InitializeSpotifyClient Descriptor="as:" UserContainer=@clientScoped DefaultText="Not logged in" />
         </MudButtonGroup>
         <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Href="https://github.com/Vunlinur/Spotify-Analysis" Target="_blank" />
     </MudAppBar>
     <MudDrawer Breakpoint=Breakpoint.Sm ClipMode=DrawerClipMode.Always
-               Variant="@DrawerVariant.Mini" OpenMiniOnHover="true" @bind-Open="@_open">
+               Variant="@DrawerVariant.Mini" OpenMiniOnHover="true" @bind-Open="@open">
         <NavMenu></NavMenu>
     </MudDrawer>
 
@@ -36,6 +36,15 @@
 
 
 @code {
-    private bool _open = true;
-    private void ToggleDrawer() => _open = !_open;
+    private bool open = true;
+    private void ToggleDrawer() => open = !open;
+
+    bool UserLoaded { get => !string.IsNullOrEmpty(appState?.UserDTO?.ID); }
+    bool Home { get => string.IsNullOrEmpty(navigationManager.ToBaseRelativePath(navigationManager.Uri)); }
+
+    protected override async Task OnInitializedAsync() {
+        if (!UserLoaded && !Home)
+            navigationManager.NavigateTo("/");
+        await base.OnInitializedAsync();
+    }
 }
