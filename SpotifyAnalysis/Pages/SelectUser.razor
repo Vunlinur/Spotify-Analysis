@@ -4,10 +4,12 @@
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.Database
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 @using System.Text.RegularExpressions
 
 @inject IDialogService DialogService
 @inject SpotifyModuleFactory spotifyModuleFactory;
+@inject ProtectedLocalStorage localStorage;
 @inject ScopedData data;
 
 <MudContainer MaxWidth="MaxWidth.Medium">
@@ -52,7 +54,8 @@
     MudForm form;
     DataFetch dataFetch;
     UserDTO selectedUser;
-    string userInput = "11ek5k7fhea9otrb7k2ecizzb";
+    Storage<string> selectedUserIDStorage;
+    string userInput;
     ushort loadValue = 0;
     string loadMessage;
 
@@ -60,6 +63,15 @@
     protected override void OnInitialized() {
         base.OnInitialized();
         selectedUser = data.UserDTO ?? new UserDTO();
+        selectedUserIDStorage = new(nameof(selectedUserIDStorage), localStorage);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        if (firstRender) {
+            userInput = await selectedUserIDStorage.Get();
+            if (!string.IsNullOrEmpty(userInput))
+                StateHasChanged();
+        }
     }
 
     private void UpdateProgressBar(float value, string message) {
@@ -81,6 +93,7 @@
         if (publicUser is null)
             return "User not found, possible incorrect ID";
 
+        await selectedUserIDStorage.Set(id);
         userFromAPI = publicUser.ToUserDTO();
         return null;
     }
@@ -120,6 +133,8 @@
 
     static readonly Regex[] patterns = [URLRegex, HrefRegex, URIRegex, IdRegex];
     static string SanitizeUserID(string input) {
+        if (string.IsNullOrWhiteSpace(input))
+            return null;
         input = input.Trim();
         string id;
         foreach (Regex re in patterns)

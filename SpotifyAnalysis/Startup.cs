@@ -6,13 +6,14 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MudBlazor.Services;
 using SpotifyAnalysis.Data.Database;
-using SpotifyAnalysis.Data.DTO;
+using SpotifyAnalysis.Data.Common;
 using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAnalysis.Components;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace SpotifyAnalysis {
     public class Startup(IConfiguration configuration) {
@@ -34,7 +35,8 @@ namespace SpotifyAnalysis {
             services.AddSpotifyAPI();
             services.AddSingleton<SpotifyMudTheme>();
             services.AddScoped<ScopedData>();
-			services.AddTransient<SpotifyContext>();
+            services.AddScoped<ProtectedLocalStorage>();
+            services.AddTransient<SpotifyContext>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
