@@ -4,8 +4,10 @@
 @using SpotifyAnalysis.Data.DTO
 @using System.Threading
 @using System.Collections.Concurrent
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 @inject IDialogService dialogService;
+@inject ProtectedLocalStorage localStorage
 @inject ScopedData data;
 
 
@@ -37,11 +39,26 @@
 @code {
     private PlaylistTable playlistTable;
 
+    Storage<bool> storageOpen;
     List<WidgetBase> chartRefs = [];
     WidgetBase chartRef { set { chartRefs.Add(value); } }
 
     private bool open { get; set; }
-    private void TogglePlaylistTable() => open = !open;
+    private async void TogglePlaylistTable() {
+        open = !open;
+        await storageOpen.Set(open);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+        if (!firstRender)
+            return;
+
+        storageOpen = new(nameof(storageOpen), localStorage);
+        open = await storageOpen.Get();
+        if (open)
+            StateHasChanged();
+    }
 
     IEnumerable<TrackDTO> AllTracks;
     IDictionary<string, ArtistDTO> ArtistsDict;
@@ -53,10 +70,12 @@
         await Task.Delay(100);  // TODO fix dirty hack, this prevents a race condition, presumably between the server and the js chart
         foreach (var chart in chartRefs) 
             chart.ProcessData();
-        
+
         await InvokeAsync(StateHasChanged);
         foreach (var chart in chartRefs)
             chart.RefreshChartAsync();
+        await storageOpen.Set(open);
+        StateHasChanged();
     }
 
     private int selectedCount;
