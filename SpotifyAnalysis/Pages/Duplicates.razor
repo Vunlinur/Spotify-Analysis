@@ -20,7 +20,7 @@
 
 @if (data.UserDTO is not null) {
     <MudCollapse Expanded=@open>
-        <PlaylistTable @ref="playlistTable" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
+        <PlaylistTable @ref="playlistTable" Name="Duplicates" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
     </MudCollapse>
 }
 
@@ -72,12 +72,6 @@
         }
     </Columns>
 </MudDataGrid>
-
-<style>
-    .sortable-column-header {
-
-    }
-</style>
 
 
 @code {
