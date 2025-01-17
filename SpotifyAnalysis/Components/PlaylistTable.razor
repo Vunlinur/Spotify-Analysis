@@ -43,14 +43,14 @@
 	[Parameter, EditorRequired]
 	public string Name { get; set; }
 
-	string storageKey;
 	string searchString;
+	Storage<IEnumerable<string>> selectionStorage;
 	HashSet<PlaylistDTO> selectedPlaylists;
 
 
-	protected override void OnParametersSet() {
-		base.OnParametersSet();
-		storageKey = Name + "PlaylistTableSelection";
+	protected override void OnInitialized() {
+		base.OnInitialized();
+		selectionStorage = new(Name + "PlaylistTableSelection", localStorage);
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender) {
@@ -58,8 +58,8 @@
 		if (!firstRender)
 			return;
 
-		var selectedIDs = await localStorage.GetSafeAsync<string[]>(storageKey);
-		if (selectedIDs is not null && selectedIDs.Length > 0) {
+		var selectedIDs = await selectionStorage.Get();
+		if (selectedIDs is not null && selectedIDs.Any()) {
 			selectedPlaylists = Playlists.Where(i => selectedIDs.Contains(i.ID)).ToHashSet();
 			StateHasChanged();
 		}
@@ -67,9 +67,9 @@
 
 	public IEnumerable<PlaylistDTO> GetSelectedPlaylists() => selectedPlaylists;
 
-	void SelectedItemsChanged(HashSet<PlaylistDTO> items) {
+	async void SelectedItemsChanged(HashSet<PlaylistDTO> items) {
 		selectedPlaylists = items;
-		localStorage.SetAsync(storageKey, items.Select(p => p.ID));
+		await selectionStorage.Set(items.Select(p => p.ID));
 		SelectionChanged?.Invoke(items.Count);
 	}
 
