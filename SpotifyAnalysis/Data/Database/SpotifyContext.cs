@@ -5,6 +5,7 @@ using SpotifyAnalysis.Data.DTO;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 
 namespace SpotifyAnalysis.Data.Database {
@@ -37,15 +38,22 @@ namespace SpotifyAnalysis.Data.Database {
             modelBuilder.Entity<PlaylistDTO>()
                 .HasMany(p => p.Tracks)
                 .WithMany(t => t.Playlists)
-                .UsingEntity<Dictionary<string, object>>(
+                .UsingEntity<Dictionary<string, object>>(  // define a join table
                     "PlaylistDTOTrackDTO",  // let's keep the auto convention
                     j => j.HasOne<TrackDTO>().WithMany().HasForeignKey("TracksID"),
-                    j => j.HasOne<PlaylistDTO>().WithMany().HasForeignKey("PlaylistDTOID"),
+                    j => j.HasOne<PlaylistDTO>().WithMany().HasForeignKey("PlaylistDTOID").OnDelete(DeleteBehavior.Cascade),
                     j => {
                         j.HasKey("PlaylistDTOID", "TracksID");
                         j.Property<string>("PlaylistDTOID");
                         j.Property<string>("TracksID");
                     });
+
+            // Set cascade delete for all Images relations
+            foreach (var relation in modelBuilder.Model.GetEntityTypes()
+                .Where(e => e.ClrType == typeof(ImageDTO))
+                .SelectMany(e => e.GetForeignKeys())) {
+                relation.DeleteBehavior = DeleteBehavior.Cascade;
+            }
         }
 
         protected static void ConfigureSqlServer(DbContextOptionsBuilder options) {
