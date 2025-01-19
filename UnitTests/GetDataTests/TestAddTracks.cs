@@ -258,7 +258,8 @@ namespace Tests.GetDataTests {
             Console.WriteLine($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
             ClassicAssert.AreEqual(1, dbContext.Users.Count());
             AssertDbSetCounts(100, 99010, 1000, 5000);
-            ClassicAssert.Less(stopwatch.ElapsedMilliseconds, 10000, "Data fetch should complete in under 10 seconds");
+            // <10s for UseInMemoryDatabase, <15 for ConfigureSQLiteInMemory
+            ClassicAssert.Less(stopwatch.ElapsedMilliseconds, 15000, "Data fetch should complete in under 15 seconds");
         }
     }
 }

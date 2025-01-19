@@ -1,4 +1,3 @@
-﻿using Microsoft.EntityFrameworkCore;
 using SpotifyAPI.Web;
 
 namespace UnitTests {
@@ -66,9 +65,5 @@ namespace UnitTests {
                 Id = $"artist{id}",
                 Name = $"Test Artist {id}",
             };
-
-        public static void ConfigureInMemory(DbContextOptionsBuilder options) {
-            options.UseInMemoryDatabase(databaseName: "SpotifyDB-test");
-        }
     }
 }

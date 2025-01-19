@@ -1,4 +1,5 @@
 using Moq;
+using NUnit.Framework.Legacy;
 using SpotifyAPI.Web;
 using UnitTests;
 
@@ -69,6 +70,7 @@ namespace Tests.GetDataTests {
 
             // Assert
             AssertDbSetCounts(0, 1, 1, 1);
+            ClassicAssert.AreEqual(3, dbContext.Images.Count());
         }
 
         [Test]

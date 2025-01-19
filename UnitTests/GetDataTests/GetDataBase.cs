@@ -4,6 +4,7 @@ using SpotifyAnalysis.Data.Database;
 using SpotifyAPI.Web;
 using NUnit.Framework.Legacy;
 using UnitTests;
+using Microsoft.Data.Sqlite;
 
 namespace Tests.GetDataTests {
     public class GetDataBase {
@@ -14,18 +15,25 @@ namespace Tests.GetDataTests {
         protected Mock<GetArtistsAsyncDelegate> mockArtists;
         protected Mock<UpdateProgressBarDelegate> mockProgressBar;
 
+        protected SqliteConnection connection;
         protected SpotifyContext dbContext;
         protected PublicUser testUser;
 
         [OneTimeSetUp]
-        public void OneTimeSetup() {
-            // Configure in-memory database for testing
-            SpotifyContext.Configurator = Stubs.ConfigureInMemory;
-        }
+        public void OneTimeSetup() { }
 
         [SetUp]
         public void Setup() {
+            connection = new SqliteConnection("DataSource=:memory:");
+            connection.Open();
+            void ConfigureSQLiteInMemory(DbContextOptionsBuilder options) {
+                options.UseSqlite(connection);
+                options.EnableSensitiveDataLogging();
+            }
+            SpotifyContext.Configurator = ConfigureSQLiteInMemory;
             dbContext = new SpotifyContext();
+            dbContext.Database.EnsureCreated();
+
 
             // Initialize mock delegates
             mockUserProfile = new Mock<GetUserProfileDelegate>();
@@ -127,6 +135,7 @@ namespace Tests.GetDataTests {
         public void TearDown() {
             dbContext.Database.EnsureDeleted();
             dbContext?.Dispose();
+            connection.Dispose();
         }
     }
 }
