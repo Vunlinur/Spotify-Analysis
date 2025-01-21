@@ -1,8 +1,6 @@
 ﻿using SpotifyAnalysis.Data.DTO;
-using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAPI.Web;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -22,7 +20,6 @@ namespace SpotifyAnalysis.Data.Database {
             playlist.Followers = source.Followers.Total;
             playlist.SnapshotID = source.SnapshotId;
             playlist.TracksTotal = source.Tracks.Total;
-            playlist.Images = source.Images.ToImageDTOs();
         }
 
         public static void Update(this ArtistDTO artist, SimpleArtist source) {
@@ -33,14 +30,12 @@ namespace SpotifyAnalysis.Data.Database {
             artist.Genres = source.Genres;
             artist.Popularity = source.Popularity;
 			artist.Genres = source.Genres;
-            artist.Images = source.Images.ToImageDTOs();
         }
 
         public static void Update(this AlbumDTO album, SimpleAlbum source) {
             album.Name = source.Name;
             album.ReleaseDate = source.ReleaseDate;
             album.TotalTracks = source.TotalTracks;
-            album.Images = source.Images.ToImageDTOs();
         }
 
         public static void Update(this TrackDTO track, FullTrack source) {

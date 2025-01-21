@@ -48,6 +48,10 @@ namespace Tests.GetDataTests {
                 .Returns(Task.FromResult(testUser));
         }
 
+        static void ConfigureInMemory(DbContextOptionsBuilder options) {
+            options.UseInMemoryDatabase(databaseName: "SpotifyDB-test");
+        }
+
         protected DataFetch CreateDataFetch() =>
             new(
                 mockUserProfile.Object,
@@ -58,11 +62,14 @@ namespace Tests.GetDataTests {
                 mockProgressBar.Object
             );
 
-        protected void AssertDbSetCounts(int playlistCount, int trackCount, int artistCount, int albumCount) {
+        protected void AssertDbSetCounts(int playlistCount, int trackCount, int artistCount, int albumCount, int imageCount = -1) {
             ClassicAssert.AreEqual(playlistCount, dbContext.Playlists.Count());
             ClassicAssert.AreEqual(trackCount, dbContext.Tracks.Count());
             ClassicAssert.AreEqual(artistCount, dbContext.Artists.Count());
             ClassicAssert.AreEqual(albumCount, dbContext.Albums.Count());
+            if (imageCount > -1)
+				// 1 ImageDTO per: User, Playlist, Album, Artist
+				ClassicAssert.AreEqual(imageCount, dbContext.Images.Count());
         }
 
         protected void AssertPlaylistData(FullPlaylist testPlaylist, int expectedTrackCount) {

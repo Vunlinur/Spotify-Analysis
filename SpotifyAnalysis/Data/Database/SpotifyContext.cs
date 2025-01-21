@@ -60,6 +60,9 @@ namespace SpotifyAnalysis.Data.Database {
             IConfigurationRoot configuration = Program.PrepareConfig();
             options.UseSqlServer(configuration.GetConnectionString("SpotifyDB"));
             options.LogTo(Console.WriteLine, LogLevel.Information);
+#if DEBUG
+            options.EnableSensitiveDataLogging();
+#endif
         }
     }
 }

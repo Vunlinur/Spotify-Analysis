@@ -15,6 +15,7 @@ namespace SpotifyAnalysis.Data.Database {
         public ConcurrentDictionary<string, TrackDTO> Tracks { get; private set; }
         public ConcurrentDictionary<string, AlbumDTO> Albums { get; private set; }
         public ConcurrentDictionary<string, ArtistDTO> Artists { get; private set; }
+        public ConcurrentDictionary<string, ImageDTO> Images { get; private set; }
 
         private DTOAggregate() { }
 
@@ -25,7 +26,8 @@ namespace SpotifyAnalysis.Data.Database {
                 Playlists = new ConcurrentDictionary<string, PlaylistDTO>(await db.Playlists.Include(p => p.Tracks).Where(p => playlistsToUpdateIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t)),
                 Tracks = new ConcurrentDictionary<string, TrackDTO>(await db.Tracks.ToDictionaryAsync(t => t.ID, t => t)),
                 Albums = new ConcurrentDictionary<string, AlbumDTO>(await db.Albums.ToDictionaryAsync(t => t.ID, t => t)),
-                Artists = new ConcurrentDictionary<string, ArtistDTO>(await db.Artists.ToDictionaryAsync(t => t.ID, t => t))
+                Artists = new ConcurrentDictionary<string, ArtistDTO>(await db.Artists.ToDictionaryAsync(t => t.ID, t => t)),
+                Images = new ConcurrentDictionary<string, ImageDTO>(await db.Images.ToDictionaryAsync(t => t.Url, t => t))
             };
         }
 
@@ -68,6 +70,22 @@ namespace SpotifyAnalysis.Data.Database {
                 id => track.ToTrackDTO(),
                 out entity
             );
+
+        public bool GetOrAddImage(Image image, out ImageDTO entity) =>
+            GetOrAddEntity(
+                Images,
+                image.Url,
+                id => image.ToImageDTO(),
+                out entity
+            );
+
+        public void GetOrAddImages(List<ImageDTO> images, List<Image> source) {
+            images.Clear();
+            foreach (var image in source) {
+                GetOrAddImage(image, out ImageDTO newImage);
+                images.Add(newImage);
+            }
+        }
 
         public List<ArtistDTO> GetArtists(List<SimpleArtist> simpleArtists) {
             var artistIds = simpleArtists?.Select(a => a.Id) ?? [];

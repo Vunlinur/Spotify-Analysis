@@ -1,4 +1,4 @@
-using SpotifyAPI.Web;
+﻿using SpotifyAPI.Web;
 
 namespace UnitTests {
     internal static class Stubs {
@@ -9,7 +9,7 @@ namespace UnitTests {
                 Name = $"Test Artist {id}",
                 Genres = ["Rock", "Pop"],
                 Popularity = 80,
-                Images = Images()
+                Images = Images("Artist", id)
             };
 
         public static FullPlaylist FullPlaylist(PublicUser owner, IEnumerable<FullTrack> tracks, int id = 0) =>
@@ -20,7 +20,7 @@ namespace UnitTests {
                 SnapshotId = $"snapshot{id}",
                 Tracks = PagingFromTracks(tracks),
                 Followers = new Followers { Total = id },
-                Images = Images()
+                Images = Images("Playlist", id)
             };
 
         public static Paging<PlaylistTrack<IPlayableItem>> PagingFromTracks(IEnumerable<FullTrack> tracks) =>
@@ -39,15 +39,15 @@ namespace UnitTests {
                 Album = album,
             };
 
-        public static List<Image> Images(int id = 0) => [
-                new Image { Url = $"http://example.com/image{id}.jpg", Height = 100, Width = 100 }
+        public static List<Image> Images(string type, int id) => [
+                new Image { Url = $"http://example.com/image{type}{id}.jpg", Height = 100, Width = 100 }
             ];
 
         public static PublicUser PublicUser(int id = 0) =>
             new() {
                 Id = $"public_user{id}",
                 DisplayName = $"Test User {id}",
-                Images = Images()
+                Images = Images("PublicUser", id)
             };
 
         public static SimpleAlbum SimpleAlbum(List<SimpleArtist> artists, int id = 0) =>
@@ -57,7 +57,7 @@ namespace UnitTests {
                 ReleaseDate = new DateTime(2022, 1, 1).AddDays(id).ToString("yyyy-MM-dd"),
                 TotalTracks = id,
                 Artists = artists,
-                Images = Images()
+                Images = Images("Album", id)
             };
 
         public static SimpleArtist SimpleArtist(int id = 0) =>
