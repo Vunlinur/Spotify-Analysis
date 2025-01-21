@@ -31,7 +31,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
         public async void InitializeSpotifyClient() {
             server = new EmbedIOAuthServer(
-                new Uri("http://localhost:5543/callback"),
+                new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
                 5543
             );
             server.AuthorizationCodeReceived += OnAuthorizationCodeReceived;
