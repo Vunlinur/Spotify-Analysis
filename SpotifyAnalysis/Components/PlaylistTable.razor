@@ -48,16 +48,12 @@
 	HashSet<PlaylistDTO> selectedPlaylists;
 
 
-	protected override void OnInitialized() {
-		base.OnInitialized();
-		selectionStorage = new(Name + "PlaylistTableSelection", localStorage);
-	}
-
 	protected override async Task OnAfterRenderAsync(bool firstRender) {
 		await base.OnAfterRenderAsync(firstRender);
 		if (!firstRender)
 			return;
-
+			
+		selectionStorage = new(Name + "PlaylistTableSelection", localStorage);
 		var selectedIDs = await selectionStorage.Get();
 		if (selectedIDs is not null && selectedIDs.Any()) {
 			selectedPlaylists = Playlists.Where(i => selectedIDs.Contains(i.ID)).ToHashSet();

@@ -3,11 +3,13 @@
 
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.SpotifyAPI
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 @inject SpotifyMudTheme SpotifyTheme
 @inject ScopedData appState
 @inject SpotifyClientScoped clientScoped
 @inject NavigationManager navigationManager
+@inject ProtectedLocalStorage localStorage
 
 <MudThemeProvider IsDarkMode=true Theme="SpotifyTheme" />
 <MudPopoverProvider />
@@ -36,8 +38,9 @@
 
 
 @code {
+    Storage<bool> openStorage;
     private bool open = true;
-    private void ToggleDrawer() => open = !open;
+    private async void ToggleDrawer() => await openStorage.Set(open = !open);
 
     bool UserLoaded { get => !string.IsNullOrEmpty(appState?.UserDTO?.ID); }
     bool Home { get => string.IsNullOrEmpty(navigationManager.ToBaseRelativePath(navigationManager.Uri)); }
@@ -46,5 +49,18 @@
         if (!UserLoaded && !Home)
             navigationManager.NavigateTo("/");
         await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+        if (!firstRender)
+            return;
+
+        openStorage = new(nameof(openStorage), localStorage);
+        var stored = await openStorage.Get(open);
+        if (stored != open) {
+            open = stored;
+            StateHasChanged();
+        }
     }
 }
