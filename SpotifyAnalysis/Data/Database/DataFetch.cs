@@ -203,8 +203,7 @@ namespace SpotifyAnalysis.Data.Database {
         private async Task GetNewArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
             var newArtistsIds = db.Artists
                 .FindNewEntities(dtoAggregate.Artists.Values, p => p.ID)
-                .Select(a => a.ID)
-                .ToList();
+                .Select(a => a.ID);
 
             var chunks = DivideArtistsRequests(newArtistsIds);
             float progressBase = 60, progressDelta = (90 - progressBase) / chunks.Count();
@@ -218,7 +217,7 @@ namespace SpotifyAnalysis.Data.Database {
             await Task.WhenAll(tasks);
         }
 
-        private static IEnumerable<List<string>> DivideArtistsRequests(List<string> newArtistsIds) {
+        private static IEnumerable<List<string>> DivideArtistsRequests(IEnumerable<string> newArtistsIds) {
             ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions
             return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
         }

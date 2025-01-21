@@ -29,7 +29,6 @@ namespace SpotifyAnalysis.Data.Database {
         public static void Update(this ArtistDTO artist, FullArtist source) {
             artist.Genres = source.Genres;
             artist.Popularity = source.Popularity;
-			artist.Genres = source.Genres;
         }
 
         public static void Update(this AlbumDTO album, SimpleAlbum source) {
