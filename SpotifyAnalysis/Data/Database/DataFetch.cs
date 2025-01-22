@@ -158,6 +158,7 @@ namespace SpotifyAnalysis.Data.Database {
             dtos.GetOrAddImages(playlist.Images, fullPlaylist.Images);
 
             AddPlaylistToUser(dtos.User, playlist);
+            RemoveOldTracks(playlist, fullTracks);
 
             foreach (var fullTrack in fullTracks) {
                 UpdateOrAddArtists(fullTrack.Artists, dtos);
@@ -180,9 +181,16 @@ namespace SpotifyAnalysis.Data.Database {
             }
         }
 
-        public static void AddPlaylistToUser(UserDTO user, PlaylistDTO playlist) {
+        private static void AddPlaylistToUser(UserDTO user, PlaylistDTO playlist) {
             if (!user.Playlists.Any(p => p.ID == playlist.ID))
                 user.Playlists.Add(playlist);
+        }
+
+        private static void RemoveOldTracks(PlaylistDTO playlist, IEnumerable<FullTrack> fullTracks) {
+            var localTracks = playlist.Tracks.Select(t => t.ID).ToHashSet();
+            var remoteTracks = fullTracks.Select(t => t.Id).ToHashSet();
+            var staleTracks = localTracks.Except(remoteTracks);
+            playlist.Tracks.RemoveAll(t => staleTracks.Contains(t.ID));
         }
 
         private static void UpdateOrAddArtists(List<SimpleArtist> artists, DTOAggregate dtos) {
@@ -191,7 +199,7 @@ namespace SpotifyAnalysis.Data.Database {
                     artistDTO.Update(artist);
         }
 
-        public static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
+        private static void AddTrackToPlaylist(TrackDTO track, PlaylistDTO playlist) {
             if (!playlist.Tracks.Any(t => t.ID == track.ID))
                 playlist.Tracks.Add(track);
         }

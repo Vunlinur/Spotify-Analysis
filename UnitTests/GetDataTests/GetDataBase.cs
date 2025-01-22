@@ -82,14 +82,15 @@ namespace Tests.GetDataTests {
             ClassicAssert.AreEqual(expectedTrackCount, playlist.Tracks.Count);
         }
 
-        protected void AssertTrackData(FullTrack testTrack, string albumID, string[] artistIDs) {
+        protected void AssertTrackData(FullTrack testTrack, string albumID, string[] artistIDs, int inPlaylists = 1) {
             var track = dbContext.Tracks
+                .Include(t => t.Playlists)
                 .Include(t => t.Album)
                 .Include(t => t.Artists)
                 .FirstOrDefault(p => p.ID == testTrack.Id);
             ClassicAssert.IsNotNull(track);
             ClassicAssert.AreEqual(albumID, track.Album.ID);
-            ClassicAssert.AreEqual(1, track.Playlists.Count);
+            ClassicAssert.AreEqual(inPlaylists, track.Playlists.Count);
             CollectionAssert.AreEquivalent(artistIDs, track.Artists.Select(a => a.ID));
         }
 
