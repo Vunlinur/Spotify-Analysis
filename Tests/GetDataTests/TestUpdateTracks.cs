@@ -1,7 +1,7 @@
 using Moq;
 using SpotifyAPI.Web;
 using NUnit.Framework.Legacy;
-using UnitTests;
+using Tests;
 
 namespace Tests.GetDataTests {
     public class TestUpdateTracks : GetDataBase {

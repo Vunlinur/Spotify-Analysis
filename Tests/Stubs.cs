@@ -1,6 +1,6 @@
 ﻿using SpotifyAPI.Web;
 
-namespace UnitTests {
+namespace Tests {
     internal static class Stubs {
 
         public static FullArtist FullArtist(int id = 0) =>

@@ -2,7 +2,7 @@ using ApexCharts;
 using Moq;
 using NUnit.Framework.Legacy;
 using SpotifyAPI.Web;
-using UnitTests;
+using Tests;
 
 namespace Tests.GetDataTests {
     public class TestImages : GetDataBase {

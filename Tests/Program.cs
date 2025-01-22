@@ -2,7 +2,7 @@
 using System;
 using Tests.GetDataTests;
 
-namespace UnitTests {
+namespace Tests {
     class Program {
         static void Main(string[] args) {
             BenchmarkRunner.Run<GetDataBenchmark>();

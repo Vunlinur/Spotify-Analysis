@@ -3,7 +3,7 @@ using Moq;
 using SpotifyAnalysis.Data.Database;
 using SpotifyAPI.Web;
 using NUnit.Framework.Legacy;
-using UnitTests;
+using Tests;
 using Microsoft.Data.Sqlite;
 
 namespace Tests.GetDataTests {
