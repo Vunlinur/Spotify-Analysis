@@ -6,10 +6,10 @@
 @inject ProtectedLocalStorage localStorage
 
 
-<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection FixedHeader
+<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection=MultiSelection FixedHeader
 			 SortMode="SortMode.Multiple" QuickFilter=@Filter SelectedItems="selectedPlaylists" SelectedItemsChanged="@SelectedItemsChanged">
 	<ToolBarContent>
-		<MudText Typo="Typo.h6">Tracks</MudText>
+		<MudText Typo="Typo.h6">@Title</MudText>
 		<MudSpacer />
 		<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
 					  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -41,7 +41,11 @@
 	[Parameter, EditorRequired]
 	public Action<int> SelectionChanged { get; set; }
 	[Parameter, EditorRequired]
-	public string Name { get; set; }
+	public string Name { get; set; }  // Used for storage
+	[Parameter]
+	public string Title { get; set; } = "Tracks";
+	[Parameter]
+	public bool MultiSelection { get; set; } = true;
 
 	string searchString;
 	Storage<IEnumerable<string>> selectionStorage;
