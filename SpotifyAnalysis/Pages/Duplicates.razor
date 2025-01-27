@@ -71,6 +71,13 @@
             </CellTemplate>
         </PropertyColumn>
 
+        @* Remove entry *@
+        <TemplateColumn HeaderStyle="width: 20px">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size=Size.Small OnClick="_ => duplicates.Remove(context.Item)"/>
+            </CellTemplate>
+        </TemplateColumn>
+
         @* Duplicate track columns *@
         <PropertyColumn Title="Duplicate Playlist" Property="x => x.playlist.Name" HeaderStyle="width: 10%">
             <CellTemplate>
@@ -107,7 +114,11 @@
 }
 
 <style>
-    td:nth-child(n+4) {
+    td:nth-child(4) {
+        background: rgba(255, 255, 0, 0.1);
+        text-align: center;
+    }
+    td:nth-child(n+5) {
         background: rgba(255, 0, 0, 0.1);
     }
 </style>
@@ -122,8 +133,7 @@
     bool open { get; set; }
     void TogglePlaylistTable() => open = !open;
 
-    ConcurrentBag<Duplicate> duplicates = [];
-    List<PlaylistDTO> playlistsWDuplicates = [];
+    HashSet<Duplicate> duplicates = [];
     private async Task FindDuplicates() {
         loading = true;
         open = false;
@@ -133,15 +143,16 @@
         if (originalPlaylist == null || !duplicatePlaylists.Any())
             return;
 
-        duplicates = new ConcurrentBag<Duplicate>();
+        var duplicateBag = new ConcurrentBag<Duplicate>();
         var playlistTasks = duplicatePlaylists.Select(duplicatePlaylist => Task.Run(
-            () => SearchPlaylist(originalPlaylist, duplicatePlaylist)
+            () => SearchPlaylist(originalPlaylist, duplicatePlaylist, duplicateBag)
         ));
         await Task.WhenAll(playlistTasks);
+        duplicates = duplicateBag.ToHashSet();
         loading = false;
     }
 
-    private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate) {
+    private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate, ConcurrentBag<Duplicate> concurrentBag) {
         HashSet<Duplicate> duplicateSet = new();
         foreach (var originalTrack in original.Tracks)
             foreach (var duplicateTrack in duplicate.Tracks)
@@ -155,7 +166,7 @@
                 duplicateSet.RemoveWhere(d => d.dupe.ID == originalTrack.ID);
 
         foreach (var d in duplicateSet)
-            duplicates.Add(d);
+            concurrentBag.Add(d);
     }
 
     int similarityThreshold = 95;
