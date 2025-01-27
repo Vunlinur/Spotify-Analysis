@@ -5,6 +5,7 @@ using SpotifyAPI.Web.Auth;
 using System;
 using System.Threading.Tasks;
 using static SpotifyAPI.Web.Scopes;
+using Microsoft.JSInterop;
 
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
@@ -17,7 +18,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
     /// This class also maintains the authenticated user's profile information (`UserDTO`) and triggers 
     /// a `UserChanged` event whenever the authenticated user context is updated.
     /// </remarks>
-    public class SpotifyClientScoped : IUserContainer {
+    public class SpotifyClientScoped(IJSRuntime JSRuntime) : IUserContainer {
+        private readonly IJSRuntime JSRuntime = JSRuntime;
+
         public UserDTO UserDTO {
             get => user;
             set => UserChanged?.Invoke(user = value);
@@ -31,9 +34,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
         public async void InitializeSpotifyClient() {
             server = new EmbedIOAuthServer(
-                new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
-                5543
-            );
+                            new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
+                            5543
+                        );
             server.AuthorizationCodeReceived += OnAuthorizationCodeReceived;
             await server.Start();
 
@@ -48,12 +51,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             };
 
             var uri = request.ToUri();
-            try {
-                BrowserUtil.Open(uri);
-            }
-            catch (Exception) {
-                Console.WriteLine("Unable to open URL, manually open: {0}", uri);
-            }
+            await JSRuntime.InvokeVoidAsync("open", uri.AbsoluteUri, "_blank");
         }
 
         private async Task OnAuthorizationCodeReceived(object sender, AuthorizationCodeResponse response) {
