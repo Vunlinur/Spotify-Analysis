@@ -135,13 +135,14 @@
 
     HashSet<Duplicate> duplicates = [];
     private async Task FindDuplicates() {
-        loading = true;
-        open = false;
         var originalPlaylist = tableOriginal.GetSelectedPlaylists().First();
         var duplicatePlaylists = tableDupes.GetSelectedPlaylists();
 
         if (originalPlaylist == null || !duplicatePlaylists.Any())
             return;
+
+        loading = true;
+        open = false;
 
         var duplicateBag = new ConcurrentBag<Duplicate>();
         var playlistTasks = duplicatePlaylists.Select(duplicatePlaylist => Task.Run(
