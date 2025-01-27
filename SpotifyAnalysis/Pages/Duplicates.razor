@@ -29,7 +29,7 @@
     </MudCollapse>
 }
 
-<MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" FixedHeader
+<MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates" FixedHeader
              QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
              Filterable="true" Groupable="true" GroupExpanded="true">
     <ToolBarContent>
@@ -114,11 +114,12 @@
 }
 
 <style>
-    td:nth-child(4) {
+    .duplicates > * td:nth-child(4) {
         background: rgba(255, 255, 0, 0.1);
         text-align: center;
     }
-    td:nth-child(n+5) {
+
+    .duplicates > * td:nth-child(n+5) {
         background: rgba(255, 0, 0, 0.1);
     }
 </style>
