@@ -15,7 +15,7 @@
     <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
     <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{tableDupes?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
     <MudSpacer />
-    <MudSlider @bind-Value=similarityThreshold Min=75 Max=100 Variant="Variant.Filled" Class="mr-8" Style="width: 300px" Disabled=@loading >Similarity threshold: @similarityThreshold.ToString()%</MudSlider>
+    <MudSlider @bind-Value=similarityThreshold Min=75 Max=100 Variant="Variant.Filled" Class="mr-8" Style="width: 300px" Disabled=@loading >Title similarity threshold: @similarityThreshold.ToString()%</MudSlider>
     <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="!readyToSearch || loading">Find duplicates</MudButton>
 </MudAppBar>
 <div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
