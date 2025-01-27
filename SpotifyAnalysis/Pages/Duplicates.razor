@@ -15,8 +15,8 @@
     <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
     <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{tableDupes?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
     <MudSpacer />
-    <MudSlider @bind-Value=similarityThreshold Min=75 Max=100 Variant="Variant.Filled" Class="mr-8" Style="width: 300px">Similarity threshold: @similarityThreshold.ToString()%</MudSlider>
-    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="!readyToSearch">Find duplicates</MudButton>
+    <MudSlider @bind-Value=similarityThreshold Min=75 Max=100 Variant="Variant.Filled" Class="mr-8" Style="width: 300px" Disabled=@loading >Similarity threshold: @similarityThreshold.ToString()%</MudSlider>
+    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="!readyToSearch || loading">Find duplicates</MudButton>
 </MudAppBar>
 <div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
@@ -100,6 +100,12 @@
     </Columns>
 </MudDataGrid>
 
+@if (loading) {
+    <MudStack Row Justify=Justify.Center AlignItems=AlignItems.Center Style="height: 500px">
+        <MudProgressCircular Style="height:70px;width:70px;" Indeterminate="true" />
+    </MudStack>
+}
+
 <style>
     td:nth-child(n+4) {
         background: rgba(255, 0, 0, 0.1);
@@ -112,12 +118,14 @@
     PlaylistTable tableDupes;
     MudDataGrid<Duplicate> dataGrid;
 
-    private bool open { get; set; }
-    private void TogglePlaylistTable() => open = !open;
+    bool loading;
+    bool open { get; set; }
+    void TogglePlaylistTable() => open = !open;
 
     ConcurrentBag<Duplicate> duplicates = [];
     List<PlaylistDTO> playlistsWDuplicates = [];
     private async Task FindDuplicates() {
+        loading = true;
         open = false;
         var originalPlaylist = tableOriginal.GetSelectedPlaylists().First();
         var duplicatePlaylists = tableDupes.GetSelectedPlaylists();
@@ -130,6 +138,7 @@
             () => SearchPlaylist(originalPlaylist, duplicatePlaylist)
         ));
         await Task.WhenAll(playlistTasks);
+        loading = false;
     }
 
     private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate) {
