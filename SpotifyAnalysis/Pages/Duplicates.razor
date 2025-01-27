@@ -101,14 +101,14 @@
 
 
 @code {
-    PlaylistTable tableOriginal;
-    PlaylistTable tableDupes;
-    MudDataGrid<Duplicate> dataGrid;
+        PlaylistTable tableOriginal;
+        PlaylistTable tableDupes;
+        MudDataGrid<Duplicate> dataGrid;
 
     private bool open { get; set; }
     private void TogglePlaylistTable() => open = !open;
 
-    List<Duplicate> duplicates = [];
+    ConcurrentBag<Duplicate> duplicates = [];
     List<PlaylistDTO> playlistsWDuplicates = [];
     private async Task FindDuplicates() {
         open = false;
@@ -118,12 +118,18 @@
         if (originalPlaylist == null || !duplicatePlaylists.Any())
             return;
 
-        duplicates = new List<Duplicate>();
-        foreach (var originalTrack in originalPlaylist.Tracks)
-            foreach (var duplicatePlaylist in duplicatePlaylists)
-                foreach (var duplicateTrack in duplicatePlaylist.Tracks)
-                    if (AreTracksSimilar(originalTrack.Name, duplicateTrack.Name))
-                        duplicates.Add(new Duplicate(originalTrack, duplicateTrack, duplicatePlaylist));
+        duplicates = new ConcurrentBag<Duplicate>();
+        var playlistTasks = duplicatePlaylists.Select(duplicatePlaylist => Task.Run(
+            () => SearchPlaylist(originalPlaylist, duplicatePlaylist)
+        ));
+        await Task.WhenAll(playlistTasks);
+    }
+
+    private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate) {
+        foreach (var originalTrack in original.Tracks)
+            foreach (var duplicateTrack in duplicate.Tracks)
+                if (AreTracksSimilar(originalTrack.Name, duplicateTrack.Name))
+                    duplicates.Add(new Duplicate(originalTrack, duplicateTrack, duplicate));
     }
 
     private bool AreTracksSimilar(string original, string duplicate) {
