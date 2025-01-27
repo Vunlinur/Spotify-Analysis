@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
 using System;
 using System.Threading.Tasks;
 using static SpotifyAPI.Web.Scopes;
+using SpotifyAnalysis.Data.Common;
 using Microsoft.JSInterop;
 
 
@@ -18,7 +20,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
     /// This class also maintains the authenticated user's profile information (`UserDTO`) and triggers 
     /// a `UserChanged` event whenever the authenticated user context is updated.
     /// </remarks>
-    public class SpotifyClientScoped(IJSRuntime JSRuntime) : IUserContainer {
+    public class SpotifyClientScoped(ProtectedLocalStorage protectedLocalStorage, IJSRuntime JSRuntime) : IUserContainer {
+        private readonly Storage<AuthorizationCodeTokenResponse> accessTokenStorage = new(nameof(accessTokenStorage), protectedLocalStorage);
         private readonly IJSRuntime JSRuntime = JSRuntime;
 
         public UserDTO UserDTO {
@@ -26,13 +29,36 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             set => UserChanged?.Invoke(user = value);
         }
         public event Action<UserDTO> UserChanged;
+
         public SpotifyClient SpotifyClient { get; set; }
 
         private UserDTO user;
         private EmbedIOAuthServer server;
 
-
         public async void InitializeSpotifyClient() {
+            if (await CheckClientInitialized())
+                await DestroyClient();
+            else
+                await AuthenticateUser();
+        }
+
+        public async Task<bool> CheckClientInitialized() {
+            var accessToken = await accessTokenStorage.Get();
+            bool tokenFound = accessToken is not null;
+            if (tokenFound)
+                try {
+                    await CreateClient(accessToken);
+                }
+                catch (APIUnauthorizedException e) {
+                    if (e.Message.Contains("token expired"))
+                        await accessTokenStorage.Set(null);
+                    else
+                        throw;
+                }
+            return tokenFound;
+        }
+
+        private async Task AuthenticateUser() {
             server = new EmbedIOAuthServer(
                             new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
                             5543
@@ -63,7 +89,17 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 response.Code,
                 server.BaseUri)
             );
+            await accessTokenStorage.Set(token);
+            await CreateClient(token);
+        }
 
+        private async Task DestroyClient() {
+            SpotifyClient = null;
+            UserDTO = new UserDTO();
+            await accessTokenStorage.Set(null);
+        }
+
+        private async Task CreateClient(AuthorizationCodeTokenResponse token) {
             var config = SpotifyClientConfig.CreateDefault().WithToken(token.AccessToken, token.TokenType);
             SpotifyClient = new SpotifyClient(config);
 
