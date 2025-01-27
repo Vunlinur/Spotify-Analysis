@@ -107,9 +107,9 @@
 
 
 @code {
-        PlaylistTable tableOriginal;
-        PlaylistTable tableDupes;
-        MudDataGrid<Duplicate> dataGrid;
+    PlaylistTable tableOriginal;
+    PlaylistTable tableDupes;
+    MudDataGrid<Duplicate> dataGrid;
 
     private bool open { get; set; }
     private void TogglePlaylistTable() => open = !open;
@@ -132,10 +132,20 @@
     }
 
     private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate) {
+        HashSet<Duplicate> duplicateSet = new();
         foreach (var originalTrack in original.Tracks)
             foreach (var duplicateTrack in duplicate.Tracks)
                 if (AreTracksSimilar(originalTrack.Name, duplicateTrack.Name))
-                    duplicates.Add(new Duplicate(originalTrack, duplicateTrack, duplicate));
+                    duplicateSet.Add(new Duplicate(originalTrack, duplicateTrack, duplicate));
+
+        // If checking for dupes in the same playlist, remove one occurrence of
+        // the original track from the dupes if IDs match - this is the original
+        if (original.ID == duplicate.ID)
+            foreach (var originalTrack in original.Tracks)
+                duplicateSet.RemoveWhere(d => d.dupe.ID == originalTrack.ID);
+
+        foreach (var d in duplicateSet)
+            duplicates.Add(d);
     }
 
     private bool AreTracksSimilar(string original, string duplicate) {
