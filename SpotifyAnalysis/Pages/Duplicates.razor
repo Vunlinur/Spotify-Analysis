@@ -30,7 +30,7 @@
 
 <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" FixedHeader
              QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
-             Filterable="true" Groupable="false" GroupExpanded="true">
+             Filterable="true" Groupable="true" GroupExpanded="true">
     <ToolBarContent>
         <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>
         <MudText Typo="Typo.h6">Browse tracks</MudText>
@@ -44,7 +44,7 @@
     </ToolBarContent>
     <Columns>
         @* Original track columns *@
-        <PropertyColumn Title="Original Title" Property="x => x.original.Name" Grouping>
+        <PropertyColumn Title="Original Title" Property="x => x.original.Name" HeaderStyle="width: 15%" Grouping>
             <CellTemplate>
                 <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
             </CellTemplate>
@@ -56,7 +56,7 @@
             </GroupTemplate>
         </PropertyColumn>
 
-        <PropertyColumn Title="Original Artists" Property="x => x.original.Artists" HeaderStyle="width: 20%" GroupBy="x => x.original.Artists[0].Name" Groupable=true>
+        <PropertyColumn Title="Original Artists" Property="x => x.original.Artists" HeaderStyle="width: 15%" GroupBy="x => x.original.Artists[0].Name">
             <CellTemplate>
                 @foreach (var artist in context.Item.original.Artists) {
                     <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
@@ -64,26 +64,26 @@
             </CellTemplate>
         </PropertyColumn>
 
-        <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name" Groupable=true>
+        <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name">
             <CellTemplate>
                 <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
             </CellTemplate>
         </PropertyColumn>
 
         @* Duplicate track columns *@
-        <PropertyColumn Title="Duplicate Playlist" Property="x => x.playlist.Name" HeaderStyle="width: 20%" Groupable=true>
+        <PropertyColumn Title="Duplicate Playlist" Property="x => x.playlist.Name" HeaderStyle="width: 10%">
             <CellTemplate>
                 <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.playlist.ID)>@(context.Item.playlist.Name)</MudLink>
             </CellTemplate>
         </PropertyColumn>
 
-        <PropertyColumn Title="Duplicate Title" Property="x => x.dupe.Name" HeaderStyle="width: 20%" Groupable=true>
+        <PropertyColumn Title="Duplicate Title" Property="x => x.dupe.Name" HeaderStyle="width: 15%">
             <CellTemplate>
                 <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.dupe.ID)>@(context.Item.dupe.Name)</MudLink>
             </CellTemplate>
         </PropertyColumn>
 
-        <PropertyColumn Title="Duplicate Artists" Property="x => x.dupe.Artists" HeaderStyle="width: 20%" GroupBy="x => x.dupe.Artists[0].Name" Groupable=true>
+        <PropertyColumn Title="Duplicate Artists" Property="x => x.dupe.Artists" HeaderStyle="width: 15%" GroupBy="x => x.dupe.Artists[0].Name">
             <CellTemplate>
                 @foreach (var artist in context.Item.dupe.Artists) {
                     <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
@@ -91,13 +91,19 @@
             </CellTemplate>
         </PropertyColumn>
 
-        <PropertyColumn Title="Duplicate Album" Property="x => x.dupe.Album.Name" Groupable=true>
+        <PropertyColumn Title="Duplicate Album" Property="x => x.dupe.Album.Name">
             <CellTemplate>
                 <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.dupe.Album.ID)>@(context.Item.dupe.Album.Name)</MudLink>
             </CellTemplate>
         </PropertyColumn>
     </Columns>
 </MudDataGrid>
+
+<style>
+    td:nth-child(n+4) {
+        background: rgba(255, 0, 0, 0.1);
+    }
+</style>
 
 
 @code {
