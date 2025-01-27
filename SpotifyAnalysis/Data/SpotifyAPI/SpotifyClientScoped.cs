@@ -44,18 +44,10 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
         public async Task<bool> CheckClientInitialized() {
             var accessToken = await accessTokenStorage.Get();
-            bool tokenFound = accessToken is not null;
-            if (tokenFound)
-                try {
-                    await CreateClient(accessToken);
-                }
-                catch (APIUnauthorizedException e) {
-                    if (e.Message.Contains("token expired"))
-                        await accessTokenStorage.Set(null);
-                    else
-                        throw;
-                }
-            return tokenFound;
+            bool validTokenFound = accessToken?.IsExpired == false;
+            if (validTokenFound) 
+                await CreateClient(accessToken);
+            return validTokenFound;
         }
 
         private async Task AuthenticateUser() {
