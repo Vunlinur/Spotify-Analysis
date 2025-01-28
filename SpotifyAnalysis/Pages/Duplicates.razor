@@ -184,6 +184,18 @@
     bool Filter(Duplicate d) {
         if (string.IsNullOrWhiteSpace(_searchString))
             return true;
+        // originals
+        if (d.original.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (d.original.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (d.original.Artists.Any(a => a.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+        // duplicates
+        if (d.playlist.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
 
         if (d.dupe.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
