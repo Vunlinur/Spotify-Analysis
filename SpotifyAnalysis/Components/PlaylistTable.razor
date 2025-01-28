@@ -56,13 +56,18 @@
 		await base.OnAfterRenderAsync(firstRender);
 		if (!firstRender)
 			return;
-			
+
 		selectionStorage = new(Name + "PlaylistTableSelection", localStorage);
 		var selectedIDs = await selectionStorage.Get();
 		if (selectedIDs is not null && selectedIDs.Any()) {
 			selectedPlaylists = Playlists.Where(i => selectedIDs.Contains(i.ID)).ToHashSet();
 			StateHasChanged();
 		}
+	}
+
+	protected override void OnParametersSet() {
+		Playlists = Playlists.OrderBy(p => p.Name);
+		base.OnParametersSet();
 	}
 
 	public IEnumerable<PlaylistDTO> GetSelectedPlaylists() => selectedPlaylists;
