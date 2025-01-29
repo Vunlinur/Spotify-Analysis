@@ -1,5 +1,6 @@
 ﻿@page "/duplicates"
 
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
 @using System.Threading
@@ -8,6 +9,7 @@
 @using FuzzySharp;
 
 @inject IDialogService dialogService;
+@inject ProtectedLocalStorage localStorage
 @inject ScopedData data;
 
 
@@ -118,13 +120,28 @@
     PlaylistTable tableOriginal;
     PlaylistTable tableDupes;
     MudDataGrid<Duplicate> dataGrid;
+    HashSet<Duplicate> duplicates = [];
+    Storage<int> similarityThresholdStorage;
 
     string title = "Browse duplicates";
+    int similarityThreshold = 95;
     bool loading;
-    bool open { get; set; }
+    bool open;
     void TogglePlaylistTable() => open = !open;
 
-    HashSet<Duplicate> duplicates = [];
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+        if (!firstRender)
+            return;
+
+        similarityThresholdStorage = new(nameof(similarityThreshold), localStorage);
+        var storedThreshold = await similarityThresholdStorage.Get();
+        if (storedThreshold != default) {
+            similarityThreshold = storedThreshold;
+            StateHasChanged();
+        }
+    }
+
     private async Task FindDuplicates() {
         var originalPlaylist = tableOriginal.GetSelectedPlaylists().First();
         var duplicatePlaylists = tableDupes.GetSelectedPlaylists();
@@ -135,11 +152,14 @@
         loading = true;
         open = false;
 
+        var storeTask = similarityThresholdStorage.Set(similarityThreshold);
+
         var duplicateBag = new ConcurrentBag<Duplicate>();
         var playlistTasks = duplicatePlaylists.Select(duplicatePlaylist => Task.Run(
             () => SearchPlaylist(originalPlaylist, duplicatePlaylist, duplicateBag)
         ));
         await Task.WhenAll(playlistTasks);
+        await storeTask;
         duplicates = duplicateBag.ToHashSet();
         title = $"Duplicates from: {originalPlaylist.Name}";
         loading = false;
@@ -162,7 +182,6 @@
             concurrentBag.Add(d);
     }
 
-    int similarityThreshold = 95;
     private bool AreTracksSimilar(string original, string duplicate) {
         int similarity = Fuzz.WeightedRatio(original.ToLower(), duplicate.ToLower());
         return similarity >= similarityThreshold;

@@ -8,7 +8,7 @@ namespace SpotifyAnalysis.Data.Common {
         private readonly string key = key;
         private readonly ProtectedLocalStorage storage = protectedLocalStorage;
 
-        public async Task<T> Get(T backupValue = default) => await storage.GetSafeAsync<T>(key, backupValue);
+        public async Task<T> Get(T backupValue = default) => await storage.GetSafeAsync(key, backupValue);
         public async Task Set(T value) => await storage.SetAsync(key, value);
     }
 
