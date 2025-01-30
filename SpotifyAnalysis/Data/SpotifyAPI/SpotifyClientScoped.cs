@@ -6,7 +6,7 @@ using System;
 using System.Threading.Tasks;
 using static SpotifyAPI.Web.Scopes;
 using SpotifyAnalysis.Data.Common;
-using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components;
 
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
@@ -19,9 +19,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
     /// This class also maintains the authenticated user's profile information (`UserDTO`) and triggers 
     /// a `UserChanged` event whenever the authenticated user context is updated.
     /// </remarks>
-    public class SpotifyClientScoped(ProtectedLocalStorage protectedLocalStorage, IJSRuntime JSRuntime) : IUserContainer {
+    public class SpotifyClientScoped(ProtectedLocalStorage protectedLocalStorage, NavigationManager navigation) : IUserContainer {
         private readonly Storage<AuthorizationCodeTokenResponse> accessTokenStorage = new(nameof(accessTokenStorage), protectedLocalStorage);
-        private readonly IJSRuntime JSRuntime = JSRuntime;
+        private readonly NavigationManager navigation = navigation;
 
         public UserDTO UserDTO {
             get => user;
@@ -37,7 +37,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             if (await CheckClientInitialized())
                 await DestroyClient();
             else
-                await AuthenticateUser();
+                AuthenticateUser();
         }
 
         public async Task<bool> CheckClientInitialized() {
@@ -48,8 +48,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             return validTokenFound;
         }
 
-        private async Task AuthenticateUser() {
-
+        private void AuthenticateUser() {
             var request = new LoginRequest(
                 new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
                 Program.Config.GetValue<string>("ClientId"),
@@ -64,7 +63,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             };
 
             var uri = request.ToUri();
-            await JSRuntime.InvokeVoidAsync("open", uri.AbsoluteUri, "_self");
+            navigation.NavigateTo(uri.AbsoluteUri);
         }
 
         public async Task ExchangeCodeForTokenAsync(string code) {
