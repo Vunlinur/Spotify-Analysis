@@ -42,12 +42,12 @@
     private bool open = true;
     private async void ToggleDrawer() => await openStorage.Set(open = !open);
 
-    bool UserLoaded { get => !string.IsNullOrEmpty(appState?.UserDTO?.ID); }
-    bool Home { get => string.IsNullOrEmpty(navigationManager.ToBaseRelativePath(navigationManager.Uri)); }
-
     protected override async Task OnInitializedAsync() {
-        if (!UserLoaded && !Home)
+        bool UserNotLoaded = string.IsNullOrEmpty(appState?.UserDTO?.ID);
+        if (UserNotLoaded && LimitedPageManager.IsCurrentPageLimited(navigationManager)) {
             navigationManager.NavigateTo("/");
+            return;
+        }
         await base.OnInitializedAsync();
     }
 
