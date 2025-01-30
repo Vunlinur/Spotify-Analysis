@@ -10,7 +10,7 @@
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="d-flex flex-column align-center justify-center" Style="height: 80vh; text-align: center;">
     <MudPaper Class="pa-8">
-        @if (success) {
+        @if (authorized) {
             <MudText Typo="Typo.h4" Class="ma-4">Success!</MudText>
             <MudDivider />
             <MudText Typo="Typo.subtitle1" Class="ma-4">Spotify authorization was successful.</MudText>
@@ -27,7 +27,7 @@
 </MudContainer>
 
 @code {
-    bool success;
+    bool authorized;
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         base.OnAfterRender(firstRender);
@@ -39,13 +39,14 @@
     }
 
     protected override async Task OnInitializedAsync() {
+        authorized = SpotifyClientScoped?.UserDTO?.ID is not null;  // not null e.g. when backwarding
         SpotifyClientScoped.UserChanged += AuthenticationSuccessful;
         await base.OnInitializedAsync();
     }
 
     async void AuthenticationSuccessful(object _ = null) {
         SpotifyClientScoped.UserChanged -= AuthenticationSuccessful;
-        success = true;
+        authorized = true;
         await InvokeAsync(StateHasChanged);
     }
 
