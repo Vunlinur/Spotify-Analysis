@@ -33,20 +33,7 @@
             return;
 
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        var code = queryParams["code"];
-        if (code is null)
-            return;
-
-        try {
-            await SpotifyClientScoped.ExchangeCodeForTokenAsync(code);
-        }
-        catch (SpotifyAPI.Web.APIException e) {
-            if (e.Message == "invalid_grant")
-                AuthenticationSuccessful();
-            else
-                throw;
-        }
+        await SpotifyClientScoped.ExchangeCodeForTokenAsync(uri);
     }
 
     protected override async Task OnInitializedAsync() {

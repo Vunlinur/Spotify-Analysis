@@ -66,15 +66,26 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             navigation.NavigateTo(uri.AbsoluteUri);
         }
 
-        public async Task ExchangeCodeForTokenAsync(string code) {
-            var token = await new OAuthClient().RequestToken(new AuthorizationCodeTokenRequest(
+        public async Task ExchangeCodeForTokenAsync(Uri uri) {
+            var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var authorizationCode = queryParams["code"];
+            if (authorizationCode is null)
+                return;
+
+            try {
+                var token = await new OAuthClient().RequestToken(new AuthorizationCodeTokenRequest(
                 Program.Config.GetValue<string>("ClientId"),
                 Program.Config.GetValue<string>("ClientSecret"),
-                code,
+                authorizationCode,
                 new Uri(Program.Config.GetValue<string>("OAuthServerUri")))
             );
-            await accessTokenStorage.Set(token);
-            await CreateClient(token);
+                await accessTokenStorage.Set(token);
+                await CreateClient(token);
+            }
+            catch (APIException e) {
+                if (e.Message != "invalid_grant") // invalid_grant is OK, happens when we request token with an already used code
+                    throw;
+            }
         }
 
         private async Task DestroyClient() {
@@ -86,7 +97,6 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         private async Task CreateClient(AuthorizationCodeTokenResponse token) {
             var config = SpotifyClientConfig.CreateDefault().WithToken(token.AccessToken, token.TokenType);
             SpotifyClient = new SpotifyClient(config);
-
             UserDTO = (await SpotifyClient.UserProfile.Current()).ToUserDTO();
         }
     }
