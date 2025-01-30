@@ -3,6 +3,8 @@
 @using SpotifyAnalysis.Data.SpotifyAPI
 @using SpotifyAnalysis.Data.DTO
 
+@implements IDisposable
+
 @inject NavigationManager Navigation
 @inject SpotifyClientScoped SpotifyClientScoped
 
@@ -30,48 +32,39 @@
         if (!firstRender)
             return;
 
-        if (SpotifyClientScoped?.UserDTO?.ID is not null) {
-            success = true;
-            return;
-        }
-
         var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
         var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
         var code = queryParams["code"];
+        if (code is null)
+            return;
 
-        if (!string.IsNullOrEmpty(code))
-            try {
-                await SpotifyClientScoped.ExchangeCodeForTokenAsync(code);
-            }
-            catch (SpotifyAPI.Web.APIException e) {
-                if (e.Message == "invalid_grant") {
-                    success = true;
-                    return;
-                }
-                throw;
-            }
-
-        success = true;
-        StateHasChanged();
-    }
-
-    protected override Task OnInitializedAsync() {
-        if (SpotifyClientScoped?.UserDTO?.ID is not null) {
-            success = true;
-            StateHasChanged();
+        try {
+            await SpotifyClientScoped.ExchangeCodeForTokenAsync(code);
         }
-        else
-            SpotifyClientScoped.UserChanged += aaa;
-        return base.OnInitializedAsync();
+        catch (SpotifyAPI.Web.APIException e) {
+            if (e.Message == "invalid_grant")
+                AuthenticationSuccessful();
+            else
+                throw;
+        }
     }
 
-    async void aaa(UserDTO user) {
+    protected override async Task OnInitializedAsync() {
+        SpotifyClientScoped.UserChanged += AuthenticationSuccessful;
+        await base.OnInitializedAsync();
+    }
+
+    async void AuthenticationSuccessful(object _ = null) {
+        SpotifyClientScoped.UserChanged -= AuthenticationSuccessful;
         success = true;
         await InvokeAsync(StateHasChanged);
-        SpotifyClientScoped.UserChanged -= aaa;
     }
 
-    private void ReturnToApp() {
+    void ReturnToApp() {
         Navigation.NavigateTo("/");
+    }
+
+    public void Dispose() {
+        SpotifyClientScoped.UserChanged -= AuthenticationSuccessful;
     }
 }
