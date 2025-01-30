@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
-using SpotifyAPI.Web.Auth;
 using System;
 using System.Threading.Tasks;
 using static SpotifyAPI.Web.Scopes;
@@ -33,7 +32,6 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         public SpotifyClient SpotifyClient { get; set; }
 
         private UserDTO user;
-        private EmbedIOAuthServer server;
 
         public async void InitializeSpotifyClient() {
             if (await CheckClientInitialized())
@@ -51,14 +49,11 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         }
 
         private async Task AuthenticateUser() {
-            server = new EmbedIOAuthServer(
-                            new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
-                            5543
-                        );
-            server.AuthorizationCodeReceived += OnAuthorizationCodeReceived;
-            await server.Start();
 
-            var request = new LoginRequest(server.BaseUri, Program.Config.GetValue<string>("ClientId"), LoginRequest.ResponseType.Code) {
+            var request = new LoginRequest(
+                new Uri(Program.Config.GetValue<string>("OAuthServerUri")),
+                Program.Config.GetValue<string>("ClientId"),
+                LoginRequest.ResponseType.Code) {
                 Scope = [
                     UserLibraryRead,
                     PlaylistReadPrivate,
@@ -69,17 +64,15 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             };
 
             var uri = request.ToUri();
-            await JSRuntime.InvokeVoidAsync("open", uri.AbsoluteUri, "_blank");
+            await JSRuntime.InvokeVoidAsync("open", uri.AbsoluteUri, "_self");
         }
 
-        private async Task OnAuthorizationCodeReceived(object sender, AuthorizationCodeResponse response) {
-            await server.Stop();
-
+        public async Task ExchangeCodeForTokenAsync(string code) {
             var token = await new OAuthClient().RequestToken(new AuthorizationCodeTokenRequest(
                 Program.Config.GetValue<string>("ClientId"),
                 Program.Config.GetValue<string>("ClientSecret"),
-                response.Code,
-                server.BaseUri)
+                code,
+                new Uri(Program.Config.GetValue<string>("OAuthServerUri")))
             );
             await accessTokenStorage.Set(token);
             await CreateClient(token);

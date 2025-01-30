@@ -1,0 +1,77 @@
+﻿@page "/callback"
+
+@using SpotifyAnalysis.Data.SpotifyAPI
+@using SpotifyAnalysis.Data.DTO
+
+@inject NavigationManager Navigation
+@inject SpotifyClientScoped SpotifyClientScoped
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="d-flex flex-column align-center justify-center" Style="height: 80vh; text-align: center;">
+    <MudPaper Elevation="3" Class="pa-6">
+        @if (success) {
+            <MudText Typo="Typo.h5" Class="mb-4">Success!</MudText>
+            <MudText Typo="Typo.body1" Class="mb-3">Spotify authorization was successful.</MudText>
+            <MudText Typo="Typo.body2" Class="mb-4">You can close this tab and go back to your app.</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@ReturnToApp">
+                Return to App
+            </MudButton>
+        } else {
+            <MudText Typo="Typo.h5" Class="mb-4">Processing Authorization...</MudText>
+            <MudProgressCircular Indeterminate />
+        }
+    </MudPaper>
+</MudContainer>
+
+@code {
+    bool success;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        base.OnAfterRender(firstRender);
+        if (!firstRender)
+            return;
+
+        if (SpotifyClientScoped?.UserDTO?.ID is not null) {
+            success = true;
+            return;
+        }
+
+        var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var code = queryParams["code"];
+
+        if (!string.IsNullOrEmpty(code))
+            try {
+                await SpotifyClientScoped.ExchangeCodeForTokenAsync(code);
+            }
+            catch (SpotifyAPI.Web.APIException e) {
+                if (e.Message == "invalid_grant") {
+                    success = true;
+                    return;
+                }
+                throw;
+            }
+
+        success = true;
+        StateHasChanged();
+    }
+
+    protected override Task OnInitializedAsync() {
+        if (SpotifyClientScoped?.UserDTO?.ID is not null) {
+            success = true;
+            StateHasChanged();
+        }
+        else
+            SpotifyClientScoped.UserChanged += aaa;
+        return base.OnInitializedAsync();
+    }
+
+    async void aaa(UserDTO user) {
+        success = true;
+        await InvokeAsync(StateHasChanged);
+        SpotifyClientScoped.UserChanged -= aaa;
+    }
+
+    private void ReturnToApp() {
+        Navigation.NavigateTo("/");
+    }
+}
