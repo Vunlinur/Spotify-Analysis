@@ -76,13 +76,13 @@
             </FilterTemplate>
         </PropertyColumn>
 
-		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable=false HeaderStyle="width: 10%">
+		<PropertyColumn Title="Popularity" Property="x => x.Track.Popularity" Groupable=false HeaderStyle="width: 8%">
 			<CellTemplate>
 				<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Track.Popularity) />
 			</CellTemplate>
 		</PropertyColumn>
 
-        <PropertyColumn Title="Playlist" Property="x => x.Playlist.Name" Grouping HeaderStyle="width: 20%" >
+        <PropertyColumn Title="Playlist" Property="x => x.Playlist.Name" Grouping HeaderStyle="width: 15%" >
 			<CellTemplate>
 				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.Playlist.ID) >@(context.Item.Playlist.Name)</MudLink>
 			</CellTemplate>
@@ -96,6 +96,10 @@
 	.mud-table-container {
 		max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
 	}
+    @*Moves DataGridFilterMode.ColumnFilterMenu under the title*@
+    .column-header {
+        display: grid !important;
+    }
 
     @*space between artists*@
     a {
