@@ -188,7 +188,7 @@
     }
 
     bool readyToSearch;
-    Dictionary<Table, int> selections = [];
+    Dictionary<Table, int> selections = new() { [Table.Original] = 0, [Table.Duplicates] = 0 };
     void UpdateGenerateButton(Table table, int newSelectedCount) {
         selections[table] = newSelectedCount;
         readyToSearch = selections.Values.All(v => v > 0);
