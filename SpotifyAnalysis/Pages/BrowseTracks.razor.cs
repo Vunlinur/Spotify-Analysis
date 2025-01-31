@@ -32,7 +32,7 @@ namespace SpotifyAnalysis.Pages {
             var ms = 500  // to offset the precision missing when displaying seconds
                 + Seconds * 1000
                 + Minutes * 60000
-                + Hours * 360000;
+                + Hours * 3600000;
             filterDefinition.FilterFunction = x => durationFilter(x, ms);
         }
 
