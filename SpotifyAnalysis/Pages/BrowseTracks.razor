@@ -46,6 +46,30 @@
 			</CellTemplate>
 		</PropertyColumn>
 
+        <PropertyColumn Title="Release Date" Property="x => x.Track.Album.ReleaseDate" Groupable=false HeaderStyle="width: 8%">
+			<CellTemplate>
+				<MudText Typo="Typo.body2" Color=@Color.Default >@(context.Item.Track.Album.ReleaseDate)</MudText>
+			</CellTemplate>
+            <FilterTemplate>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudSelect @bind-Value=@releaseDateFilter FullWidth="true" Dense="true" Margin="@Margin.Dense" >
+                            @foreach (var o in releaseDateOperators) {
+                                <MudSelectItem Value="@o.Value">@o.Key</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudDatePicker Label="Date" @bind-Date="date" ShowToolbar="false" ShowWeekNumbers="true" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex justify-end">
+                        <MudButton Class="clear-filter-button" OnClick=@(() => ClearReleaseDateFilter(context)) >Clear</MudButton>
+                        <MudButton Class="apply-filter-button" OnClick=@(() => ApplyReleaseDateFilter(context)) Color="@Color.Primary" >Filter</MudButton>
+                    </MudItem>
+                </MudGrid>
+            </FilterTemplate>
+		</PropertyColumn>
+
    		<PropertyColumn Title="Duration" Property="x => x.Track.DurationMs" Groupable=false HeaderStyle="width: 6%">
 			<CellTemplate>
                 <MudText Typo="Typo.body2" >@FormatDuration(context)</MudText>
@@ -54,7 +78,7 @@
                 <MudGrid>
                     <MudItem xs="12">
                         <MudSelect @bind-Value=@durationFilter FullWidth="true" Dense="true" Margin="@Margin.Dense" >
-                            @foreach (var o in Operators) {
+                            @foreach (var o in durationOperators) {
                                 <MudSelectItem Value="@o.Value">@o.Key</MudSelectItem>
                             }
                         </MudSelect>
@@ -69,8 +93,8 @@
                         <MudNumericField @bind-Value="Seconds" Label="seconds" Variant="Variant.Text" Min="0" Max="59" />
                     </MudItem>
                     <MudItem xs="12" Class="d-flex justify-end">
-                        <MudButton Class="clear-filter-button" OnClick=@(() => ClearFilter(context)) >Clear</MudButton>
-                        <MudButton Class="apply-filter-button" OnClick=@(() => ApplyFilter(context)) Color="@Color.Primary" >Filter</MudButton>
+                        <MudButton Class="clear-filter-button" OnClick=@(() => ClearDurationFilter(context)) >Clear</MudButton>
+                        <MudButton Class="apply-filter-button" OnClick=@(() => ApplyDurationFilter(context)) Color="@Color.Primary" >Filter</MudButton>
                     </MudItem>
                 </MudGrid>
             </FilterTemplate>
