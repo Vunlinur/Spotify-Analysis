@@ -22,7 +22,7 @@
                 <MudForm @ref="form" Class="flex-grow-1">
                     <MudTextField @bind-Value="userInput" Label="User ID"
                                   Required="true" RequiredError="User ID or user link is required."
-                                  Validation=@(new Func<string, Task<string>>(ValidateInput)) OnlyValidateIfDirty="true"
+                                  Validation=ValidateInput OnlyValidateIfDirty="true"
                                   Variant="Variant.Outlined" FullWidth Margin="Margin.Dense" />
                 </MudForm>
                 <HelpButton Title="How to get a user ID or URL?">
@@ -31,10 +31,10 @@
             </MudStack>
             <MudStack Row>
                 @if (clientScoped?.UserDTO?.ID is not null) {
-                    <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="() => userInput = clientScoped.UserDTO.ID">Get my user ID</MudButton>
+                    <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick=GetMyUserID>Get my user ID</MudButton>
                 }
-            <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="TrySwitchUserAsync">Select User</MudButton>
-        </MudStack>
+                <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick=TrySwitchUserAsync>Select User</MudButton>
+            </MudStack>
         </MudStack>
 
         <MudStack AlignItems=AlignItems.Center Style="height:50px;">
@@ -113,6 +113,11 @@
         await selectedUserIDStorage.Set(id);
         userFromAPI = publicUser.ToUserDTO();
         return null;
+    }
+
+    void GetMyUserID() {
+        userInput = clientScoped.UserDTO.ID;
+        form.ResetValidation();
     }
 
     async Task TrySwitchUserAsync() {
