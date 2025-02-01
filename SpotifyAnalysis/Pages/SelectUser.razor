@@ -4,13 +4,16 @@
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.Database
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.Text.RegularExpressions
+
+@implements IDisposable
 
 @inject IDialogService DialogService
 @inject SpotifyModuleFactory spotifyModuleFactory;
 @inject ProtectedLocalStorage localStorage;
 @inject ScopedData data;
+@inject SpotifyClientScoped clientScoped;
 
 <MudContainer MaxWidth="MaxWidth.Medium">
     <MudStack Justify=Justify.SpaceEvenly Style="height: 80vh">
@@ -26,7 +29,12 @@
                     <HelpUserID />
                 </HelpButton>
             </MudStack>
+            <MudStack Row>
+                @if (clientScoped?.UserDTO?.ID is not null) {
+                    <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="() => userInput = clientScoped.UserDTO.ID">Get my user ID</MudButton>
+                }
             <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 150px" OnClick="TrySwitchUserAsync">Select User</MudButton>
+        </MudStack>
         </MudStack>
 
         <MudStack AlignItems=AlignItems.Center Style="height:50px;">
@@ -62,6 +70,7 @@
 
     protected override void OnInitialized() {
         base.OnInitialized();
+        clientScoped.UserChanged += OnUserChanged;
         selectedUser = data.UserDTO ?? new UserDTO();
         selectedUserIDStorage = new(nameof(selectedUserIDStorage), localStorage);
     }
@@ -72,6 +81,14 @@
             if (!string.IsNullOrEmpty(userInput))
                 StateHasChanged();
         }
+    }
+
+    async void OnUserChanged(object _) {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() {
+        clientScoped.UserChanged -= OnUserChanged;
     }
 
     private void UpdateProgressBar(float value, string message) {
