@@ -23,7 +23,7 @@
         if (Tracks is null)
             return elements;
 
-        trackList = Enumerable.Range(0, DateTime.Now.Year).Select(_ => new List<TrackDTO>()).ToList();
+        trackList = Enumerable.Range(0, DateTime.Now.Year + 1).Select(_ => new List<TrackDTO>()).ToList();
 
         foreach (var track in Tracks)
             trackList[int.Parse(track.Album.ReleaseDate.Substring(0, 4))].Add(track);
