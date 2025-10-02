@@ -1,0 +1,29 @@
+﻿@page "/playlistgenres"
+
+@using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.DTO
+@using System.Threading
+@using System.Collections.Concurrent
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+
+@inject IDialogService dialogService;
+@inject ProtectedLocalStorage localStorage
+@inject ScopedData data;
+
+
+<div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
+
+@if (data.UserDTO is not null) {
+    <PlaylistTable @ref="playlistTable" Name="Charts" Playlists="data.UserDTO.Playlists" />
+}
+
+@code {
+    private PlaylistTable playlistTable;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) {
+        await base.OnAfterRenderAsync(firstRender);
+        if (!firstRender)
+            return;
+
+    }
+}
