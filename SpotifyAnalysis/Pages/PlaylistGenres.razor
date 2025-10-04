@@ -4,6 +4,7 @@
 @using SpotifyAnalysis.Data.DTO
 @using System.Threading
 @using System.Collections.Concurrent
+@using MudBlazor
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 @inject IDialogService dialogService;
@@ -11,19 +12,91 @@
 @inject ScopedData data;
 
 
-<div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
-
-@if (data.UserDTO is not null) {
-    <PlaylistTable @ref="playlistTable" Name="Charts" Playlists="data.UserDTO.Playlists" />
+@if (loaded) {
+	<MudDataGrid T="Playlist" Items="@Playlists" FixedHeader
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
+		<ToolBarContent>
+			<MudText Typo="Typo.h6">Top 3 playlist genres</MudText>
+			<MudSpacer />
+			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+		</ToolBarContent>
+		<Columns>
+			<TemplateColumn Sortable=false HeaderStyle="width: 50px">
+				<CellTemplate>
+					<MudImage Height="50" Width="50" Src=@GetImage(context) />
+				</CellTemplate>
+			</TemplateColumn>
+			<PropertyColumn Property="x => x.playlistDTO.Name" Title="Name" />
+			<PropertyColumn Property="x => x.playlistDTO.OwnerName" Title="Owner" CellStyle="color: grey" />
+			<PropertyColumn Property="x => x.playlistDTO.TracksTotal" Title="Tracks" HeaderStyle="width:100px" />
+			<PropertyColumn Property="x => Get(x.topGenres, 0).name" Title="#1" HeaderStyle="width:100px" />
+			<PropertyColumn Property="x => Get(x.topGenres, 1).name" Title="#2" HeaderStyle="width:100px" />
+			<PropertyColumn Property="x => Get(x.topGenres, 2).name" Title="#3" HeaderStyle="width:100px" />
+		</Columns>
+	</MudDataGrid>
 }
 
 @code {
-    private PlaylistTable playlistTable;
+	IEnumerable<Playlist> Playlists { get; set; }
+	bool loaded;
+	string searchString;
+	private PlaylistTable playlistTable;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender) {
-        await base.OnAfterRenderAsync(firstRender);
-        if (!firstRender)
-            return;
+	protected override async Task OnInitializedAsync() {
+		await base.OnInitializedAsync();
+		var playlistsTasks = data.UserDTO.Playlists.Select(CalculateGenresAsync).ToArray();
+		Playlists = await Task.WhenAll(playlistsTasks);
+		loaded = true;
+	}
 
-    }
+	async Task<Playlist> CalculateGenresAsync(PlaylistDTO playlistDTO) {
+		return await Task.Run(() => 
+		{
+			return new Playlist(playlistDTO, CalculatePlaylistGenres(playlistDTO));
+		});
+	}
+
+	List<Genre> CalculatePlaylistGenres(PlaylistDTO p) {
+		var topGenres = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+		var tasks = p.Tracks.Select(async track => {
+			foreach (var artist in track.Artists) {
+				foreach (string genre in artist.Genres)
+					topGenres.AddOrUpdate(genre, 1, (_, count) => count + 1);
+			}
+		}).ToArray();
+		Task.WaitAll(tasks);
+		return topGenres
+			.OrderByDescending(kv => kv.Value)
+			.Take(3)
+			.Select(kv => new Genre(kv.Key, kv.Value))
+			.ToList();
+	}
+
+	bool Filter(Playlist p) {
+		if (string.IsNullOrWhiteSpace(searchString))
+			return true;
+
+		if (p.playlistDTO.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (p.playlistDTO.TracksTotal.ToString().Contains(searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		return false;
+	}
+
+	string GetImage(CellContext<Playlist> c) => c.Item.playlistDTO.Images.FirstOrDefault()?.Url ?? StaticResourceMap.UnknownPlaylist;
+
+	Genre Get(List<Genre> list, int index) => index < list.Count ? list[index] : null;
+
+	class Playlist(PlaylistDTO playlistDTO, List<Genre> topGenres) {
+		public PlaylistDTO playlistDTO = playlistDTO;
+		public List<Genre> topGenres = topGenres;
+	}
+
+	class Genre(string name, int count) {
+		public string name = name;
+		public int count = count;
+	}
 }
