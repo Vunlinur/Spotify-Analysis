@@ -30,9 +30,9 @@
 			<PropertyColumn Property="x => x.playlistDTO.Name" Title="Name" />
 			<PropertyColumn Property="x => x.playlistDTO.OwnerName" Title="Owner" CellStyle="color: grey" />
 			<PropertyColumn Property="x => x.playlistDTO.TracksTotal" Title="Tracks" HeaderStyle="width:100px" />
-			<PropertyColumn Property="x => Get(x.topGenres, 0).name" Title="#1" HeaderStyle="width:100px" />
-			<PropertyColumn Property="x => Get(x.topGenres, 1).name" Title="#2" HeaderStyle="width:100px" />
-			<PropertyColumn Property="x => Get(x.topGenres, 2).name" Title="#3" HeaderStyle="width:100px" />
+			<PropertyColumn Property="x => Get(x.topGenres, 0).name" Title="#1" />
+			<PropertyColumn Property="x => Get(x.topGenres, 1).name" Title="#2" />
+			<PropertyColumn Property="x => Get(x.topGenres, 2).name" Title="#3" />
 		</Columns>
 	</MudDataGrid>
 }
@@ -50,12 +50,9 @@
 		loaded = true;
 	}
 
-	async Task<Playlist> CalculateGenresAsync(PlaylistDTO playlistDTO) {
-		return await Task.Run(() => 
-		{
-			return new Playlist(playlistDTO, CalculatePlaylistGenres(playlistDTO));
-		});
-	}
+	async Task<Playlist> CalculateGenresAsync(PlaylistDTO playlistDTO) => await Task.Run(() => 
+			new Playlist(playlistDTO, CalculatePlaylistGenres(playlistDTO))
+		);
 
 	List<Genre> CalculatePlaylistGenres(PlaylistDTO p) {
 		var topGenres = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -88,7 +85,8 @@
 
 	string GetImage(CellContext<Playlist> c) => c.Item.playlistDTO.Images.FirstOrDefault()?.Url ?? StaticResourceMap.UnknownPlaylist;
 
-	Genre Get(List<Genre> list, int index) => index < list.Count ? list[index] : null;
+	static Genre empty = new("", 0);
+	Genre Get(List<Genre> list, int index) => index < list.Count ? list[index] : empty;
 
 	class Playlist(PlaylistDTO playlistDTO, List<Genre> topGenres) {
 		public PlaylistDTO playlistDTO = playlistDTO;
