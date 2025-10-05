@@ -24,7 +24,7 @@ ORDER BY ar.Name, al.Name
 SELECT COUNT(*) FROM Images
 SELECT * FROM Images WHERE Url = 'https://i.scdn.co/image/ab67616d00001e02135e3bce4f087e726fbb44f0'
 
-UPDATE Users SET Updated = '2020' WHERE ID = '11ek5k7fhea9otrb7k2ecizzb'
+UPDATE Users SET Updated = '2020' WHERE Name = 'Vunlinur'
 UPDATE Playlists SET SnapshotID = '' WHERE ID = '7D8pgfx10524cS2i6kuKgo'
 
 
