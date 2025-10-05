@@ -1,6 +1,6 @@
 ﻿@using static SpotifyAnalysis.Pages.PlaylistGenres
 
-<MudStack Row>
+<MudStack Row Spacing="0" >
 	<MudChip T="string" Class="genreLabel" Label="true" Style="@CellStyle(Context.Item, Index)">
 		@GetGenreAt(Context.Item.topGenres, Index).name
 	</MudChip>
