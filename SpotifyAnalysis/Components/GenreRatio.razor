@@ -1,11 +1,13 @@
 ﻿@using static SpotifyAnalysis.Pages.PlaylistGenres
+@using System.Numerics
+
 
 <MudStack Row Spacing="0" >
-	<MudChip T="string" Class="genreLabel" Label="true" Style="@CellStyle(Context.Item, Index)">
-		@GetGenreAt(Context.Item.topGenres, Index).name
+	<MudChip T="string" Class="genreLabel" Label="true" Style="@LabelStyle()">
+		@genre.name
 	</MudChip>
-	<MudChip T="string" Class="genreRatio" Label="true">
-		@((int)(GetGenreAt(Context.Item.topGenres, Index).count / (float)Context.Item.playlistDTO.TracksTotal * 100))%
+	<MudChip T="string" Class="genreRatio" Label="true" Style="@RatioStyle()">
+		@((int)(ratio * 100))%
 	</MudChip>
 </MudStack>
 
@@ -16,9 +18,44 @@
 	[Parameter, EditorRequired]
 	public int Index { get; set; }
 
-
 	static readonly Genre empty = new("", 0) { color = "" };
-	public static Genre GetGenreAt(List<Genre> list, int index) => index < list.Count ? list[index] : empty;
 
-	public static string CellStyle(Playlist p, int ordinal) => $"background: {GetGenreAt(p.topGenres, ordinal).color}";
+	Playlist playlist;
+	Genre genre;
+	float ratio;
+
+	static readonly Vector3 colorA, colorB;
+	static GenreRatio() {
+		var color1 = 0x222222;
+		var color2 = 0x1DB954; // spotify green
+
+		colorA = new Vector3(
+			(color1 & 0xff0000) >> 16,
+			(color1 & 0x00ff00) >> 8,
+			color1 & 0x0000ff
+		);
+
+		colorB = new Vector3(
+			(color2 & 0xff0000) >> 16,
+			(color2 & 0x00ff00) >> 8,
+			color2 & 0x0000ff
+		);
+	}
+
+	protected override void OnInitialized() {
+		base.OnInitialized();
+
+		playlist = Context.Item;
+		genre = Index < playlist.topGenres.Count ? playlist.topGenres[Index] : empty;
+		ratio = genre.count / (float)playlist.playlistDTO.TracksTotal;
+	}
+
+	public string LabelStyle() => $"background: {genre.color}";
+
+	public string RatioStyle() {
+		var product = Vector3.Lerp(colorA, colorB, Math.Min(ratio, 1));
+		var hex = string.Format("background: #{0:X2}{1:X2}{2:X2}", (int)product.X, (int)product.Y, (int)product.Z);
+		return hex;
+
+	}
 }
