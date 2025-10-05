@@ -115,8 +115,12 @@
 			}
 	}
 
+	static readonly char[] splitOn = [ ' ', '-' ];
 	public static string GenreToColor(string genre) {
-		var tokens = genre.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		var tokens = genre
+			.ToLower()
+			.Replace("music", "")
+			.Split(splitOn, StringSplitOptions.RemoveEmptyEntries);
 		string root = tokens.Last(); // e.g. "rock" from "classic rock"
 		var colorHash = new ColorHash();
 		return '#' + colorHash.Hex(root);
