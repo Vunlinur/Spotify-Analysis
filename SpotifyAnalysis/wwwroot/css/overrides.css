@@ -46,3 +46,12 @@ svg > foreignObject { /* pie chart legend */
 .full-width {
     width: 100%;
 }
+
+.genreLabel {
+    width: 100%;
+}
+
+.genreRatio {
+    width: 70px;
+    padding: 0;
+}

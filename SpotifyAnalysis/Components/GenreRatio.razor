@@ -1,0 +1,24 @@
+﻿@using static SpotifyAnalysis.Pages.PlaylistGenres
+
+<MudStack Row>
+	<MudChip T="string" Class="genreLabel" Label="true" Style="@CellStyle(Context.Item, Index)">
+		@GetGenreAt(Context.Item.topGenres, Index).name
+	</MudChip>
+	<MudChip T="string" Class="genreRatio" Label="true">
+		@((int)(GetGenreAt(Context.Item.topGenres, Index).count / (float)Context.Item.playlistDTO.TracksTotal * 100))%
+	</MudChip>
+</MudStack>
+
+
+@code {
+	[Parameter, EditorRequired]
+	public CellContext<Playlist> Context { get; set; }
+	[Parameter, EditorRequired]
+	public int Index { get; set; }
+
+
+	static readonly Genre empty = new("", 0) { color = "" };
+	public static Genre GetGenreAt(List<Genre> list, int index) => index < list.Count ? list[index] : empty;
+
+	public static string CellStyle(Playlist p, int ordinal) => $"background: {GetGenreAt(p.topGenres, ordinal).color}";
+}

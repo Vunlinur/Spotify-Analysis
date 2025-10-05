@@ -30,13 +30,40 @@
 			</TemplateColumn>
 			<PropertyColumn Property="x => x.playlistDTO.Name" Title="Name" />
 			<PropertyColumn Property="x => x.playlistDTO.OwnerName" Title="Owner" CellStyle="color: grey" />
-			<PropertyColumn Property="x => x.playlistDTO.TracksTotal" Title="Tracks" HeaderStyle="width:100px" />
-			<PropertyColumn Property="x => Get(x.topGenres, 0).name" Title="#1" CellStyleFunc="p => CellStyle(p, 0)" />
-			<PropertyColumn Property="x => Get(x.topGenres, 1).name" Title="#2" CellStyleFunc="p => CellStyle(p, 1)" />
-			<PropertyColumn Property="x => Get(x.topGenres, 2).name" Title="#3" CellStyleFunc="p => CellStyle(p, 2)" />
+			<PropertyColumn Property="x => x.playlistDTO.TracksTotal" Title="Tracks" HeaderStyle="width:60px" />
+			<TemplateColumn Title="#1">
+				<CellTemplate>
+					<GenreRatio Context="context" Index="0"/>
+				</CellTemplate>
+			</TemplateColumn>
+			<TemplateColumn Title="#2">
+				<CellTemplate>
+					<GenreRatio Context="context" Index="1" />
+				</CellTemplate>
+			</TemplateColumn>
+			<TemplateColumn Title="#3">
+				<CellTemplate>
+					<GenreRatio Context="context" Index="2" />
+				</CellTemplate>
+			</TemplateColumn>
 		</Columns>
 	</MudDataGrid>
 }
+
+<style>
+	tr > td:nth-last-child(-n + 3) {
+		padding: 0 4px;
+	}
+
+	td > div {
+		width: 100%;
+		font-weight: bold;
+    }
+
+	.mud-chip.mud-chip-size-medium {
+		height: 42px
+	}
+</style>
 
 @code {
 	IEnumerable<Playlist> Playlists { get; set; }
@@ -91,8 +118,6 @@
 		return '#' + colorHash.Hex(root);
 	}
 
-	string CellStyle(Playlist p, int ordinal) => $"background: {Get(p.topGenres, ordinal).color}";
-
 	bool Filter(Playlist p) {
 		if (string.IsNullOrWhiteSpace(searchString))
 			return true;
@@ -108,18 +133,4 @@
 	}
 
 	string GetImage(CellContext<Playlist> c) => c.Item.playlistDTO.Images.FirstOrDefault()?.Url ?? StaticResourceMap.UnknownPlaylist;
-
-	static Genre empty = new("", 0) { color = "" };
-	Genre Get(List<Genre> list, int index) => index < list.Count ? list[index] : empty;
-
-	class Playlist(PlaylistDTO playlistDTO, List<Genre> topGenres) {
-		public PlaylistDTO playlistDTO = playlistDTO;
-		public List<Genre> topGenres = topGenres;
-	}
-
-	class Genre(string name, int count) {
-		public string name = name;
-		public int count = count;
-		public string color;
-	}
 }
