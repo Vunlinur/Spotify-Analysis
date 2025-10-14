@@ -28,7 +28,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 1, 1, 1, 4);
+            AssertDbSetCounts(1, 1, 1, 1);
             AssertPlaylistData(testPlaylist, 1);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
 
@@ -63,7 +63,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 2, 2, 2, 6);
+            AssertDbSetCounts(1, 2, 2, 2);
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum2.Id, [testArtist2.Id]);
@@ -96,7 +96,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 2, 1, 2, 5);
+            AssertDbSetCounts(1, 2, 1, 2);
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum2.Id, [testArtist.Id]);
@@ -126,7 +126,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 2, 1, 1, 4);
+            AssertDbSetCounts(1, 2, 1, 1);
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum.Id, [testArtist.Id]);
@@ -159,7 +159,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 2, 2, 1, 5);
+            AssertDbSetCounts(1, 2, 2, 1);
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
@@ -192,7 +192,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 2, 2, 1, 5);
+            AssertDbSetCounts(1, 2, 2, 1);
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum.Id, [testArtist2.Id]);
@@ -257,7 +257,7 @@ namespace Tests.GetDataTests {
             // Assert
             Console.WriteLine($"Execution Time: {stopwatch.ElapsedMilliseconds} ms");
             ClassicAssert.AreEqual(1, dbContext.Users.Count());
-            AssertDbSetCounts(100, 99010, 1000, 5000, 6101);
+            AssertDbSetCounts(100, 99010, 1000, 5000);
             // <10s for UseInMemoryDatabase, <15 for ConfigureSQLiteInMemory
             ClassicAssert.Less(stopwatch.ElapsedMilliseconds, 15000, "Data fetch should complete in under 15 seconds");
         }

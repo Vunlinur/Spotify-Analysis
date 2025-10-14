@@ -37,7 +37,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 2, 1, 2, 4);
+            AssertDbSetCounts(1, 2, 1, 2);
             AssertPlaylistData(testPlaylist, 2);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
             AssertTrackData(testTrack2, testAlbum2.Id, [testArtist.Id]);
@@ -68,7 +68,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 1, 1, 1, 3);
+            AssertDbSetCounts(1, 1, 1, 1);
             AssertPlaylistData(testPlaylist, 1);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
         }
@@ -98,7 +98,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 1, 1, 1, 3);
+            AssertDbSetCounts(1, 1, 1, 1);
             AssertPlaylistData(testPlaylist, 1);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
         }
@@ -129,7 +129,7 @@ namespace Tests.GetDataTests {
             await dataFetch.GetData(testUser.Id);
 
             // Assert
-            AssertDbSetCounts(1, 1, 1, 1, 2);
+            AssertDbSetCounts(1, 1, 1, 1);
             AssertPlaylistData(testPlaylist, 1);
             AssertTrackData(testTrack, testAlbum.Id, [testArtist.Id]);
         }
