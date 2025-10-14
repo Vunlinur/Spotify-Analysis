@@ -14,7 +14,6 @@ namespace SpotifyAnalysis.Data.Database {
 
         public DbSet<AlbumDTO> Albums { get; set; }
         public DbSet<ArtistDTO> Artists { get; set; }
-        public DbSet<ImageDTO> Images { get; set; }
         public DbSet<PlaylistDTO> Playlists { get; set; }
         public DbSet<TrackDTO> Tracks { get; set; }
         public DbSet<UserDTO> Users { get; set; }
@@ -47,13 +46,6 @@ namespace SpotifyAnalysis.Data.Database {
                         j.Property<string>("PlaylistDTOID");
                         j.Property<string>("TracksID");
                     });
-
-            // Set cascade delete for all Images relations
-            foreach (var relation in modelBuilder.Model.GetEntityTypes()
-                .Where(e => e.ClrType == typeof(ImageDTO))
-                .SelectMany(e => e.GetForeignKeys())) {
-                relation.DeleteBehavior = DeleteBehavior.Cascade;
-            }
         }
 
         protected static void ConfigureSqlServer(DbContextOptionsBuilder options) {

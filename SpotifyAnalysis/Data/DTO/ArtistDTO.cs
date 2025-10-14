@@ -15,8 +15,10 @@ namespace SpotifyAnalysis.Data.DTO {
 
         public List<string> Genres { get; set; }
 
-        public virtual List<AlbumDTO> Albums { get; set; }
+		public string ImageS { get; set; }
 
-        public virtual List<ImageDTO> Images { get; set; }
+		public string ImageL { get; set; }
+
+		public virtual List<AlbumDTO> Albums { get; set; }
     }
 }

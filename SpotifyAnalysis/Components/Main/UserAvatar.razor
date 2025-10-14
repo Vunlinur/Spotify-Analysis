@@ -31,7 +31,7 @@
 
     public void Dispose() => UserContainer.UserChanged -= Refresh;
 
-    string GetAvatar() => UserContainer.UserDTO?.Images?.LastOrDefault()?.Url ?? StaticResourceMap.UnknownUser;
+    string GetAvatar() => UserContainer.UserDTO?.ImageS ?? StaticResourceMap.UnknownUser;
 
     string GetUserName() => UserContainer.UserDTO?.Name ?? DefaultText;
 

@@ -1,4 +1,5 @@
-﻿using SpotifyAnalysis.Data.DTO;
+﻿using SpotifyAnalysis.Data.Database;
+using SpotifyAnalysis.Data.DTO;
 using SpotifyAPI.Web;
 using System;
 using System.Collections.Generic;
@@ -7,26 +8,31 @@ using System.Linq;
 namespace SpotifyAnalysis.Data.SpotifyAPI {
     public static class SpotifyToDTOExtensions {
         public static UserDTO ToUserDTO(this PublicUser pu) {
+			pu.Images.SortImages();
             return new UserDTO() {
                 ID = pu.Id,
                 Name = pu.DisplayName,
                 Updated = DateTime.Now,
                 Playlists = [],
-                Images = pu.Images.ToImageDTOs()
-            };
+				ImageS = pu.Images.FirstOrDefault()?.Url,
+				ImageL = pu.Images.LastOrDefault()?.Url,
+			};
         }
 
         public static UserDTO ToUserDTO(this PrivateUser pu) {
+			pu.Images.SortImages();
             return new UserDTO() {
                 ID = pu.Id,
                 Name = pu.DisplayName,
                 Updated = DateTime.Now,
                 Playlists = [],
-                Images = pu.Images.ToImageDTOs()
-            };
+				ImageS = pu.Images.FirstOrDefault()?.Url,
+				ImageL = pu.Images.LastOrDefault()?.Url,
+			};
         }
 
         public static PlaylistDTO ToPlaylistDTO(this FullPlaylist fp) {
+			fp.Images.SortImages();
 			return new PlaylistDTO() {
 				ID = fp.Id,
 				Name = fp.Name,
@@ -35,8 +41,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				SnapshotID = fp.SnapshotId,
 				TracksTotal = fp.Tracks.Total,
 				Tracks = [],
-				Images = fp.Images.ToImageDTOs()
-            };
+				ImageS = fp.Images.FirstOrDefault()?.Url,
+				ImageL = fp.Images.LastOrDefault()?.Url,
+			};
 		}
 
 		public static List<PlaylistDTO> ToPlaylistDTOs(this IEnumerable<FullPlaylist> fullPlaylists)
@@ -54,6 +61,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		}
 
 		public static AlbumDTO ToAlbumDTO(this FullAlbum a) {
+			a.Images.SortImages();
 			return new AlbumDTO() {
 				ID = a.Id,
 				Name = a.Name,
@@ -61,11 +69,13 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				TotalTracks = a.TotalTracks,
 				Artists = [],
 				Tracks = [],
-				Images = a.Images.ToImageDTOs()
-            };
+				ImageS = a.Images.FirstOrDefault()?.Url,
+				ImageL = a.Images.LastOrDefault()?.Url,
+			};
 		}
 
 		public static AlbumDTO ToAlbumDTO(this SimpleAlbum a) {
+			a.Images.SortImages();
 			return new AlbumDTO() {
 				ID = a.Id,
 				Name = a.Name,
@@ -73,18 +83,21 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				TotalTracks = a.TotalTracks,
 				Artists = [],
 				Tracks = [],
-				Images = a.Images.ToImageDTOs()
-            };
+				ImageS = a.Images.FirstOrDefault()?.Url,
+				ImageL = a.Images.LastOrDefault()?.Url,
+			};
 		}
 
 		public static ArtistDTO ToArtistDTO(this FullArtist fa) {
+			fa.Images.SortImages();
 			return new ArtistDTO() {
 				ID = fa.Id,
 				Name = fa.Name,
 				Genres = fa.Genres,
 				Popularity = fa.Popularity,
 				Albums = [],
-				Images = fa.Images.ToImageDTOs()
+				ImageS = fa.Images.FirstOrDefault()?.Url,
+				ImageL = fa.Images.LastOrDefault()?.Url,
 			};
 		}
 
@@ -93,20 +106,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 				ID = a.Id,
 				Name = a.Name,
 				Genres = [],
-				Albums = [],
-				Images = []
+				Albums = []
 			};
 		}
-
-		public static ImageDTO ToImageDTO(this Image i) {
-			return new ImageDTO() {
-                Url = i.Url,
-                Resolution = Math.Min(i.Height, i.Width)
-			};
-		}
-
-		public static List<ImageDTO> ToImageDTOs(this IEnumerable<Image> images)
-			=> images?.Select(i => i.ToImageDTO()).ToList();
-
     }
 }

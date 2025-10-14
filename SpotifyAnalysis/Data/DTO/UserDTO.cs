@@ -14,8 +14,10 @@ namespace SpotifyAnalysis.Data.DTO {
 
         public DateTime Updated {  get; set; }
 
-        public virtual List<PlaylistDTO> Playlists { get; set; }
+		public string ImageS { get; set; }
 
-        public List<ImageDTO> Images { get; set; }
+		public string ImageL { get; set; }
+
+		public virtual List<PlaylistDTO> Playlists { get; set; }
     }
 }

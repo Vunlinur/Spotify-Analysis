@@ -155,7 +155,6 @@ namespace SpotifyAnalysis.Data.Database {
         private static void ProcessDataTree(FullPlaylist fullPlaylist, List<FullTrack> fullTracks, DTOAggregate dtos) {
             if (dtos.GetOrAddPlaylist(fullPlaylist, out PlaylistDTO playlist))
                 playlist.Update(fullPlaylist);
-            dtos.GetOrAddImages(playlist.Images, fullPlaylist.Images);
 
             AddPlaylistToUser(dtos.User, playlist);
             RemoveOldTracks(playlist, fullTracks);
@@ -168,7 +167,6 @@ namespace SpotifyAnalysis.Data.Database {
                     album.Update(fullTrack.Album);
                 else
                     album.Artists = dtos.GetArtists(fullTrack.Album.Artists);
-                dtos.GetOrAddImages(album.Images, fullTrack.Album.Images);
 
                 if (dtos.GetOrAddTrack(fullTrack, out TrackDTO track))
                     track.Update(fullTrack);
@@ -234,7 +232,6 @@ namespace SpotifyAnalysis.Data.Database {
             foreach (var artist in fullArtists) {
                 if (dtos.GetOrAddArtist(artist, out ArtistDTO artistDTO))
                     artistDTO.Update(artist);
-                dtos.GetOrAddImages(artistDTO.Images, artist.Images);
             }
         }
 

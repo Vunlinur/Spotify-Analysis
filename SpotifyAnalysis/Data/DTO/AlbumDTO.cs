@@ -13,12 +13,14 @@ namespace SpotifyAnalysis.Data.DTO {
 
         public string ReleaseDate { get; set; }
 
-        public int TotalTracks { get; set; } 
+        public int TotalTracks { get; set; }
 
-        public virtual List<ArtistDTO> Artists { get; set; }
+		public string ImageS { get; set; }
+
+		public string ImageL { get; set; }
+
+		public virtual List<ArtistDTO> Artists { get; set; }
 
         public virtual List<TrackDTO> Tracks { get; set; }
-
-        public virtual List<ImageDTO> Images { get; set; }
 	}
 }

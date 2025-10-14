@@ -91,5 +91,5 @@
 		return false;
 	}
 	
-	string GetImage(CellContext<PlaylistDTO> c) => c.Item.Images.FirstOrDefault()?.Url ?? StaticResourceMap.UnknownPlaylist;
+	string GetImage(CellContext<PlaylistDTO> c) => c.Item.ImageS ?? StaticResourceMap.UnknownPlaylist;
 }

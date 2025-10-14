@@ -31,5 +31,5 @@
 	[Parameter]
 	public ArtistDTO Artist { get; set; }
 
-	internal string GetImage() => Artist?.Images?.FirstOrDefault()?.Url ?? StaticResourceMap.UnknownArtist;
+	internal string GetImage() => Artist?.ImageL ?? StaticResourceMap.UnknownArtist;
 }
