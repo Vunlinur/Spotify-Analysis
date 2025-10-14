@@ -1,0 +1,61 @@
+@namespace SpotifyAnalysis.Components
+
+@inject SpotifyMudTheme SpotifyTheme
+
+<MudText Typo="Typo.body1">Use this page to <b>visualize your playlists</b> as charts. Select the playlists you care about and generate charts for <b>artists</b>, <b>genres</b>, and <b>years</b>, among other things.</MudText>
+
+<MudDivider Class="mt-4 mb-4" />
+
+<MudText Typo="Typo.h6">How it works</MudText>
+<MudList T="string">
+	<MudListItem>
+		<MudText>1. Click <b>Show playlists</b> to open the playlists panel.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>2. <b>Select one or more playlists</b>.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>3. Click <b>Generate charts</b> in the top right.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>4. Review the charts. You can regenerate anytime after adjusting your selection.</MudText>
+	</MudListItem>
+</MudList>
+
+<MudDivider Class="mt-4 mb-4" />
+
+<MudText Typo="Typo.h6">What you’ll see</MudText>
+<MudList T="string">
+	<MudListItem>
+		<MudText><b>Artists</b>: distribution of tracks by artist from the selected playlists.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText><b>Genres</b>: breakdown of genres inferred from track artists.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText><b>Genres (general)</b>: broader genre groupings for a higher‑level view.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText><b>Years</b>: distribution of tracks by release year.</MudText>
+	</MudListItem>
+</MudList>
+
+<MudDivider Class="mt-4 mb-4" />
+
+<MudText Typo="Typo.h6">Tips</MudText>
+<MudList T="string">
+	<MudListItem>
+		<MudText>You can reopen the playlists panel anytime with <b>Show playlists</b> to refine selection.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>You can click on most entries in the charts to inspect them in detail.</MudText>
+	</MudListItem>
+</MudList>
+
+<style>
+	b {
+		color: @(SpotifyTheme.PaletteDark.Primary.Value);
+	}
+</style>
+
+
