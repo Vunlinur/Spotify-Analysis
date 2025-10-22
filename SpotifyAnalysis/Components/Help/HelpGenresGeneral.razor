@@ -1,0 +1,37 @@
+@namespace SpotifyAnalysis.Components
+
+@inject SpotifyMudTheme SpotifyTheme
+
+<MudText>This chart <b>counts words</b> that appear inside artist genres (e.g., "classic rock" → "classic", "rock") for every track on the selected playlists.</MudText>
+<MudText>Common words like <i>of</i>, <i>music</i>, etc. are ignored.</MudText>
+
+<MudText Class="mt-4">This means the total can be <b>higher than the number of songs</b> because:</MudText>
+<MudList T="string">
+	<MudListItem>
+		<MudText>One song can have <b>multiple artists</b>.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>One artist can have <b>several genre labels</b>.</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>Some labels have <b>more than one word</b> (each word is counted).</MudText>
+	</MudListItem>
+	<MudListItem>
+		<MudText>The same word appearing for different artists is <b>counted each time</b>.</MudText>
+	</MudListItem>
+</MudList>
+
+<MudDivider Class="mt-4 mb-4" />
+
+<MudText >In short, this is a <b>term frequency</b> view over artist genres, not a per‑track tally.</MudText>
+
+<MudText Class="mb-4">Clicking a genre word shows all the tracks contributing to its count.</MudText>
+
+
+<style>
+	b {
+		color: @(SpotifyTheme.PaletteDark.Primary.Value);
+	}
+</style>
+
+

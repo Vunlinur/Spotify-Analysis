@@ -9,6 +9,11 @@
 <MudItemBase>
     <MudToolBar>
         <MudText Typo="Typo.h6">@Title</MudText>
+        @if (HelpType is not null) {
+            <HelpButton Title=@(Title + " Help")>
+                @BuildHelp()
+            </HelpButton>
+        }
         <MudSpacer />
         <MudMenu Icon="@Icons.Material.Outlined.Settings" Size=@MudBlazor.Size.Small AnchorOrigin=Origin.BottomCenter Dense="true" AriaLabel="Options">
             <MudMenuItem OnClick="ShowAllSlices">Show all slices</MudMenuItem>

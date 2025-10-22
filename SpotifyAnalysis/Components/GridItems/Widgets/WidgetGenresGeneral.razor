@@ -17,6 +17,7 @@
     [Parameter, EditorRequired]
     public IDictionary<string, ArtistDTO> ArtistsDict { get; set; }
     public override string Title { get; } = "Genres General";
+    protected override Type HelpType { get; } = typeof(HelpGenresGeneral);
 
     static readonly string[] excludes = { "of", "and", "new", "music" };
     protected override Elements BuildElements() {

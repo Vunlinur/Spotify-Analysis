@@ -13,6 +13,8 @@ namespace SpotifyAnalysis.Components {
         public virtual IEnumerable<Element> Elements { get; set; }
         [Parameter]
         public virtual Action<Element> OnClickCallback { get; set; }
+        [Parameter]
+        public virtual Type HelpType { get; set; }
 
         protected ApexChart<Element> chart;
 
@@ -28,6 +30,11 @@ namespace SpotifyAnalysis.Components {
         protected override void OnInitialized() {
             ProcessElements();
         }
+
+        protected RenderFragment BuildHelp() => builder => {
+            builder.OpenComponent(0, HelpType);
+            builder.CloseComponent();
+        };
 
         protected abstract void ProcessElements();
     }

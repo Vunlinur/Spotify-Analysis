@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 namespace SpotifyAnalysis.Components {
     public abstract class WidgetBase : ComponentBase {
         public abstract string Title { get; }
+        protected virtual Type HelpType{ get; }
 
         protected Elements elements;
         protected ChartBase chart;
@@ -34,7 +35,8 @@ namespace SpotifyAnalysis.Components {
             builder.AddAttribute(1, nameof(ChartBase.Title), Title);
             builder.AddAttribute(2, nameof(ChartBase.Elements), elements);
             builder.AddAttribute(3, nameof(ChartBase.OnClickCallback), onClickCallback);
-            builder.AddComponentReferenceCapture(4, o => chart = o as ChartBase);
+            builder.AddAttribute(4, nameof(ChartBase.HelpType), HelpType);
+            builder.AddComponentReferenceCapture(5, o => chart = o as ChartBase);
             builder.CloseComponent();
         };
     }
