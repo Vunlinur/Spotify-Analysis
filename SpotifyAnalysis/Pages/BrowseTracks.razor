@@ -32,7 +32,7 @@
 			</CellTemplate>
 		</PropertyColumn>
 
-        <PropertyColumn Title="Artists" Property="x => x.Artists" HeaderStyle="width: 20%" >
+        <PropertyColumn Title="Artists" Property="x => x.Track.Artists[0].Name" HeaderStyle="width: 20%" >
 			<CellTemplate>
                 @foreach (var artist in context.Item.Track.Artists) {
                     <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID) >@(artist.Name)</MudLink>
@@ -162,7 +162,8 @@
         if (p.Track.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (p.Artists.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        foreach (var artist in p.Track.Artists)
+            if (artist.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
         if (p.Track.Album.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
