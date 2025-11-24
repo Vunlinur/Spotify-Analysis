@@ -15,7 +15,7 @@
 		</ToolBarContent>
 		<Columns>
 			<PropertyColumn Property="x => x.track.Name"		Title="Name"		Hidden="!ShowColumns.HasFlag(Column.Name)" Groupable="false" />
-			<PropertyColumn Property="x => x.artists"			Title="Artists"		Hidden="!ShowColumns.HasFlag(Column.Artists)" />
+			<PropertyColumn Property="x => x.artists"			Title="Artists"		Hidden="!ShowColumns.HasFlag(Column.Artists)" GroupBy="x => x.track.Artists[0].Name"/>
 			<PropertyColumn Property="x => x.track.Album.Name"	Title="Album"		Hidden="!ShowColumns.HasFlag(Column.Album)" />
 			<PropertyColumn Property="x => x.playlists"			Title="Playlists"	Hidden="!ShowColumns.HasFlag(Column.Playlists)" />
 			<PropertyColumn Property="x => x.genres"			Title="Genres"		Hidden="!ShowColumns.HasFlag(Column.Genres)" />
