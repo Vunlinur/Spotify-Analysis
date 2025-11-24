@@ -1,0 +1,64 @@
+﻿@page "/recentreleases"
+
+@using SpotifyAnalysis.Data.SpotifyAPI
+@using Fernandezja.ColorHashSharp
+@using SpotifyAnalysis.Data
+@using SpotifyAnalysis.Data.DTO
+@using System.Threading
+@using System.Collections.Concurrent
+@using MudBlazor
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+
+@inject SpotifyModuleFactory spotifyModuleFactory;
+@inject IDialogService dialogService;
+@inject ProtectedLocalStorage localStorage
+@inject ScopedData data;
+
+
+@if (loaded) {
+	<MudDataGrid T="SpotifyAPI.Web.FullArtist" Items="@Artists" FixedHeader
+				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
+		<ToolBarContent>
+			<MudText Typo="Typo.h6">Top 3 playlist genres</MudText>
+			<MudSpacer />
+			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+		</ToolBarContent>
+		<Columns>
+			<PropertyColumn Property="x => x.Name" Title="Name" />
+			<TemplateColumn Title="Genres">
+				<CellTemplate>
+					@string.Join(", ", context.Item.Genres)
+				</CellTemplate>
+			</TemplateColumn>
+		</Columns>
+	</MudDataGrid>
+}
+
+
+@code {
+	bool loaded;
+	string searchString;
+	private PlaylistTable playlistTable;
+	List<SpotifyAPI.Web.FullArtist> Artists;
+
+	protected override async Task OnInitializedAsync() {
+		await base.OnInitializedAsync();
+
+		var spotifyModule = spotifyModuleFactory.GetModule();
+		Artists = await spotifyModule.GetUsersTopArtists();
+
+		loaded = true;
+	}
+
+
+	bool Filter(SpotifyAPI.Web.FullArtist p) {
+		if (string.IsNullOrWhiteSpace(searchString))
+			return true;
+
+		if (p.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		return false;
+	}
+}

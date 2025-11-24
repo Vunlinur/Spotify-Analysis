@@ -57,7 +57,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                     UserLibraryRead,
                     PlaylistReadPrivate,
                     PlaylistReadCollaborative,
-                    //UserTopRead,
+                    UserTopRead,
                     //UserFollowRead,
                 ]
             };

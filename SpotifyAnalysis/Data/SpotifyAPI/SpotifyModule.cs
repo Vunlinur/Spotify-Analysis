@@ -29,6 +29,12 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             }
 		}
 
+		public async Task<List<FullArtist>> GetUsersTopArtists(TimeRange timeRange = TimeRange.LongTerm) {
+			// TODO: handle APIUnauthorizedException?
+			var topArtistsResponse = await SpotifyClient.UserProfile.GetTopArtists(new UsersTopItemsRequest(timeRange) { Limit = 50 });
+			return topArtistsResponse.Items;
+		}
+
 		/**
 		 * Get a list of the playlists owned or followed by a Spotify user.
 		 * https://developer.spotify.com/documentation/web-api/reference/get-list-users-playlists
