@@ -67,9 +67,17 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         public async Task<List<FullArtist>> GetArtistsAsync(IList<string> ids) {
             var artistsResponse = await SpotifyClient.Artists.GetSeveral(new ArtistsRequest(ids));
             return artistsResponse.Artists;
-        }
+		}
 
-        private static IEnumerable<T> PlayableItemTo<T>(IEnumerable<PlaylistTrack<IPlayableItem>> playableItems) where T : IPlayableItem {
+		/**
+		 * Get multiple albums by their ids.
+		 */
+		public async Task<List<FullAlbum>> GetAlbumsAsync(IList<string> ids) {
+			var albumResponse = await SpotifyClient.Albums.GetSeveral(new AlbumsRequest(ids));
+			return albumResponse.Albums;
+		}
+
+		private static IEnumerable<T> PlayableItemTo<T>(IEnumerable<PlaylistTrack<IPlayableItem>> playableItems) where T : IPlayableItem {
             foreach (PlaylistTrack<IPlayableItem> item in playableItems)
                 if (item.Track is T track)
                     yield return track;

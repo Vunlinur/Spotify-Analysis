@@ -13,7 +13,8 @@ namespace SpotifyAnalysis.Data.Database {
     public delegate Task<IList<FullPlaylist>> GetUsersPublicPlaylistsDelegate(string userID);
     public delegate Task<FullPlaylist> GetPlaylistAsyncDelegate(string playlistId);
     public delegate Task<List<FullTrack>> GetTracksAsyncDelegate(Paging<PlaylistTrack<IPlayableItem>> paging);
-    public delegate Task<List<FullArtist>> GetArtistsAsyncDelegate(IList<string> ids);
+	public delegate Task<List<FullArtist>> GetArtistsAsyncDelegate(IList<string> ids);
+	public delegate Task<List<FullAlbum>> GetAlbumsAsyncDelegate(IList<string> ids);
     public delegate void UpdateProgressBarDelegate(float progress, string message);
 
     public class DataFetch(GetUserProfileDelegate getUserProfile,
@@ -21,12 +22,14 @@ namespace SpotifyAnalysis.Data.Database {
             GetPlaylistAsyncDelegate getPlaylistAsync,
             GetTracksAsyncDelegate getTracksAsync,
             GetArtistsAsyncDelegate getArtistsAsync,
-            UpdateProgressBarDelegate updateProgressBar = null) {
+			GetAlbumsAsyncDelegate getAlbumsAsync,
+			UpdateProgressBarDelegate updateProgressBar = null) {
         readonly GetUserProfileDelegate getUserProfileAsync = getUserProfile;
         readonly GetUsersPublicPlaylistsDelegate getUsersPublicPlaylistsAsync = getUsersPublicPlaylists;
         readonly GetPlaylistAsyncDelegate getPlaylistAsync = getPlaylistAsync;
         readonly GetTracksAsyncDelegate getTracksAsync = getTracksAsync;
         readonly GetArtistsAsyncDelegate getArtistsAsync = getArtistsAsync;
+        readonly GetAlbumsAsyncDelegate getAlbumsAsync = getAlbumsAsync;
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
         
         /**

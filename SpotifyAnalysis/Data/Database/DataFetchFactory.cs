@@ -10,6 +10,7 @@ namespace SpotifyAnalysis.Data.Database {
                 spotifyModule.GetPlaylistAsync,
                 spotifyModule.GetTracksAsync,
                 spotifyModule.GetArtistsAsync,
+                spotifyModule.GetAlbumsAsync,
                 updateProgressBar
             );
     }
