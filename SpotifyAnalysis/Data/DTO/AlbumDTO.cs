@@ -15,6 +15,10 @@ namespace SpotifyAnalysis.Data.DTO {
 
         public int TotalTracks { get; set; }
 
+        public int Popularity { get; set; }
+
+        public string Label { get; set; }
+
 		public string ImageS { get; set; }
 
 		public string ImageL { get; set; }
