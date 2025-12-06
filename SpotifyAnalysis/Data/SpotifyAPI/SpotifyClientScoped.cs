@@ -34,6 +34,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         private UserDTO user;
 
         public async void InitializeSpotifyClient() {
+            // TODO add timed refresh? expiry can happen for a user
             if (await CheckClientInitialized())
                 await DestroyClient();
             else
