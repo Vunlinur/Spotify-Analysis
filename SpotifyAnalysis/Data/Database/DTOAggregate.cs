@@ -24,7 +24,7 @@ namespace SpotifyAnalysis.Data.Database {
                 User = user,
                 Playlists = new ConcurrentDictionary<string, PlaylistDTO>(await db.Playlists.Include(p => p.Tracks).Where(p => playlistsToUpdateIds.Contains(p.ID)).ToDictionaryAsync(t => t.ID, t => t)),
                 Tracks = new ConcurrentDictionary<string, TrackDTO>(await db.Tracks.ToDictionaryAsync(t => t.ID, t => t)),
-                Albums = new ConcurrentDictionary<string, AlbumDTO>(await db.Albums.ToDictionaryAsync(t => t.ID, t => t)),
+                Albums = new ConcurrentDictionary<string, AlbumDTO>(await db.Albums.Include(a => a.Artists).ToDictionaryAsync(t => t.ID, t => t)),
                 Artists = new ConcurrentDictionary<string, ArtistDTO>(await db.Artists.ToDictionaryAsync(t => t.ID, t => t))
             };
         }
