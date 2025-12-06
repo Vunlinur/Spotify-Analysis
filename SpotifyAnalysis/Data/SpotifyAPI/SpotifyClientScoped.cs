@@ -91,7 +91,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
         private async Task DestroyClient() {
             SpotifyClient = null;
-            UserDTO = new UserDTO();
+            UserDTO = null;
             await accessTokenStorage.Set(null);
         }
 
