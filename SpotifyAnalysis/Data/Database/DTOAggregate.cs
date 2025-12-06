@@ -61,6 +61,14 @@ namespace SpotifyAnalysis.Data.Database {
                 out entity
             );
 
+        public bool GetOrAddAlbum(FullAlbum album, out AlbumDTO entity) =>
+            GetOrAddEntity(
+                Albums,
+                album.Id,
+                id => album.ToAlbumDTO(),
+                out entity
+            );
+
         public bool GetOrAddTrack(FullTrack track, out TrackDTO entity) =>
             GetOrAddEntity(
                 Tracks,

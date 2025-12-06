@@ -31,6 +31,8 @@ namespace SpotifyAnalysis.Data.Database {
         readonly GetArtistsAsyncDelegate getArtistsAsync = getArtistsAsync;
         readonly GetAlbumsAsyncDelegate getAlbumsAsync = getAlbumsAsync;
         readonly UpdateProgressBarDelegate updateProgressBar = updateProgressBar;
+
+        private static readonly DateTime StaleCutoff = DateTime.UtcNow.AddDays(-1);
         
         /**
          * Fetches User data from Spotify API and inserts to the DB.
@@ -57,7 +59,10 @@ namespace SpotifyAnalysis.Data.Database {
                 updateProgressBar?.Invoke(20, "Processing tracks");
                 await ProcessPlaylistDataTreesAsync(playlistsToUpdate, dtoAggregate);
 
-                updateProgressBar?.Invoke(60, "Processing artists");
+                updateProgressBar?.Invoke(60, "Processing albums");
+                await GetNewAlbumsAsync(db, dtoAggregate);
+
+                updateProgressBar?.Invoke(70, "Processing artists");
                 await GetNewArtistsAsync(db, dtoAggregate);
 
                 updateProgressBar?.Invoke(90, "Saving data");
@@ -166,6 +171,7 @@ namespace SpotifyAnalysis.Data.Database {
                 UpdateOrAddArtists(fullTrack.Artists, dtos);
                 UpdateOrAddArtists(fullTrack.Album.Artists, dtos);
 
+                // TODO can be sped up by checking if the album has been already updated this run
                 if (dtos.GetOrAddAlbum(fullTrack.Album, out AlbumDTO album))
                     album.Update(fullTrack.Album);
                 else
@@ -207,6 +213,43 @@ namespace SpotifyAnalysis.Data.Database {
 
         #endregion DATA TREE
 
+        #region ALBUMS
+
+        private async Task GetNewAlbumsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
+            var newAlbumsIds = db.Albums
+                .FindNewEntities(dtoAggregate.Albums.Values, p => p.ID)
+                .Select(a => a.ID);
+
+            var staleAlbumsIds = (await db.Albums
+                .Where(a => a.LastUpdated < StaleCutoff)
+                .ToListAsync())
+                .Select(a => a.ID);
+
+            var chunks = newAlbumsIds.Concat(staleAlbumsIds).Chunk(20);
+            float progressBase = 60, progressDelta = (70 - progressBase) / chunks.Count();
+            var tasks = chunks.Select(chunk =>
+                Task.Run(
+                    () => getAlbumsAsync(chunk)
+                    .ContinueWith(async fullAlbums => UpdateOrAddAlbums(await fullAlbums, dtoAggregate))
+                    .ContinueWith(_ => updateProgressBar?.Invoke(progressBase += progressDelta, null))
+            ));
+
+            await Task.WhenAll(tasks);
+        }
+
+        private static void UpdateOrAddAlbums(List<FullAlbum> fullAlbums, DTOAggregate dtos) {
+            foreach (var album in fullAlbums) {
+                if (dtos.GetOrAddAlbum(album, out AlbumDTO albumDTO)) {
+                    var albumArtists = album.Artists.Select(a => {
+                        dtos.GetOrAddArtist(a, out ArtistDTO artist); return artist;
+                    }).ToList();
+                    albumDTO.Update(album, albumArtists);
+                }
+            }
+        }
+
+        #endregion ALBUMS
+
         #region ARTISTS
 
         private async Task GetNewArtistsAsync(SpotifyContext db, DTOAggregate dtoAggregate) {
@@ -214,8 +257,8 @@ namespace SpotifyAnalysis.Data.Database {
                 .FindNewEntities(dtoAggregate.Artists.Values, p => p.ID)
                 .Select(a => a.ID);
 
-            var chunks = DivideArtistsRequests(newArtistsIds);
-            float progressBase = 60, progressDelta = (90 - progressBase) / chunks.Count();
+            var chunks = newArtistsIds.Chunk(50);
+            float progressBase = 70, progressDelta = (90 - progressBase) / chunks.Count();
             var tasks = chunks.Select(chunk =>
                 Task.Run(
                     () => getArtistsAsync(chunk)
@@ -224,11 +267,6 @@ namespace SpotifyAnalysis.Data.Database {
             ));
 
             await Task.WhenAll(tasks);
-        }
-
-        private static IEnumerable<List<string>> DivideArtistsRequests(IEnumerable<string> newArtistsIds) {
-            ushort chunkSize = 50;  // TODO replace with something that doesn't create empty partitions
-            return newArtistsIds.Select((s, i) => newArtistsIds.Skip(i * chunkSize).Take(chunkSize).ToList()).Where(a => a.Count != 0);
         }
 
         private static void UpdateOrAddArtists(List<FullArtist> fullArtists, DTOAggregate dtos) {

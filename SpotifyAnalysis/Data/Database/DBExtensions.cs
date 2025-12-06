@@ -15,13 +15,13 @@ namespace SpotifyAnalysis.Data.Database {
 		}
 
         public static void Update(this PlaylistDTO playlist, FullPlaylist source) {
-            source.Images.SortImages();
             playlist.Name = source.Name;
             playlist.OwnerID = source.Owner.Id;
             playlist.OwnerName = source.Owner.DisplayName;
             playlist.Followers = source.Followers.Total;
             playlist.SnapshotID = source.SnapshotId;
             playlist.TracksTotal = source.Tracks.Total;
+            source.Images.SortImages();
             playlist.ImageS = source.Images.FirstOrDefault()?.Url;
             playlist.ImageL = source.Images.LastOrDefault()?.Url;
 		}
@@ -31,18 +31,37 @@ namespace SpotifyAnalysis.Data.Database {
         }
 
         public static void Update(this ArtistDTO artist, FullArtist source) {
-			source.Images.SortImages();
 			artist.Name = source.Name;
 			artist.Genres = source.Genres;
             artist.Popularity = source.Popularity;
+			source.Images.SortImages();
 			artist.ImageS = source.Images.FirstOrDefault()?.Url;
 			artist.ImageL = source.Images.LastOrDefault()?.Url;
 		}
 
-        public static void Update(this AlbumDTO album, SimpleAlbum source) {
-			album.Name = source.Name;
+        public static void Update(this AlbumDTO album, SimpleAlbum source, List<ArtistDTO> artists = null) {
+            album.Name = source.Name;
+            album.Type = AlbumTypeExtensions.FromString(source.AlbumType);
             album.ReleaseDate = source.ReleaseDate;
             album.TotalTracks = source.TotalTracks;
+            album.Artists = artists ?? album.Artists;
+            source.Images.SortImages();
+            album.ImageS = source.Images.FirstOrDefault()?.Url;
+            album.ImageL = source.Images.LastOrDefault()?.Url;
+        }
+
+        public static void Update(this AlbumDTO album, FullAlbum source, List<ArtistDTO> artists = null) {
+			album.Name = source.Name;
+            album.Type = AlbumTypeExtensions.FromString(source.AlbumType);
+            album.ReleaseDate = source.ReleaseDate;
+            album.TotalTracks = source.TotalTracks;
+            album.Popularity = source.Popularity;
+            album.Label = source.Label;
+            album.Artists = artists ?? album.Artists;
+            album.LastUpdated = DateTime.Now;
+            source.Images.SortImages();
+            album.ImageS = source.Images.FirstOrDefault()?.Url;
+            album.ImageL = source.Images.LastOrDefault()?.Url;
 		}
 
         public static void Update(this TrackDTO track, FullTrack source) {

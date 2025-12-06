@@ -38,8 +38,8 @@ namespace SpotifyAnalysis.Data.DTO {
     public enum AlbumType { album, single, compilation, appears_on }
 
     public static class AlbumTypeExtensions {
-        public static AlbumType FromString(this AlbumType type, string from) {
-            Enum.TryParse(from, out AlbumType result);
+        public static AlbumType FromString(string from) {
+            _ = Enum.TryParse(from, out AlbumType result);
             return result;
         }
     }
