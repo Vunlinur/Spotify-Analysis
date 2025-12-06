@@ -13,6 +13,7 @@ namespace Tests.GetDataTests {
         protected Mock<GetPlaylistAsyncDelegate> mockPlaylist;
         protected Mock<GetTracksAsyncDelegate> mockTracks;
         protected Mock<GetArtistsAsyncDelegate> mockArtists;
+        protected Mock<GetAlbumsAsyncDelegate> mockAlbums;
         protected Mock<UpdateProgressBarDelegate> mockProgressBar;
 
         protected SqliteConnection connection;
@@ -41,6 +42,7 @@ namespace Tests.GetDataTests {
             mockPlaylist = new Mock<GetPlaylistAsyncDelegate>();
             mockTracks = new Mock<GetTracksAsyncDelegate>();
             mockArtists = new Mock<GetArtistsAsyncDelegate>();
+            mockAlbums = new Mock<GetAlbumsAsyncDelegate>();
             mockProgressBar = new Mock<UpdateProgressBarDelegate>();
 
             testUser = Stubs.PublicUser();
@@ -59,6 +61,7 @@ namespace Tests.GetDataTests {
                 mockPlaylist.Object,
                 mockTracks.Object,
                 mockArtists.Object,
+                mockAlbums.Object,
                 mockProgressBar.Object
             );
 
