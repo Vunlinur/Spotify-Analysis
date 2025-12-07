@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,10 +8,6 @@ using SpotifyAnalysis.Data.Database;
 using SpotifyAnalysis.Data.Common;
 using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAnalysis.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 
 namespace SpotifyAnalysis {
@@ -25,13 +20,6 @@ namespace SpotifyAnalysis {
             /* https://apipark.com/technews/O4zBQwTk.html
              * "limit of 100 requests per hour for each user token and 25 requests per second for each application token" <- true?
 			 */
-            services.AddRateLimiter(o => o.AddSlidingWindowLimiter(policyName: "sliding", options => {
-				options.PermitLimit = 30;
-				options.Window = TimeSpan.FromSeconds(30);
-				options.SegmentsPerWindow = 10;
-				options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-				options.QueueLimit = 4 * options.PermitLimit;
-			}));
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 			services.AddMudServices();

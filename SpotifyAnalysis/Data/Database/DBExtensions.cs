@@ -9,10 +9,10 @@ namespace SpotifyAnalysis.Data.Database {
         /**
 		 * Finds entities in the source collection that do not exist in the database set based on the specified key selector.
 		 */
-        public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this DbSet<TEnt> current, IEnumerable<TEnt> source, Func<TEnt, TKey> keySelector) where TEnt : class {
-			var existingKeys = current.Select(keySelector).ToHashSet();
+        public static IEnumerable<TEnt> FindNewEntities<TEnt, TKey>(this IQueryable<TEnt> current, IEnumerable<TEnt> source, Func<TEnt, TKey> keySelector) where TEnt : class {
+            var existingKeys = current.Select(keySelector).ToHashSet();
             return source.Where(s => !existingKeys.Contains(keySelector(s)));
-		}
+        }
 
         public static void Update(this PlaylistDTO playlist, FullPlaylist source) {
             playlist.Name = source.Name;
@@ -37,7 +37,7 @@ namespace SpotifyAnalysis.Data.Database {
 			source.Images.SortImages();
 			artist.ImageS = source.Images.FirstOrDefault()?.Url;
 			artist.ImageL = source.Images.LastOrDefault()?.Url;
-		}
+        }
 
         public static void Update(this AlbumDTO album, SimpleAlbum source, List<ArtistDTO> artists = null) {
             album.Name = source.Name;
@@ -51,7 +51,7 @@ namespace SpotifyAnalysis.Data.Database {
         }
 
         public static void Update(this AlbumDTO album, FullAlbum source, List<ArtistDTO> artists = null) {
-			album.Name = source.Name;
+            album.Name = source.Name;
             album.Type = AlbumTypeExtensions.FromString(source.AlbumType);
             album.ReleaseDate = source.ReleaseDate;
             album.TotalTracks = source.TotalTracks;
@@ -62,7 +62,7 @@ namespace SpotifyAnalysis.Data.Database {
             source.Images.SortImages();
             album.ImageS = source.Images.FirstOrDefault()?.Url;
             album.ImageL = source.Images.LastOrDefault()?.Url;
-		}
+        }
 
         public static void Update(this TrackDTO track, FullTrack source) {
             track.Name = source.Name;
