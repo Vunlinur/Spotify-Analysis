@@ -17,9 +17,6 @@ namespace SpotifyAnalysis {
 		// This method gets called by the runtime. Use this method to add services to the container.
 		// For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
 		public void ConfigureServices(IServiceCollection services) {
-            /* https://apipark.com/technews/O4zBQwTk.html
-             * "limit of 100 requests per hour for each user token and 25 requests per second for each application token" <- true?
-			 */
 			services.AddRazorPages();
 			services.AddServerSideBlazor();
 			services.AddMudServices();

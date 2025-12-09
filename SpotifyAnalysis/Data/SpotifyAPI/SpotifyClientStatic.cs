@@ -19,13 +19,16 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 		public SpotifyClient SpotifyClient { get; set; }
 
         private Timer refreshTimer;
+        private readonly SpotifyHttpClientProvider httpClientProvider;
 
-        public SpotifyClientStatic() {
+        public SpotifyClientStatic(SpotifyHttpClientProvider httpClientProvider) {
+            this.httpClientProvider = httpClientProvider ?? throw new ArgumentNullException(nameof(httpClientProvider));
             Task.Run(InitializeSpotifyClient);
         }
 
         private void InitializeSpotifyClient() {
-			var config = SpotifyClientConfig.CreateDefault();
+            var config = SpotifyClientConfig.CreateDefault()
+                .WithHTTPClient(httpClientProvider.HttpClient);
 			var credentials = new ClientCredentialsRequest(
 				Program.Config.GetValue<string>("ClientId"),
 				Program.Config.GetValue<string>("ClientSecret")

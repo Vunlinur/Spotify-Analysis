@@ -19,7 +19,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
     /// This class also maintains the authenticated user's profile information (`UserDTO`) and triggers 
     /// a `UserChanged` event whenever the authenticated user context is updated.
     /// </remarks>
-    public class SpotifyClientScoped(ProtectedLocalStorage protectedLocalStorage, NavigationManager navigation) : IUserContainer {
+    public class SpotifyClientScoped(ProtectedLocalStorage protectedLocalStorage, NavigationManager navigation, SpotifyHttpClientProvider httpClientProvider) : IUserContainer {
+        private readonly SpotifyHttpClientProvider httpClientProvider = httpClientProvider ?? throw new ArgumentNullException(nameof(httpClientProvider));
         private readonly Storage<AuthorizationCodeTokenResponse> accessTokenStorage = new(nameof(accessTokenStorage), protectedLocalStorage);
         private readonly NavigationManager navigation = navigation;
 
@@ -27,11 +28,11 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             get => user;
             set => UserChanged?.Invoke(user = value);
         }
-        public event Action<UserDTO> UserChanged;
 
         public SpotifyClient SpotifyClient { get; set; }
 
         private UserDTO user;
+        public event Action<UserDTO> UserChanged;
 
         public async void InitializeSpotifyClient() {
             // TODO add timed refresh? expiry can happen for a user
@@ -45,7 +46,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             var accessToken = await accessTokenStorage.Get();
             bool validTokenFound = accessToken?.IsExpired == false;
             if (validTokenFound) 
-                await CreateClient(accessToken);
+                    await CreateClient(accessToken);
             return validTokenFound;
         }
 
@@ -96,7 +97,9 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         }
 
         private async Task CreateClient(AuthorizationCodeTokenResponse token) {
-            var config = SpotifyClientConfig.CreateDefault().WithToken(token.AccessToken, token.TokenType);
+            var config = SpotifyClientConfig.CreateDefault()
+                .WithHTTPClient(httpClientProvider.HttpClient)
+                .WithToken(token.AccessToken, token.TokenType);
             SpotifyClient = new SpotifyClient(config);
             UserDTO = (await SpotifyClient.UserProfile.Current()).ToUserDTO();
         }
