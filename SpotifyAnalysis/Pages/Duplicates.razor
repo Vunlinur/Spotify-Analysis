@@ -22,98 +22,109 @@
 </MudAppBar>
 <div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
-@if (data.UserDTO is not null) {
-    <MudCollapse Expanded=@open>
+@if (data.UserDTO is not null) return;
+
+<MudCarousel Class="mud-width-full" Style="height: calc(100vh - (var(--mud-appbar-height) * 7 / 4))" ShowArrows=@true ShowBullets=@true EnableSwipeGesture=@true AutoCycle=@false TData="object">
+    <MudCarouselItem Transition=@Transition.Slide Color="@Color.Primary">
         <MudStack Row StretchItems=StretchItems.All Style="gap: 2px;">
             <PlaylistTable @ref="tableOriginal" Title="Original (one)" Playlists="data.UserDTO.Playlists" Name="Duplicated" SelectionChanged="c => UpdateGenerateButton(Table.Original, c)" MultiSelection=false />
             <PlaylistTable @ref="tableDupes" Title="Duplicates (many)" Playlists="data.UserDTO.Playlists" Name="Duplicates" SelectionChanged="c => UpdateGenerateButton(Table.Duplicates, c)" />
         </MudStack>
-    </MudCollapse>
-}
+    </MudCarouselItem>
 
-<MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates" FixedHeader
-             QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
-             Filterable="true" Groupable="true" GroupExpanded="true">
-    <ToolBarContent>
-        @* TODO <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>*@
-        <MudText Typo="Typo.h6">@title</MudText>
-        <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
-            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
-            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
-        </MudButtonGroup>
-        <MudSpacer />
-        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
-    </ToolBarContent>
-    <Columns>
-        @* Original track columns *@
-        <PropertyColumn Title="Original Title" Property="x => x.original.Name" HeaderStyle="width: 15%" Grouping>
-            <CellTemplate>
-                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
-            </CellTemplate>
-            <GroupTemplate>
-                <span style="font-weight:bold">
-                    Original Title: @context.Grouping.Key
-                    <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
-                </span>
-            </GroupTemplate>
-        </PropertyColumn>
+    <MudCarouselItem Transition=@Transition.Slide Color="@Color.Secondary">
+        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates" FixedHeader
+                     QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
+                     Filterable="true" Groupable="true" GroupExpanded="true">
+            <ToolBarContent>
+                @* TODO <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>*@
+                <MudText Typo="Typo.h6">@title</MudText>
+                <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
+                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
+                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+                </MudButtonGroup>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                @* Original track columns *@
+                <PropertyColumn Title="Original Title" Property="x => x.original.Name" HeaderStyle="width: 15%" Grouping>
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
+                    </CellTemplate>
+                    <GroupTemplate>
+                        <span style="font-weight:bold">
+                            Original Title: @context.Grouping.Key
+                            <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
+                        </span>
+                    </GroupTemplate>
+                </PropertyColumn>
 
-        <PropertyColumn Title="Original Artists" Property="x => x.original.Artists" HeaderStyle="width: 15%" GroupBy="x => x.original.Artists[0].Name">
-            <CellTemplate>
-                @foreach (var artist in context.Item.original.Artists) {
-                    <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
-                }
-            </CellTemplate>
-        </PropertyColumn>
+                <PropertyColumn Title="Original Artists" Property="x => x.original.Artists" HeaderStyle="width: 15%" GroupBy="x => x.original.Artists[0].Name">
+                    <CellTemplate>
+                        @foreach (var artist in context.Item.original.Artists) {
+                            <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
+                        }
+                    </CellTemplate>
+                </PropertyColumn>
 
-        <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name">
-            <CellTemplate>
-                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
-            </CellTemplate>
-        </PropertyColumn>
+                <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name">
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
+                    </CellTemplate>
+                </PropertyColumn>
 
-        @* Remove entry *@
-        <TemplateColumn HeaderStyle="width: 20px">
-            <CellTemplate>
-                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size=Size.Small OnClick="_ => duplicates.Remove(context.Item)"/>
-            </CellTemplate>
-        </TemplateColumn>
+                @* Remove entry *@
+                <TemplateColumn HeaderStyle="width: 20px">
+                    <CellTemplate>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size=Size.Small OnClick="_ => duplicates.Remove(context.Item)" />
+                    </CellTemplate>
+                </TemplateColumn>
 
-        @* Duplicate track columns *@
-        <PropertyColumn Title="Duplicate Playlist" Property="x => x.playlist.Name" HeaderStyle="width: 10%">
-            <CellTemplate>
-                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.playlist.ID)>@(context.Item.playlist.Name)</MudLink>
-            </CellTemplate>
-        </PropertyColumn>
+                @* Duplicate track columns *@
+                <PropertyColumn Title="Duplicate Playlist" Property="x => x.playlist.Name" HeaderStyle="width: 10%">
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.playlist.ID)>@(context.Item.playlist.Name)</MudLink>
+                    </CellTemplate>
+                </PropertyColumn>
 
-        <PropertyColumn Title="Duplicate Title" Property="x => x.dupe.Name" HeaderStyle="width: 15%">
-            <CellTemplate>
-                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.dupe.ID)>@(context.Item.dupe.Name)</MudLink>
-            </CellTemplate>
-        </PropertyColumn>
+                <PropertyColumn Title="Duplicate Title" Property="x => x.dupe.Name" HeaderStyle="width: 15%">
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.dupe.ID)>@(context.Item.dupe.Name)</MudLink>
+                    </CellTemplate>
+                </PropertyColumn>
 
-        <PropertyColumn Title="Duplicate Artists" Property="x => x.dupe.Artists" HeaderStyle="width: 15%" GroupBy="x => x.dupe.Artists[0].Name">
-            <CellTemplate>
-                @foreach (var artist in context.Item.dupe.Artists) {
-                    <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
-                }
-            </CellTemplate>
-        </PropertyColumn>
+                <PropertyColumn Title="Duplicate Artists" Property="x => x.dupe.Artists" HeaderStyle="width: 15%" GroupBy="x => x.dupe.Artists[0].Name">
+                    <CellTemplate>
+                        @foreach (var artist in context.Item.dupe.Artists) {
+                            <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
+                        }
+                    </CellTemplate>
+                </PropertyColumn>
 
-        <PropertyColumn Title="Duplicate Album" Property="x => x.dupe.Album.Name">
-            <CellTemplate>
-                <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.dupe.Album.ID)>@(context.Item.dupe.Album.Name)</MudLink>
-            </CellTemplate>
-        </PropertyColumn>
-    </Columns>
-</MudDataGrid>
+                <PropertyColumn Title="Duplicate Album" Property="x => x.dupe.Album.Name">
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.dupe.Album.ID)>@(context.Item.dupe.Album.Name)</MudLink>
+                    </CellTemplate>
+                </PropertyColumn>
+            </Columns>
+        </MudDataGrid>
+    </MudCarouselItem>
+</MudCarousel>
+
 
 @if (loading) {
     <MudStack Row Justify=Justify.Center AlignItems=AlignItems.Center Style="height: 500px">
         <MudProgressCircular Style="height:70px;width:70px;" Indeterminate="true" />
     </MudStack>
 }
+
+<style>
+    .mud-carousel-swipe > .align-self-end {
+        align-self: flex-start !important;
+    }
+</style>
 
 
 @code {

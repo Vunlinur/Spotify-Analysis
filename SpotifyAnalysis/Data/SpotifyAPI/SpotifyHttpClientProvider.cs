@@ -27,7 +27,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 Window = TimeSpan.FromSeconds(1),
                 SegmentsPerWindow = 2,
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 200 // Allow queuing up to 100 requests
+                QueueLimit = 200
             };
             rateLimiter = new SlidingWindowRateLimiter(options);
             var innerHandler = new HttpClientHandler();
