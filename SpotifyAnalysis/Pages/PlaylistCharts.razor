@@ -20,7 +20,6 @@
    <MudSpacer />
     <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(selectedCount == 0)">Generate charts</MudButton>
 </MudAppBar>
-<div style="height: var(--mud-appbar-height);" /> @* a cheat to offset for the AppBar's position: fixed which takes no space *@
 
 @if (data.UserDTO is not null) {
     <MudCollapse Expanded=@open>
@@ -29,7 +28,7 @@
 }
 
 @if (AllTracks is not null) {
-    <div class="pt-3 px-3">
+    <div class="pt-3 px-3" style="overflow: scroll">
         <MudGrid>
             <WidgetArtists @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
             <WidgetGenres @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
