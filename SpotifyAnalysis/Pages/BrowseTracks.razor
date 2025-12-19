@@ -11,7 +11,7 @@
 @if (tracks is null)
     return;
 
-<MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader SortMode="SortMode.Multiple"
+<MudDataGrid T="TrackPlaylist" @ref="dataGrid" Items="@tracks" Virtualize FixedHeader SortMode="SortMode.Multiple" Class="full-height-table"
              QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive FilterMode=DataGridFilterMode.ColumnFilterMenu
              Filterable="true" Groupable="true" GroupExpanded="false" >
     <ToolBarContent>
@@ -115,11 +115,6 @@
 </MudDataGrid>
 
 <style>
-	@*MudDataGrid Style and Class affect different element than Width - which is actually the one we need - hence this hack
-	3/4 * main AppBar + 4/4 DataGrid filter bar (each 64px)*@
-	.mud-table-container {
-		max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
-	}
     @*Moves DataGridFilterMode.ColumnFilterMenu under the title*@
     .column-header {
         display: grid !important;

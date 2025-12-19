@@ -39,6 +39,12 @@ svg > foreignObject { /* pie chart legend */
 
 /* Custom */
 
+/*  MudDataGrid Style and Class affect different element than Height - which is actually the one we need - hence this hack
+    3/4 * main AppBar + 4/4 DataGrid filter bar (each 64px)*@ .*/
+.full-height-table .mud-table-container {
+    max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
+}
+
 .full-height {
     height: 100%;
 }

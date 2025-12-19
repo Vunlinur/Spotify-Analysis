@@ -9,7 +9,7 @@
 			<MudToolBar>
 				<MudText Typo="Typo.h6">@(Artist?.Name ?? "Artist")</MudText>
 			</MudToolBar>
-			<MudDataGrid Items=@(Artist?.Genres ?? []) Dense=true >
+			<MudDataGrid Items=@(Artist?.Genres ?? []) Dense=true FixedHeader>
 				<Columns>
 					<PropertyColumn Property="x => x" Title="Genres:" HeaderStyle="font-size: 16px ;width: 120px" />
 				</Columns>
