@@ -13,25 +13,29 @@
 @inject ScopedData data;
 
 
-<MudAppBar Color="Color.Surface" Fixed="false" Style="position: fixed; width: -webkit-fill-available; width: -moz-available;">
-    <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
-    <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{tableDupes?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
-    <MudSpacer />
-    <MudSlider @bind-Value=similarityThreshold Min=75 Max=100 Variant="Variant.Filled" Class="mr-8" Style="width: 300px" Disabled=@loading >Title similarity threshold: @similarityThreshold.ToString()%</MudSlider>
-    <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="!readyToSearch || loading">Find duplicates</MudButton>
-</MudAppBar>
-
 @if (data.UserDTO is null) return;
 
-<MudCarousel Class="mud-width-full" Style="height: calc(100vh - (var(--mud-appbar-height) * 7 / 4))" ShowArrows=@true ShowBullets=@true EnableSwipeGesture=@true AutoCycle=@false TData="object">
-    <MudCarouselItem Transition=@Transition.Slide Color="@Color.Primary">
+@if (loading) {
+    <MudOverlay Visible DarkBackground="true">
+        <MudProgressCircular Style="height:70px;width:70px;" Indeterminate="true" />
+    </MudOverlay>
+}
+
+<MudTabs Outlined="true" @ref=tabs MinimumTabWidth="300px">
+    <MudTabPanel Text="Select Playlists and Analyze" Icon="@Icons.Material.Filled.PlaylistPlay">
+        <MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
+            <MudText Typo=Typo.subtitle1 >@($"{tableDupes?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
+            <MudSpacer />
+            <MudSlider @bind-Value=similarityThreshold Min=75 Max=100 Variant="Variant.Filled" Class="mr-8" Style="width: 300px" Disabled=@loading>Title similarity threshold: @similarityThreshold.ToString()%</MudSlider>
+            <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="!readyToSearch || loading">Find duplicates</MudButton>
+        </MudAppBar>
         <MudStack Row StretchItems=StretchItems.All Style="gap: 2px;">
             <PlaylistTable @ref="tableOriginal" Title="Original (one)" Playlists="data.UserDTO.Playlists" Name="Duplicated" SelectionChanged="c => UpdateGenerateButton(Table.Original, c)" MultiSelection=false />
             <PlaylistTable @ref="tableDupes" Title="Duplicates (many)" Playlists="data.UserDTO.Playlists" Name="Duplicates" SelectionChanged="c => UpdateGenerateButton(Table.Duplicates, c)" />
         </MudStack>
-    </MudCarouselItem>
+    </MudTabPanel>
 
-    <MudCarouselItem Transition=@Transition.Slide Color="@Color.Secondary">
+    <MudTabPanel Text="Mark Duplicates" Icon="@Icons.Material.Filled.FindReplace" Disabled=(!duplicates.Any())>
         <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates" FixedHeader
                      QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
                      Filterable="true" Groupable="true" GroupExpanded="true">
@@ -109,35 +113,26 @@
                 </PropertyColumn>
             </Columns>
         </MudDataGrid>
-    </MudCarouselItem>
-</MudCarousel>
+    </MudTabPanel>
 
-
-@if (loading) {
-    <MudStack Row Justify=Justify.Center AlignItems=AlignItems.Center Style="height: 500px">
-        <MudProgressCircular Style="height:70px;width:70px;" Indeterminate="true" />
-    </MudStack>
-}
-
-<style>
-    .mud-carousel-swipe > .align-self-end {
-        align-self: flex-start !important;
-    }
-</style>
+    <MudTabPanel Text="Review Duplicates and Delete" Icon="@Icons.Material.Filled.DeleteSweep">
+    </MudTabPanel>
+</MudTabs>
 
 
 @code {
+    // components refs
     PlaylistTable tableOriginal;
     PlaylistTable tableDupes;
     MudDataGrid<Duplicate> dataGrid;
+    MudTabs tabs;
+    // vars
     HashSet<Duplicate> duplicates = [];
     Storage<int> similarityThresholdStorage;
 
     string title = "Browse duplicates";
     int similarityThreshold = 95;
     bool loading;
-    bool open;
-    void TogglePlaylistTable() => open = !open;
 
     protected override async Task OnAfterRenderAsync(bool firstRender) {
         await base.OnAfterRenderAsync(firstRender);
@@ -160,7 +155,6 @@
             return;
 
         loading = true;
-        open = false;
 
         var storeTask = similarityThresholdStorage.Set(similarityThreshold);
 
@@ -173,6 +167,8 @@
         duplicates = duplicateBag.ToHashSet();
         title = $"Duplicates from: {originalPlaylist.Name}";
         loading = false;
+        StateHasChanged();
+        tabs.ActivatePanel(1);
     }
 
     private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate, ConcurrentBag<Duplicate> concurrentBag) {
