@@ -6,7 +6,7 @@
 @inject ProtectedLocalStorage localStorage
 
 
-<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection=MultiSelection FixedHeader
+<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection=@MultiSelection FixedHeader Height=@Height
 			 SortMode="SortMode.Multiple" QuickFilter=@Filter SelectedItems="selectedPlaylists" SelectedItemsChanged="@SelectedItemsChanged">
 	<ToolBarContent>
 		<MudText Typo="Typo.h6">@Title</MudText>
@@ -27,13 +27,6 @@
 	</Columns>
 </MudDataGrid>
 
-<style>
-	@*same jack as for css override .full-height-table but includes an additional app bar*@
-	.mud-table-container {
-		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
-	}
-</style>
-
 @code {
 	[Parameter, EditorRequired]
 	public IEnumerable<PlaylistDTO> Playlists { get; set; }
@@ -45,6 +38,11 @@
 	public string Title { get; set; } = "Tracks";
 	[Parameter]
 	public bool MultiSelection { get; set; } = true;
+	[Parameter]
+	public string Height { get; set; } = defaultHeight;
+
+	/* 3/4 * main AppBar + 4/4 DataGrid filter bar (each 64px)*@ .*/
+	const string defaultHeight = "calc(100vh - (var(--mud-appbar-height) * 11 / 4))";
 
 	string searchString;
 	Storage<IEnumerable<string>> selectionStorage;

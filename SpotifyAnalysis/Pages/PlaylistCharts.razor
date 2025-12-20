@@ -17,7 +17,7 @@
     </HelpButton>
     <MudButton Variant=Variant.Outlined Class="rounded-pill" Style="width: 200px;" OnClick=TogglePlaylistTable Disabled="@(data.UserDTO is null)">@(open ? "Hide" : "Show") playlists</MudButton>
     <MudText Typo=Typo.subtitle1 Class="ml-12">@($"{playlistTable?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
-   <MudSpacer />
+    <MudSpacer />
     <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(selectedCount == 0)">Generate charts</MudButton>
 </MudAppBar>
 
