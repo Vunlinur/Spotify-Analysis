@@ -36,7 +36,7 @@
     </MudTabPanel>
 
     <MudTabPanel Text="Mark Duplicates" Icon="@Icons.Material.Filled.FindReplace" Disabled=(!duplicates.Any())>
-        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates" FixedHeader
+        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates marker-table" FixedHeader
                      QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
                      Filterable="true" Groupable="true" GroupExpanded="true">
             <ToolBarContent>
