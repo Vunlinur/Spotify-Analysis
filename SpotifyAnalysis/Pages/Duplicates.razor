@@ -35,6 +35,7 @@
         </MudStack>
     </MudTabPanel>
 
+
     <MudTabPanel Text="Mark Duplicates" Icon="@Icons.Material.Filled.FindReplace" Disabled=(!duplicates.Any())>
         <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates marker-table" FixedHeader
                      QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
@@ -79,14 +80,14 @@
                 </PropertyColumn>
 
                 @* Remove entry *@
-                <TemplateColumn Title="Mark for deletion" HeaderStyle="width: 20px; padding: 0">
+                <TemplateColumn Title="Mark for deletion" HeaderStyle="width: 0; padding: 0">
                     <HeaderTemplate>
                         <HelpButton Title="Mark for deletion">
                             <HelpMarkForDeletion />
                         </HelpButton>
                     </HeaderTemplate>
                     <CellTemplate>
-                        <MudCheckBox @bind-Value=@context.Item.MarkedForDeletion Size="Size.Large" Color="Color.Secondary"></MudCheckBox>
+                        <MudCheckBox @bind-Value=@context.Item.MarkedForDeletion Size="Size.Large" Color="Color.Primary"></MudCheckBox>
                     </CellTemplate>
                 </TemplateColumn>
 
@@ -120,9 +121,10 @@
         </MudDataGrid>
     </MudTabPanel>
 
-    <MudTabPanel Text="Review Duplicates and Delete" Icon="@Icons.Material.Filled.DeleteSweep" Disabled=(!duplicates.Any())>
-        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates.Where(d => d.MarkedForDeletion).ToList()" Class="duplicates" FixedHeader
-                     QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
+
+    <MudTabPanel Text="Review Marked" Icon="@Icons.Material.Filled.Preview" Disabled=@(!duplicates.Any(d => d.MarkedForDeletion))>
+        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates.Where(d => d.MarkedForDeletion).ToList()" FixedHeader
+                     QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive Class="duplicates"
                      Filterable="true" Groupable="true" GroupExpanded="true">
             <ToolBarContent>
                 <MudText Typo="Typo.h6">@title</MudText>
@@ -136,7 +138,19 @@
             </ToolBarContent>
             <Columns>
                 @* Original track columns *@
-                <PropertyColumn Title="Original Title" Property="x => x.original.Name" HeaderStyle="width: 15%" Grouping>
+                <PropertyColumn Title="Playlist" Property="x => x.playlist.Name" HeaderStyle="width: 20%" Grouping>
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.playlist.ID)>@(context.Item.playlist.Name)</MudLink>
+                    </CellTemplate>
+                    <GroupTemplate>
+                        <span style="font-weight:bold">
+                            Original Title: @context.Grouping.Key
+                            <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
+                        </span>
+                    </GroupTemplate>
+                </PropertyColumn>
+
+                <PropertyColumn Title="Title" Property="x => x.original.Name" HeaderStyle="width: 20%">
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
                     </CellTemplate>
@@ -148,7 +162,7 @@
                     </GroupTemplate>
                 </PropertyColumn>
 
-                <PropertyColumn Title="Original Artists" Property="x => x.original.Artists" HeaderStyle="width: 15%" GroupBy="x => x.original.Artists[0].Name">
+                <PropertyColumn Title="Artists" Property="x => x.original.Artists" HeaderStyle="width: 25%" GroupBy="x => x.original.Artists[0].Name">
                     <CellTemplate>
                         @foreach (var artist in context.Item.original.Artists) {
                             <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
@@ -163,13 +177,19 @@
                 </PropertyColumn>
 
                 @* Remove entry *@
-                <TemplateColumn HeaderStyle="width: 20px">
+                <TemplateColumn Title="Unmark" HeaderStyle="width: 0; padding: 0" Groupable=false Filterable=false>
                     <CellTemplate>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size=Size.Small OnClick="_ => context.Item.MarkedForDeletion = false" />
+                        <MudCheckBox @bind-Value=@context.Item.MarkedForDeletion Size="Size.Large" Color="Color.Primary"></MudCheckBox>
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
         </MudDataGrid>
+    </MudTabPanel>
+
+
+
+    <MudTabPanel Text="Delete Marked" Icon="@Icons.Material.Filled.DeleteSweep" Disabled=@(!duplicates.Any(d => d.MarkedForDeletion))>
+        
     </MudTabPanel>
 </MudTabs>
 
