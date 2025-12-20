@@ -4,7 +4,7 @@
 @using Data.DTO
 
 <MudItemBase>
-	<MudDataGrid T="TrackView" Items="@TrackViews" FixedHeader Height="500px"
+	<MudDataGrid T="TrackView" Items="@TrackViews" FixedHeader Virtualize Height="500px"
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter ColumnResizeMode="ResizeMode.Column"
 				 ColumnsPanelReordering Hideable Filterable Groupable FilterMode="DataGridFilterMode.Simple" ShowMenuIcon="true">
 		<ToolBarContent>
