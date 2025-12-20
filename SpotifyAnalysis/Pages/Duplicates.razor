@@ -30,8 +30,8 @@
             <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="FindDuplicates" Disabled="!readyToSearch || loading">Find duplicates</MudButton>
         </MudAppBar>
         <MudStack Row StretchItems=StretchItems.All Style="gap: 2px;">
-            <PlaylistTable @ref="tableOriginal" Title="Original (one)" Playlists="data.UserDTO.Playlists" Name="Duplicated" Height=@playlistTableHeight SelectionChanged="c => UpdateGenerateButton(Table.Original, c)" MultiSelection=false />
-            <PlaylistTable @ref="tableDupes" Title="Duplicates (many)" Playlists="data.UserDTO.Playlists" Name="Duplicates" Height=@playlistTableHeight SelectionChanged="c => UpdateGenerateButton(Table.Duplicates, c)" />
+            <PlaylistTable @ref="tableOriginal" Title="Original (one)" Playlists="data.UserDTO.Playlists" Name="Duplicated" Height=@playlistTableHeight Style="width: 50%" SelectionChanged="c => UpdateGenerateButton(Table.Original, c)" MultiSelection=false />
+            <PlaylistTable @ref="tableDupes" Title="Duplicates (many)" Playlists="data.UserDTO.Playlists" Name="Duplicates" Height=@playlistTableHeight Style="width: 50%" SelectionChanged="c => UpdateGenerateButton(Table.Duplicates, c)" />
         </MudStack>
     </MudTabPanel>
 
@@ -79,9 +79,14 @@
                 </PropertyColumn>
 
                 @* Remove entry *@
-                <TemplateColumn HeaderStyle="width: 20px">
+                <TemplateColumn Title="Mark for deletion" HeaderStyle="width: 20px; padding: 0">
+                    <HeaderTemplate>
+                        <HelpButton Title="Mark for deletion">
+                            <HelpMarkForDeletion />
+                        </HelpButton>
+                    </HeaderTemplate>
                     <CellTemplate>
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size=Size.Small OnClick="_ => duplicates.Remove(context.Item)" />
+                        <MudCheckBox @bind-Value=@context.Item.MarkedForDeletion Size="Size.Large" Color="Color.Secondary"></MudCheckBox>
                     </CellTemplate>
                 </TemplateColumn>
 
@@ -115,9 +120,64 @@
         </MudDataGrid>
     </MudTabPanel>
 
-    <MudTabPanel Text="Review Duplicates and Delete" Icon="@Icons.Material.Filled.DeleteSweep">
+    <MudTabPanel Text="Review Duplicates and Delete" Icon="@Icons.Material.Filled.DeleteSweep" Disabled=(!duplicates.Any())>
+        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates.Where(d => d.MarkedForDeletion).ToList()" Class="duplicates" FixedHeader
+                     QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
+                     Filterable="true" Groupable="true" GroupExpanded="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">@title</MudText>
+                <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
+                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
+                    <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+                </MudButtonGroup>
+                <MudSpacer />
+                <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                              AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <Columns>
+                @* Original track columns *@
+                <PropertyColumn Title="Original Title" Property="x => x.original.Name" HeaderStyle="width: 15%" Grouping>
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
+                    </CellTemplate>
+                    <GroupTemplate>
+                        <span style="font-weight:bold">
+                            Original Title: @context.Grouping.Key
+                            <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
+                        </span>
+                    </GroupTemplate>
+                </PropertyColumn>
+
+                <PropertyColumn Title="Original Artists" Property="x => x.original.Artists" HeaderStyle="width: 15%" GroupBy="x => x.original.Artists[0].Name">
+                    <CellTemplate>
+                        @foreach (var artist in context.Item.original.Artists) {
+                            <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
+                        }
+                    </CellTemplate>
+                </PropertyColumn>
+
+                <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name">
+                    <CellTemplate>
+                        <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
+                    </CellTemplate>
+                </PropertyColumn>
+
+                @* Remove entry *@
+                <TemplateColumn HeaderStyle="width: 20px">
+                    <CellTemplate>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size=Size.Small OnClick="_ => context.Item.MarkedForDeletion = false" />
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
     </MudTabPanel>
 </MudTabs>
+
+<style>
+    .duplicates .mud-table-container {
+        height: calc(100vh - (var(--mud-appbar-height) * 10 / 4) - 2px);
+    }
+</style>
 
 
 @code {
@@ -240,6 +300,7 @@
         public TrackDTO original = original;
         public TrackDTO dupe = dupe;
         public PlaylistDTO playlist = playlist;
+        public bool MarkedForDeletion { get; set; }
     }
 
     enum Table {

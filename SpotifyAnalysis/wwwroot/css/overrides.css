@@ -22,9 +22,11 @@
     padding-bottom: 8px; /* Make up for the lost padding */
 }
 
-.duplicates > * td:nth-child(4) {
+.duplicates > * td:nth-child(4) { /* The Mark for deletion column */
     background: rgba(155, 155, 255, 0.1);
     text-align: center;
+    padding-top: 0;
+    padding-bottom: 6px;  /* Offset for misaligned checkbox */
 }
 
 .duplicates > * td:nth-child(n+5) {

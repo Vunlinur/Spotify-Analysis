@@ -6,7 +6,7 @@
 @inject ProtectedLocalStorage localStorage
 
 
-<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection=@MultiSelection FixedHeader Height=@Height
+<MudDataGrid T="PlaylistDTO" Items="@Playlists" MultiSelection=@MultiSelection FixedHeader Virtualize Height=@Height Style=@Style
 			 SortMode="SortMode.Multiple" QuickFilter=@Filter SelectedItems="selectedPlaylists" SelectedItemsChanged="@SelectedItemsChanged">
 	<ToolBarContent>
 		<MudText Typo="Typo.h6">@Title</MudText>
@@ -40,6 +40,8 @@
 	public bool MultiSelection { get; set; } = true;
 	[Parameter]
 	public string Height { get; set; } = defaultHeight;
+	[Parameter]
+	public string Style { get; set; } = "";
 
 	/* 3/4 * main AppBar + 4/4 DataGrid filter bar (each 64px)*@ .*/
 	const string defaultHeight = "calc(100vh - (var(--mud-appbar-height) * 11 / 4))";
