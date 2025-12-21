@@ -13,6 +13,7 @@
         readonly SpotifyClientScoped spotifyClientScoped = clientScoped;
 
         public SpotifyModule GetModule()
-            => new(spotifyClientScoped.SpotifyClient ?? spotifyClientStatic.SpotifyClient);
+            => new(spotifyClientScoped.SpotifyClient ?? spotifyClientStatic.SpotifyClient,
+                spotifyClientScoped.SpotifyClient is not null);
     }
 }

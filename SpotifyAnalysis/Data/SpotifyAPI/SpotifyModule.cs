@@ -10,7 +10,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
     /// A collection of thin Spotify API abstractions.
     /// </summary>
     /// <param name="spotifyClient">A SpotifyClient to use for connecting. Can be logged in or not.</param>
-    public class SpotifyModule(SpotifyClient spotifyClient) {
+    public class SpotifyModule(SpotifyClient spotifyClient, bool loggedIn) {
+		public readonly bool LoggedIn = loggedIn;
 		private readonly SpotifyClient SpotifyClient = spotifyClient;
 
         /**
