@@ -1,6 +1,7 @@
 ﻿@page "/duplicates"
 
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+@using SpotifyAnalysis.Data.SpotifyAPI
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
 @using System.Threading
@@ -9,6 +10,9 @@
 @using FuzzySharp;
 
 @inject IDialogService dialogService;
+@inject SpotifyMudTheme SpotifyTheme
+@inject SpotifyModuleFactory spotifyModuleFactory;
+@inject SpotifyClientScoped clientScoped
 @inject ProtectedLocalStorage localStorage
 @inject ScopedData data;
 
@@ -21,7 +25,7 @@
     </MudOverlay>
 }
 
-<MudTabs Outlined="true" @ref=tabs MinimumTabWidth="300px">
+<MudTabs Outlined="true" @ref=tabs MinimumTabWidth="300px" ActivePanelIndexChanged=@TryReloadPlaylistsSummary>
     <MudTabPanel Text="Select Playlists and Analyze" Icon="@Icons.Material.Filled.PlaylistPlay">
         <MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
             <MudText Typo=Typo.subtitle1 >@($"{tableDupes?.GetSelectedPlaylists()?.Count() ?? 0} / {data.UserDTO?.Playlists?.Count ?? 0}") playlist selected</MudText>
@@ -37,7 +41,7 @@
 
 
     <MudTabPanel Text="Mark Duplicates" Icon="@Icons.Material.Filled.FindReplace" Disabled=(!duplicates.Any())>
-        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates marker-table" FixedHeader
+        <MudDataGrid T="Duplicate" @ref="dataGrid" Items="@duplicates" Class="duplicates marker-table" FixedHeader Virtualize
                      QuickFilter=@Filter FilterCaseSensitivity=@DataGridFilterCaseSensitivity.CaseInsensitive
                      Filterable="true" Groupable="true" GroupExpanded="true">
             <ToolBarContent>
@@ -187,16 +191,61 @@
     </MudTabPanel>
 
 
-
-    <MudTabPanel Text="Delete Marked" Icon="@Icons.Material.Filled.DeleteSweep" Disabled=@(!duplicates.Any(d => d.MarkedForDeletion))>
-        
+    <MudTabPanel Text="Delete Marked" Icon="@Icons.Material.Filled.DeleteSweep" Style="display: flex" Disabled=@(!duplicates.Any(d => d.MarkedForDeletion))>
+        <MudStack StretchItems=StretchItems.All Class="full" >
+            <MudStack Row Justify=Justify.Center AlignItems=AlignItems.Center>
+                <MudPaper Class="pa-16 ma-2" Elevation="0" Style="width: 30vw">
+                    <MudStack Justify=Justify.SpaceAround AlignItems=AlignItems.Center>
+                        @if (loggedIn) {
+                            <MudText Typo="Typo.h5" Align=Align.Center><b>@(playlistSummaries.Sum(ps => ps.duplicateCount)) tracks</b> will be deleted from the following Playlists:</MudText>
+                            <MudButton Variant="Variant.Filled" StartIcon="@Icons.Material.Filled.DeleteSweep" Color="Color.Error">Delete Marked</MudButton>
+                        } else {
+                            <MudText Typo="Typo.h5" Align=Align.Center>You are <b>not logged in!</b> You won't be able to affect your Spotify account!</MudText>
+                            <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="ma-4" OnClick=clientScoped.InitializeSpotifyClient>
+                                Log In
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </MudStack>
+            <MudDataGrid T=PlaylistSummary Items=@playlistSummaries FixedHeader
+                         SortMode=SortMode.Multiple>
+                <Columns>
+                    <TemplateColumn HeaderStyle="width:0" Sortable=false>
+                        <CellTemplate>
+                            <MudImage Height="50" Width="50" Src=@GetImage(context) />
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <PropertyColumn Property="x => x.playlist.Name" Title="Name" />
+                    <PropertyColumn Property="x => x.playlist.OwnerName" Title="Owner" CellStyle="color: grey" />
+                    <PropertyColumn Property="x => x.playlist.TracksTotal" Title="Tracks Total" HeaderStyle="width:15%" />
+                    <PropertyColumn Property="x => x.duplicateCount" Title="Tracks to delete" HeaderStyle="width:15%" CellStyle="background: rgba(255, 0, 0, 0.1)" />
+                </Columns>
+            </MudDataGrid>
+        </MudStack>
     </MudTabPanel>
 </MudTabs>
 
 <style>
+    b {
+        color: @(SpotifyTheme.PaletteDark.Primary.Value);
+    }
+
     .duplicates .mud-table-container {
         height: calc(100vh - (var(--mud-appbar-height) * 10 / 4) - 2px);
     }
+
+    .full {
+        height: calc(100vh - (var(--mud-appbar-height) * 6 / 4) - 2px);
+    }
+
+        .full > .mud-table {
+            height: 60vh;
+        }
+
+            .full > * .mud-table-container {
+                height: 100%;
+            }
 </style>
 
 
@@ -287,6 +336,27 @@
 
     void CollapseAll() => dataGrid?.CollapseAllGroups();
 
+    bool loggedIn;
+    List<PlaylistSummary> playlistSummaries = [];   
+    void TryReloadPlaylistsSummary(int activatedPanelIndex) {
+        if (activatedPanelIndex != 3)
+            return;
+
+        var spotifyModule = spotifyModuleFactory.GetModule();
+        loggedIn = spotifyModule.LoggedIn;
+        if (!loggedIn)
+            return;
+
+        playlistSummaries = duplicates
+            .Where(d => d.MarkedForDeletion)
+            .GroupBy(d => d.playlist.ID)
+            .Select(g => new PlaylistSummary(g.First().playlist, g.Count()))
+            .OrderBy(ps => ps.playlist.Name)
+            .ToList();
+    }
+
+    string GetImage(CellContext<PlaylistSummary> c) => c.Item.playlist.ImageS ?? StaticResourceMap.UnknownPlaylist;
+
     string _searchString;
     bool Filter(Duplicate d) {
         if (string.IsNullOrWhiteSpace(_searchString))
@@ -321,6 +391,11 @@
         public TrackDTO dupe = dupe;
         public PlaylistDTO playlist = playlist;
         public bool MarkedForDeletion { get; set; }
+    }
+
+    class PlaylistSummary(PlaylistDTO playlistDTO, int duplicateCount) {
+        public PlaylistDTO playlist = playlistDTO;
+        public int duplicateCount = duplicateCount;
     }
 
     enum Table {
