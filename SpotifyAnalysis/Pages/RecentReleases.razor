@@ -4,10 +4,12 @@
 @using Fernandezja.ColorHashSharp
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
+@using SpotifyAnalysis.Data.Database
 @using System.Threading
 @using System.Collections.Concurrent
 @using MudBlazor
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+@using Microsoft.EntityFrameworkCore;
 
 @inject SpotifyModuleFactory spotifyModuleFactory;
 @inject IDialogService dialogService;
@@ -16,19 +18,27 @@
 
 
 @if (loaded) {
-	<MudDataGrid T="SpotifyAPI.Web.FullArtist" Items="@Artists" FixedHeader Class="full-height-table"
+	<MudDataGrid T="ArtistWithReleases" Items="@ArtistsWithReleases" FixedHeader Class="full-height-table"
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
-			<MudText Typo="Typo.h6">Top 3 playlist genres</MudText>
+			<MudText Typo="Typo.h6">Recent Releases</MudText>
 			<MudSpacer />
 			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
 						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
 		</ToolBarContent>
 		<Columns>
-			<PropertyColumn Title="Name" Property="x => x.Name" />
-			<TemplateColumn Title="Genres">
+			<PropertyColumn Title="Artist" Property="x => x.Artist.Name" />
+			<TemplateColumn Title="Recent Releases">
 				<CellTemplate>
-					@string.Join(", ", context.Item.Genres)
+					<MudStack Row Spacing="2" Style="width: 100%;">
+						@foreach (var release in context.Item.RecentReleases) {
+							<MudCard Elevation="2" Style="width: 100%;">
+								<MudCardContent>
+									<MudText Typo="Typo.body1">@release.Name</MudText>
+								</MudCardContent>
+							</MudCard>
+						}
+					</MudStack>
 				</CellTemplate>
 			</TemplateColumn>
 		</Columns>
@@ -39,26 +49,91 @@
 @code {
 	bool loaded;
 	string searchString;
-	private PlaylistTable playlistTable;
-	List<SpotifyAPI.Web.FullArtist> Artists;
+	List<ArtistWithReleases> ArtistsWithReleases;
 
 	protected override async Task OnInitializedAsync() {
 		await base.OnInitializedAsync();
 
 		var spotifyModule = spotifyModuleFactory.GetModule();
-		Artists = await spotifyModule.GetUsersTopArtists();
+		var topArtists = await spotifyModule.GetUsersTopArtists();
+		var topArtistIds = topArtists.Select(a => a.Id).ToList();
+
+		var cutoffDate = DateTime.UtcNow.AddDays(-365);
+		ArtistsWithReleases = new List<ArtistWithReleases>();
+
+		using var db = new SpotifyContext();
+		
+		// Get all albums from the database that belong to top artists and are within the last year
+		var recentAlbums = await db.Albums
+			.Include(a => a.Artists)
+			.Where(album => album.Artists.Any(artist => topArtistIds.Contains(artist.ID)))
+			.ToListAsync();
+
+		// Group albums by artist and filter by date
+		foreach (var artist in topArtists) {
+			var artistAlbums = recentAlbums
+				.Where(album => album.Artists.Any(a => a.ID == artist.Id))
+				.Where(album => IsWithinLastYear(album.ReleaseDate, cutoffDate))
+				.OrderByDescending(album => ParseReleaseDate(album.ReleaseDate))
+				.ToList();
+
+			if (artistAlbums.Count > 0)
+				ArtistsWithReleases.Add(new ArtistWithReleases {
+					Artist = artist,
+					RecentReleases = artistAlbums
+				});
+		}
 
 		loaded = true;
 	}
 
-
-	bool Filter(SpotifyAPI.Web.FullArtist p) {
+	bool Filter(ArtistWithReleases p) {
 		if (string.IsNullOrWhiteSpace(searchString))
 			return true;
 
-		if (p.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+		if (p.Artist.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
+		if (p.RecentReleases.Any(r => r.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase)))
 			return true;
 
 		return false;
 	}
+
+	private static bool IsWithinLastYear(string releaseDate, DateTime cutoffDate) {
+		if (string.IsNullOrEmpty(releaseDate))
+			return false;
+
+		var parsedDate = ParseReleaseDate(releaseDate);
+		return parsedDate >= cutoffDate;
+	}
+
+	private static DateTime ParseReleaseDate(string releaseDate) {
+		if (string.IsNullOrEmpty(releaseDate))
+			return DateTime.MinValue;
+
+		// Spotify release dates can be in formats: "YYYY", "YYYY-MM", or "YYYY-MM-DD"
+		var parts = releaseDate.Split('-');
+		if (parts.Length == 1) {
+			// Year only
+			if (int.TryParse(parts[0], out int year))
+				return new DateTime(year, 1, 1);
+		} else if (parts.Length == 2) {
+			// Year-Month
+			if (int.TryParse(parts[0], out int year) && int.TryParse(parts[1], out int month))
+				return new DateTime(year, month, 1);
+		} else if (parts.Length == 3) {
+			// Year-Month-Day
+			if (int.TryParse(parts[0], out int year) && int.TryParse(parts[1], out int month) && int.TryParse(parts[2], out int day))
+				return new DateTime(year, month, day);
+		}
+
+		return DateTime.MinValue;
+	}
+
+	private class ArtistWithReleases {
+		public SpotifyAPI.Web.FullArtist Artist { get; set; }
+		public List<AlbumDTO> RecentReleases { get; set; } = new();
+	}
 }
+
