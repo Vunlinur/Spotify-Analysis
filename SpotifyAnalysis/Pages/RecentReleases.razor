@@ -32,11 +32,12 @@
 				<CellTemplate>
 					<MudStack Row Spacing="2" Style="width: 100%;">
 						@foreach (var release in context.Item.RecentReleases) {
-							<MudCard Elevation="2" Style="width: 100%;">
-								<MudCardContent>
-									<MudText Typo="Typo.body1">@release.Name</MudText>
-								</MudCardContent>
-							</MudCard>
+							<MudPaper Class="pa-2" Style=@CardStyle(release.Type)>
+								<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
+									<MudLink Typo="Typo.body1" Color=@Color.Default Href=@("spotify:album:" + release.ID)><b>@release.Name</b></MudLink>
+									<MudText Typo="Typo.subtitle2">@release.ReleaseDate</MudText>
+								</MudStack>
+							</MudPaper>
 						}
 					</MudStack>
 				</CellTemplate>
@@ -106,6 +107,9 @@
 		var parsedDate = AlbumDTO.ParseReleaseDate(releaseDate);
 		return parsedDate >= cutoffDate;
 	}
+
+	private string CardStyle(AlbumType type)
+		=> $"width: 100%; white-space: nowrap; background: {type.ToColor()}";
 
 	private class ArtistWithReleases {
 		public ArtistDTO Artist { get; set; }

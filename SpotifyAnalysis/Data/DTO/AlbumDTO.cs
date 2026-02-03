@@ -53,5 +53,15 @@ namespace SpotifyAnalysis.Data.DTO {
             _ = Enum.TryParse(from, out AlbumType result);
             return result;
         }
+
+        public static string ToColor(this AlbumType albumType) {
+            return albumType switch {
+				AlbumType.album => "#B9541D",
+				AlbumType.single => "#541DB9", // #337db5 alternative
+				AlbumType.compilation => "#B91D82", // #326544 alternative
+				AlbumType.appears_on => "#A0A0A0", // rare
+				_ => "#FF00FF" // Unknown
+			};
+		}
 	}
 }
