@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
 using System;
+using System.Globalization;
 
 namespace SpotifyAnalysis.Data.DTO {
     [Table("Albums")]
@@ -32,7 +33,17 @@ namespace SpotifyAnalysis.Data.DTO {
 
         // Meta
         public DateTime LastUpdated { get; set; }
-    }
+
+		public static DateTime ParseReleaseDate(string input) {
+			string format = input.Length switch {
+				4 => "yyyy",
+				7 => "yyyy-MM",
+				10 => "yyyy-MM-dd",
+				_ => throw new ArgumentException($"Unexpected ReleaseDate format: {input}")
+			};
+			return DateTime.ParseExact(input, format, CultureInfo.InvariantCulture);
+		}
+	}
 
     // The relationship between the artist and the album
     public enum AlbumType { album, single, compilation, appears_on }
@@ -42,5 +53,5 @@ namespace SpotifyAnalysis.Data.DTO {
             _ = Enum.TryParse(from, out AlbumType result);
             return result;
         }
-    }
+	}
 }

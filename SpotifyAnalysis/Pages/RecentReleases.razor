@@ -73,7 +73,7 @@
 		foreach (var artist in topArtistsDTOs) {
 			var artistAlbums = artist.Albums
 				.Where(album => IsWithinLastYear(album.ReleaseDate, cutoffDate))
-				.OrderByDescending(album => ParseReleaseDate(album.ReleaseDate))
+				.OrderByDescending(album => AlbumDTO.ParseReleaseDate(album.ReleaseDate))
 				.ToList();
 
 			if (artistAlbums.Count > 0)
@@ -103,36 +103,13 @@
 		if (string.IsNullOrEmpty(releaseDate))
 			return false;
 
-		var parsedDate = ParseReleaseDate(releaseDate);
+		var parsedDate = AlbumDTO.ParseReleaseDate(releaseDate);
 		return parsedDate >= cutoffDate;
-	}
-
-	private static DateTime ParseReleaseDate(string releaseDate) {
-		if (string.IsNullOrEmpty(releaseDate))
-			return DateTime.MinValue;
-
-		// Spotify release dates can be in formats: "YYYY", "YYYY-MM", or "YYYY-MM-DD"
-		var parts = releaseDate.Split('-');
-		if (parts.Length == 1) {
-			// Year only
-			if (int.TryParse(parts[0], out int year))
-				return new DateTime(year, 1, 1);
-		} else if (parts.Length == 2) {
-			// Year-Month
-			if (int.TryParse(parts[0], out int year) && int.TryParse(parts[1], out int month))
-				return new DateTime(year, month, 1);
-		} else if (parts.Length == 3) {
-			// Year-Month-Day
-			if (int.TryParse(parts[0], out int year) && int.TryParse(parts[1], out int month) && int.TryParse(parts[2], out int day))
-				return new DateTime(year, month, day);
-		}
-
-		return DateTime.MinValue;
 	}
 
 	private class ArtistWithReleases {
 		public ArtistDTO Artist { get; set; }
-		public List<AlbumDTO> RecentReleases { get; set; } = new();
+		public List<AlbumDTO> RecentReleases { get; set; } = [];
 	}
 }
 

@@ -2,8 +2,6 @@
 using SpotifyAnalysis.Data.DTO;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace SpotifyAnalysis.Pages {
@@ -33,12 +31,12 @@ namespace SpotifyAnalysis.Pages {
         }
 
         static readonly Dictionary<string, ReleaseDateFilter> releaseDateOperators = new() {
-            { "on",             (t, date) => Parse(t.Track.Album.ReleaseDate) == date },
-            { "not on",         (t, date) => Parse(t.Track.Album.ReleaseDate) != date },
-            { "after",          (t, date) => Parse(t.Track.Album.ReleaseDate) > date },
-            { "on or after",    (t, date) => Parse(t.Track.Album.ReleaseDate) >= date },
-            { "before",         (t, date) => Parse(t.Track.Album.ReleaseDate) < date },
-            { "on or before",   (t, date) => Parse(t.Track.Album.ReleaseDate) <= date }
+            { "on",             (t, date) => AlbumDTO.ParseReleaseDate(t.Track.Album.ReleaseDate) == date },
+            { "not on",         (t, date) => AlbumDTO.ParseReleaseDate(t.Track.Album.ReleaseDate) != date },
+            { "after",          (t, date) => AlbumDTO.ParseReleaseDate(t.Track.Album.ReleaseDate) > date },
+            { "on or after",    (t, date) => AlbumDTO.ParseReleaseDate(t.Track.Album.ReleaseDate) >= date },
+            { "before",         (t, date) => AlbumDTO.ParseReleaseDate(t.Track.Album.ReleaseDate) < date },
+            { "on or before",   (t, date) => AlbumDTO.ParseReleaseDate(t.Track.Album.ReleaseDate) <= date }
         };
 
         static readonly Dictionary<string, DurationFilter> durationOperators = new() {
@@ -60,16 +58,6 @@ namespace SpotifyAnalysis.Pages {
 
         async Task ClearDurationFilter(FilterContext<TrackPlaylist> context) => await context.Actions.ClearFilterAsync(durationFilterDefinition);
         async Task ApplyDurationFilter(FilterContext<TrackPlaylist> context) => await context.Actions.ApplyFilterAsync(durationFilterDefinition);
-
-        static DateTime Parse(string input) {
-            string format = input.Length switch {
-                4 => "yyyy",
-                7 => "yyyy-MM",
-                10 => "yyyy-MM-dd",
-                _ => throw new ArgumentException($"Unexpected ReleaseDate format: {input}")
-            };
-            return DateTime.ParseExact(input, format, CultureInfo.InvariantCulture);
-        }
 
         static string FormatDuration(CellContext<TrackPlaylist> context) {
             var ts = TimeSpan.FromMilliseconds(context.Item.Track.DurationMs);
