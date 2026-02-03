@@ -93,7 +93,7 @@
 		foreach (var artist in topArtistsDTOs) {
 			var artistAlbums = artist.Albums
 				.Where(album => IsWithinLastYear(album.ReleaseDate, cutoffDate))
-				.OrderByDescending(album => AlbumDTO.ParseReleaseDate(album.ReleaseDate))
+				.OrderBy(album => AlbumDTO.ParseReleaseDate(album.ReleaseDate))
 				.ToList();
 
 			if (artistAlbums.Count > 0)
