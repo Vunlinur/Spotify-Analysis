@@ -63,6 +63,7 @@
 		</Columns>
 	</MudDataGrid>
 }
+	td > div > div {
 
 
 @code {
@@ -127,7 +128,7 @@
 	}
 
 	private string CardStyle(AlbumType type)
-		=> $"width: 100%; white-space: nowrap; background: {type.ToColor()}";
+		=> $"background: {type.ToColor()}";
 
 	private class ArtistWithReleases {
 		public ArtistDTO Artist { get; set; }
