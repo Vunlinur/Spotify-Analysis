@@ -19,6 +19,11 @@
 
 <MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
 	<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 100%">
+		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
+			<MudText>Top Artists</MudText>
+			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="Color.Tertiary" UncheckedColor="Color.Primary" Size=Size.Large />
+			<MudText>All Artists From Playlists</MudText>
+		</MudStack>
 		<MudText Typo=Typo.subtitle1>Legend:</MudText>
 		<MudPaper Class="pa-2">
 			<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 300px">
@@ -69,6 +74,11 @@
 		white-space: nowrap;
 	}
 
+	.mud-switch {
+		margin: 0;
+		padding: 0;
+	}
+
 	.mud-table .mud-table-container {
 		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
 	}
@@ -78,6 +88,7 @@
 @code {
 	bool loaded;
 	string searchString;
+	List<string> topArtistIds;
 	List<ArtistWithReleases> ArtistsWithReleases;
 
 	protected override async Task OnInitializedAsync() {
@@ -85,21 +96,40 @@
 
 		var spotifyModule = spotifyModuleFactory.GetModule();
 		var topArtists = await spotifyModule.GetUsersTopArtists();
-		var topArtistIds = topArtists.Select(a => a.Id).ToList();
-
-		var cutoffDate = DateTime.UtcNow.AddDays(-365);
-		ArtistsWithReleases = new List<ArtistWithReleases>();
-
-		using var db = new SpotifyContext();
+		topArtistIds = topArtists.Select(a => a.Id).ToList();
 
 		// Get artists from the database that belong to top artists
-		var topArtistsDTOs = await db.Artists
+		var topArtistsDTOs = await GetTopArtistsAsync();
+		CalculateReleases(topArtistsDTOs);
+		loaded = true;
+	}
+
+	async Task<List<ArtistDTO>> GetTopArtistsAsync() {
+		using var db = new SpotifyContext();
+		return await db.Artists
 			.Include(a => a.Albums)
 			.Where(a => topArtistIds.Contains(a.ID))
 			.OrderBy(a => a.Name)
 			.ToListAsync();
+	}
 
-		foreach (var artist in topArtistsDTOs) {
+	async Task<List<ArtistDTO>> GetAllPlaylistsArtistsAsync() {
+		using var db = new SpotifyContext();
+		return await db.Users
+			.Where(u => u.ID == data.UserDTO.ID)
+			.SelectMany(u => u.Playlists)
+			.SelectMany(p => p.Tracks)
+			.SelectMany(t => t.Artists)
+			.Distinct()
+			.Include(a => a.Albums)
+			.OrderBy(a => a.Name)
+			.ToListAsync();
+	}
+
+	void CalculateReleases(IEnumerable<ArtistDTO> artistsDTOs) {
+		var cutoffDate = DateTime.UtcNow.AddDays(-365);
+		ArtistsWithReleases = new List<ArtistWithReleases>();
+		foreach (var artist in artistsDTOs) {
 			var artistAlbums = artist.Albums
 				.Where(album => IsWithinLastYear(album.ReleaseDate, cutoffDate))
 				.OrderBy(album => AlbumDTO.ParseReleaseDate(album.ReleaseDate))
@@ -107,13 +137,17 @@
 
 			if (artistAlbums.Count > 0)
 				ArtistsWithReleases.Add(new ArtistWithReleases {
-					Artist = artist,
-					RecentReleases = artistAlbums
-				});
+						Artist = artist,
+						RecentReleases = artistAlbums
+					});
 		}
-
-		loaded = true;
 	}
+
+	async void OnAllArtistsSwitchChanged(bool value) {
+		var artists = await (value ? GetAllPlaylistsArtistsAsync() : GetTopArtistsAsync());
+		CalculateReleases(artists);
+		StateHasChanged();
+    }
 
 	bool Filter(ArtistWithReleases p) {
 		if (string.IsNullOrWhiteSpace(searchString))
