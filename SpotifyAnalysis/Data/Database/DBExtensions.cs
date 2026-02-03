@@ -41,7 +41,7 @@ namespace SpotifyAnalysis.Data.Database {
 
         public static void Update(this AlbumDTO album, SimpleAlbum source, List<ArtistDTO> artists = null) {
             album.Name = source.Name;
-            album.Type = AlbumTypeExtensions.FromString(source.AlbumType);
+            album.Type = source.AlbumType.ToAlbumType();
             album.ReleaseDate = source.ReleaseDate;
             album.TotalTracks = source.TotalTracks;
             album.Artists = artists ?? album.Artists;
@@ -52,7 +52,7 @@ namespace SpotifyAnalysis.Data.Database {
 
         public static void Update(this AlbumDTO album, FullAlbum source, List<ArtistDTO> artists = null) {
             album.Name = source.Name;
-            album.Type = AlbumTypeExtensions.FromString(source.AlbumType);
+            album.Type = source.AlbumType.ToAlbumType();
             album.ReleaseDate = source.ReleaseDate;
             album.TotalTracks = source.TotalTracks;
             album.Popularity = source.Popularity;

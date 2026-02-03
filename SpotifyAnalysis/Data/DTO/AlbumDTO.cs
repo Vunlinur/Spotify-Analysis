@@ -49,7 +49,7 @@ namespace SpotifyAnalysis.Data.DTO {
     public enum AlbumType { album, single, compilation, appears_on }
 
     public static class AlbumTypeExtensions {
-        public static AlbumType FromString(string from) {
+        public static AlbumType ToAlbumType(this string from) {
             _ = Enum.TryParse(from, out AlbumType result);
             return result;
         }
