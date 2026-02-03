@@ -62,17 +62,16 @@
 		ArtistsWithReleases = new List<ArtistWithReleases>();
 
 		using var db = new SpotifyContext();
-		
-		// Get all albums from the database that belong to top artists and are within the last year
-		var recentAlbums = await db.Albums
-			.Include(a => a.Artists)
-			.Where(album => album.Artists.Any(artist => topArtistIds.Contains(artist.ID)))
+
+		// Get artists from the database that belong to top artists
+		var topArtistsDTOs = await db.Artists
+			.Include(a => a.Albums)
+			.Where(a => topArtistIds.Contains(a.ID))
+			.OrderBy(a => a.Name)
 			.ToListAsync();
 
-		// Group albums by artist and filter by date
-		foreach (var artist in topArtists) {
-			var artistAlbums = recentAlbums
-				.Where(album => album.Artists.Any(a => a.ID == artist.Id))
+		foreach (var artist in topArtistsDTOs) {
+			var artistAlbums = artist.Albums
 				.Where(album => IsWithinLastYear(album.ReleaseDate, cutoffDate))
 				.OrderByDescending(album => ParseReleaseDate(album.ReleaseDate))
 				.ToList();
@@ -132,7 +131,7 @@
 	}
 
 	private class ArtistWithReleases {
-		public SpotifyAPI.Web.FullArtist Artist { get; set; }
+		public ArtistDTO Artist { get; set; }
 		public List<AlbumDTO> RecentReleases { get; set; } = new();
 	}
 }
