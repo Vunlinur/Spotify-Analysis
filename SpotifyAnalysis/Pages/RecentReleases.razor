@@ -36,7 +36,7 @@
 	</MudStack>
 </MudAppBar>
 @if (loaded) {
-	<MudDataGrid T="ArtistWithReleases" Items="@ArtistsWithReleases" FixedHeader Class="full-height-table"
+	<MudDataGrid T="ArtistWithReleases" Items="@ArtistsWithReleases" FixedHeader
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
 			<MudText Typo="Typo.h6">Recent Releases</MudText>
@@ -67,6 +67,10 @@
 	td > div > div {
 		width: 100%;
 		white-space: nowrap;
+	}
+
+	.mud-table .mud-table-container {
+		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
 	}
 </style>
 
