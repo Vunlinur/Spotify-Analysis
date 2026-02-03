@@ -51,6 +51,13 @@
 		</ToolBarContent>
 		<Columns>
 			<PropertyColumn Title="Artist" Property="x => x.Artist.Name" />
+
+			<PropertyColumn Title="Popularity" Property="x => x.Artist.Popularity" Groupable=false HeaderStyle="width: 8%">
+				<CellTemplate>
+					<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Artist.Popularity ?? 0) />
+				</CellTemplate>
+			</PropertyColumn>
+
 			<TemplateColumn Title="Recent Releases">
 				<CellTemplate>
 					<MudStack Row Spacing="2" Style="width: 100%;">
