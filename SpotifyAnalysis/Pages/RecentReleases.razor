@@ -17,6 +17,24 @@
 @inject ScopedData data;
 
 
+<MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
+	<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 100%">
+		<MudText Typo=Typo.subtitle1>Legend:</MudText>
+		<MudPaper Class="pa-2">
+			<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 300px">
+				<MudText Typo="Typo.body1"><b>Artist Name</b></MudText>
+				<MudText Typo="Typo.subtitle2">Release Date</MudText>
+			</MudStack>
+		</MudPaper>
+		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
+			@foreach(var type in Enum.GetValues<AlbumType>()) {
+				<MudPaper Class="pa-2" Style=@CardStyle(type)>
+                    <MudText Typo="Typo.button">@type.ToString().Replace("_"," ")</MudText>
+                </MudPaper>
+			}
+		</MudStack>
+	</MudStack>
+</MudAppBar>
 @if (loaded) {
 	<MudDataGrid T="ArtistWithReleases" Items="@ArtistsWithReleases" FixedHeader Class="full-height-table"
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
