@@ -20,9 +20,9 @@
 <MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
 	<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 100%">
 		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
-			<MudText>Top Artists</MudText>
+			<MudText Align=Align.Right>All Artists From User's Playlists</MudText>
 			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="Color.Tertiary" UncheckedColor="Color.Primary" Size=Size.Large />
-			<MudText>All Artists From Playlists</MudText>
+			<MudText>Your Top Artists</MudText>
 		</MudStack>
 		<MudText Typo=Typo.subtitle1>Legend:</MudText>
 		<MudPaper Class="pa-2">
@@ -101,22 +101,23 @@
 	protected override async Task OnInitializedAsync() {
 		await base.OnInitializedAsync();
 
-		var spotifyModule = spotifyModuleFactory.GetModule();
-		var topArtists = await spotifyModule.GetUsersTopArtists();
-		topArtistIds = topArtists.Select(a => a.Id).ToList();
-
-		// Get artists from the database that belong to top artists
-		var topArtistsDTOs = await GetTopArtistsAsync();
-		CalculateReleases(topArtistsDTOs);
+		// Initial calculation based on all artists in the 'inspecting' user's playlists
+		var artistDTOs = await GetAllPlaylistsArtistsAsync();
+		CalculateReleases(artistDTOs);
 		loaded = true;
 	}
 
 	async Task<List<ArtistDTO>> GetTopArtistsAsync() {
+		if (topArtistIds is null || topArtistIds.Count == 0) {
+		var spotifyModule = spotifyModuleFactory.GetModule();
+		var topArtists = await spotifyModule.GetUsersTopArtists();
+		topArtistIds = topArtists.Select(a => a.Id).ToList();
+	}
+
 		using var db = new SpotifyContext();
 		return await db.Artists
 			.Include(a => a.Albums)
 			.Where(a => topArtistIds.Contains(a.ID))
-			.OrderBy(a => a.Name)
 			.ToListAsync();
 	}
 
@@ -129,7 +130,6 @@
 			.SelectMany(t => t.Artists)
 			.Distinct()
 			.Include(a => a.Albums)
-			.OrderBy(a => a.Name)
 			.ToListAsync();
 	}
 
@@ -151,7 +151,7 @@
 	}
 
 	async void OnAllArtistsSwitchChanged(bool value) {
-		var artists = await (value ? GetAllPlaylistsArtistsAsync() : GetTopArtistsAsync());
+		var artists = await (value ? GetTopArtistsAsync() : GetAllPlaylistsArtistsAsync());
 		CalculateReleases(artists);
 		StateHasChanged();
     }
