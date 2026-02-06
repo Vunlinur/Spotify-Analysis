@@ -8,7 +8,6 @@
 @inject IDialogService dialogService;
 @inject ScopedData data;
 
-<div style="max-height: 100vh; overflow: auto;">
     <MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
         <HelpButton Title="What is this for?">
             <HelpPlaylistCharts />
@@ -19,6 +18,7 @@
         <MudButton Variant=Variant.Outlined Class="rounded-pill" OnClick="GenerateCharts" Disabled="@(selectedCount == 0)">Generate charts</MudButton>
     </MudAppBar>
 
+<div style="max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4)); overflow: auto;">
     @if (data.UserDTO is not null) {
         <MudCollapse Expanded=@open>
             <PlaylistTable @ref="playlistTable" Name="Charts" Playlists="data.UserDTO.Playlists" SelectionChanged="UpdateGenerateButton" />
