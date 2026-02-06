@@ -35,6 +35,8 @@ namespace SpotifyAnalysis.Data.DTO {
         public DateTime LastUpdated { get; set; }
 
 		public static DateTime ParseReleaseDate(string input) {
+            if (input == "0000")
+                return DateTime.UnixEpoch;
 			string format = input.Length switch {
 				4 => "yyyy",
 				7 => "yyyy-MM",
