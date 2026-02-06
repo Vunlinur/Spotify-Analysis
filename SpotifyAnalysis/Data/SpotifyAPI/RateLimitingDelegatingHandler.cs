@@ -14,8 +14,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         private readonly RateLimiter rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
-            // Only rate limit requests to Spotify API
-            if (ShouldRateLimit(request))
+			// Only rate limit requests to Spotify API
+			if (ShouldSkipUri(request))
                 return await base.SendAsync(request, cancellationToken);
 
             using var lease = await rateLimiter.AcquireAsync(1, cancellationToken);
@@ -39,11 +39,11 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             return await base.SendAsync(request, cancellationToken);
         }
 
-        static bool ShouldRateLimit(HttpRequestMessage request) =>
-            request.RequestUri?.Host.Contains(".spotify.com", StringComparison.OrdinalIgnoreCase) == true;
+        static bool ShouldSkipUri(HttpRequestMessage request) =>
+            request.RequestUri?.Host.Contains(".spotify.com", StringComparison.OrdinalIgnoreCase) == false;
 
         static HttpResponseMessage RateLimitExceeded() =>
-            new (HttpStatusCode.TooManyRequests) { ReasonPhrase = "Rate limit exceeded" };
+            new (HttpStatusCode.TooManyRequests) { ReasonPhrase = "Rate limit exceeded (post-ratelimit)" };
     }
 }
 
