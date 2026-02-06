@@ -45,12 +45,6 @@
     private bool open = true;
     private void TogglePlaylistTable() => open = !open;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender) {
-        await base.OnAfterRenderAsync(firstRender);
-        if (!firstRender)
-            return;
-    }
-
     IEnumerable<TrackDTO> AllTracks;
     IDictionary<string, ArtistDTO> ArtistsDict;
     private async Task GenerateCharts() {
