@@ -26,8 +26,8 @@
     }
 
     @if (AllTracks is not null) {
-        <div class="pt-3 px-3" style="overflow: scroll">
-            <MudGrid>
+        <div class="pt-3 px-3">
+            <MudGrid Spacing=3>
                 <WidgetArtists @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
                 <WidgetGenres @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
                 <WidgetGenresGeneral @ref=chartRef Tracks="AllTracks" ArtistsDict="ArtistsDict" />
