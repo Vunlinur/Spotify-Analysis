@@ -1,19 +1,15 @@
 ﻿@page "/recentreleases"
 
 @using SpotifyAnalysis.Data.SpotifyAPI
-@using Fernandezja.ColorHashSharp
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.Database
 @using System.Threading
-@using System.Collections.Concurrent
 @using MudBlazor
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 @using Microsoft.EntityFrameworkCore;
 
 @inject SpotifyModuleFactory spotifyModuleFactory;
 @inject IDialogService dialogService;
-@inject ProtectedLocalStorage localStorage
 @inject ScopedData data;
 
 
@@ -26,15 +22,16 @@
 		</MudStack>
 		<MudText Typo=Typo.subtitle1>Legend:</MudText>
 		<MudPaper Class="pa-2">
-			<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 300px">
+			<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 260px">
 				<MudText Typo="Typo.body1"><b>Artist Name</b></MudText>
+				<MudDivider Vertical="true" FlexItem="true" />
 				<MudText Typo="Typo.subtitle2">Release Date</MudText>
 			</MudStack>
 		</MudPaper>
 		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
 			@foreach(var type in Enum.GetValues<AlbumType>()) {
 				<MudPaper Class="pa-2" Style=@CardStyle(type)>
-                    <MudText Typo="Typo.button">@type.ToString().Replace("_"," ")</MudText>
+					<MudText Typo="Typo.button" Style="white-space: nowrap">@type.ToString().Replace("_", " ")</MudText>
                 </MudPaper>
 			}
 		</MudStack>
@@ -77,10 +74,6 @@
 	</MudDataGrid>
 }
 <style>
-	td > div > div {
-		white-space: nowrap;
-	}
-
 	.mud-switch {
 		margin: 0;
 		padding: 0;
@@ -109,10 +102,10 @@
 
 	async Task<List<ArtistDTO>> GetTopArtistsAsync() {
 		if (topArtistIds is null || topArtistIds.Count == 0) {
-		var spotifyModule = spotifyModuleFactory.GetModule();
-		var topArtists = await spotifyModule.GetUsersTopArtists();
-		topArtistIds = topArtists.Select(a => a.Id).ToList();
-	}
+			var spotifyModule = spotifyModuleFactory.GetModule();
+			var topArtists = await spotifyModule.GetUsersTopArtists();
+			topArtistIds = topArtists.Select(a => a.Id).ToList();
+		}
 
 		using var db = new SpotifyContext();
 		return await db.Artists
