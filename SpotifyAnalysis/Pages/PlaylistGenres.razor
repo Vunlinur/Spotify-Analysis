@@ -30,22 +30,35 @@
 				</CellTemplate>
 			</TemplateColumn>
 			<PropertyColumn Property="x => x.playlistDTO.Name" Title="Name" Groupable=false />
-			<PropertyColumn Property="x => x.playlistDTO.OwnerName" Title="Owner" CellStyle="color: grey" />
+			<PropertyColumn Property="x => x.playlistDTO.OwnerName" Title="Owner" CellStyle="color: grey" >
+				<GroupTemplate>
+					<GroupTemplateCounted Name="Owner" Context=@context />
+				</GroupTemplate>
+			</PropertyColumn>
 			<PropertyColumn Property="x => x.playlistDTO.TracksTotal" Title="Tracks" Groupable=false HeaderStyle="width:60px" />
 			<PropertyColumn Property="x => x.genre1.root" Title="#1">
 				<CellTemplate>
 					<GenreRatio Context="context" Genre="context.Item.genre1"/>
 				</CellTemplate>
+				<GroupTemplate>
+					<GroupTemplateCounted Name="#1" Context=@context />
+				</GroupTemplate>
 			</PropertyColumn>
 			<PropertyColumn Property="x => x.genre2.root" Title="#2">
 				<CellTemplate>
 					<GenreRatio Context="context" Genre="context.Item.genre2" />
 				</CellTemplate>
+				<GroupTemplate>
+					<GroupTemplateCounted Name="#2" Context=@context />
+				</GroupTemplate>
 			</PropertyColumn>
 			<PropertyColumn Property="x => x.genre3.root" Title="#3">
 				<CellTemplate>
 					<GenreRatio Context="context" Genre="context.Item.genre3" />
 				</CellTemplate>
+				<GroupTemplate>
+					<GroupTemplateCounted Name="#3" Context=@context />
+				</GroupTemplate>
 			</PropertyColumn>
 		</Columns>
 	</MudDataGrid>

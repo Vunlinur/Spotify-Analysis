@@ -35,12 +35,18 @@
                     <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID) >@(artist.Name)</MudLink>
                 }
 			</CellTemplate>
+            <GroupTemplate>
+                <GroupTemplateCounted Name="Artists" Context=@context />
+            </GroupTemplate>
         </PropertyColumn>
 
         <PropertyColumn Title="Album" Property="x => x.Track.Album.Name" >
 			<CellTemplate>
 				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.Track.Album.ID) >@(context.Item.Track.Album.Name)</MudLink>
 			</CellTemplate>
+            <GroupTemplate>
+                <GroupTemplateCounted Name="Album" Context=@context />
+            </GroupTemplate>
 		</PropertyColumn>
 
         <PropertyColumn Title="Release Date" Property="x => x.Track.Album.ReleaseDate" Groupable=false HeaderStyle="width: 8%">
@@ -107,6 +113,9 @@
 			<CellTemplate>
 				<MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.Playlist.ID) >@(context.Item.Playlist.Name)</MudLink>
 			</CellTemplate>
+            <GroupTemplate>
+                <GroupTemplateCounted Name="Playlist" Context=@context />
+            </GroupTemplate>
 		</PropertyColumn>
     </Columns>
 </MudDataGrid>

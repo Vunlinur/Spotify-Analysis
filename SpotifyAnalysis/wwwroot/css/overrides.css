@@ -66,5 +66,5 @@ svg > foreignObject { /* pie chart legend */
 
 .mud-data-grid * > td > span * > .mud-chip {
     border-radius: 3px;
-    margin-right: 12px;
+    margin: 2px 12px 2px 0;
 }

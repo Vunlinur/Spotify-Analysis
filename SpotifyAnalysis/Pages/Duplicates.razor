@@ -70,12 +70,18 @@
                             <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
                         }
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Original Artists" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name">
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Original Album" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 @* Mark for deletion *@
@@ -95,12 +101,18 @@
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.playlist.ID)>@(context.Item.playlist.Name)</MudLink>
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Duplicate Playlist" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 <PropertyColumn Title="Duplicate Title" Property="x => x.dupe.Name" HeaderStyle="width: 15%">
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.dupe.ID)>@(context.Item.dupe.Name)</MudLink>
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Duplicate Title" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 <PropertyColumn Title="Duplicate Artists" Property="x => x.dupe.Artists" HeaderStyle="width: 15%" GroupBy="x => x.dupe.Artists[0].Name">
@@ -109,12 +121,18 @@
                             <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
                         }
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Duplicate Artist" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 <PropertyColumn Title="Duplicate Album" Property="x => x.dupe.Album.Name">
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.dupe.Album.ID)>@(context.Item.dupe.Album.Name)</MudLink>
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Duplicate Album" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
             </Columns>
         </MudDataGrid>
@@ -158,12 +176,18 @@
                             <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:artist:" + artist.ID)>@(artist.Name)</MudLink>
                         }
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Artists" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 <PropertyColumn Title="Album" Property="x => x.original.Album.Name">
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
                     </CellTemplate>
+                    <GroupTemplate>
+                        <GroupTemplateCounted Name="Album" Context=@context />
+                    </GroupTemplate>
                 </PropertyColumn>
 
                 @* Remove entry *@
