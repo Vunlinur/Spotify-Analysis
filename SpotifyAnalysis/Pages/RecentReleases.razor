@@ -51,7 +51,7 @@
 	        Name=@(artist.Artist?.Name ?? "Unknown")
 	        XValue=@(e => e.ReleaseDate)
 			YAggregate=@(e => index)
-			ZAggregate=@(e => e.Select(a => a.Popularity).Sum())
+			ZAggregate=@(e => e.FirstOrDefault().Popularity)
 			PointColor=@(e => e.Type.ToColor())
 			/>
 		}
@@ -72,7 +72,7 @@
 		<Columns>
 			<PropertyColumn Title="Artist" Property="x => x.Artist.Name" />
 
-			<PropertyColumn Title="Popularity" Property="x => x.Artist.Popularity" Groupable=false HeaderStyle="width: 8%">
+			<PropertyColumn Title="Artist Popularity" Property="x => x.Artist.Popularity" Groupable=false HeaderStyle="width: 8%">
 				<CellTemplate>
 					<MudProgressLinear Color="MudBlazor.Color.Primary" Value=@(context.Item.Artist.Popularity ?? 0) />
 				</CellTemplate>
@@ -128,6 +128,13 @@
 		var namesJson = JsonSerializer.Serialize(artistNames);
 		var yAxisFormatter = $"function(val) {{ var n = {namesJson}; return n[val] !== undefined ? n[val] : ''; }}";
 
+		// display the release name in the tooltip for each bubble
+		var releaseTitlesBySeries = artistsWithReleases?
+			.Select(a => a.RecentReleases.Select(r => r.Name).ToList())
+			.ToList() ?? [[]];
+		var releaseTitlesJson = JsonSerializer.Serialize(releaseTitlesBySeries);
+		var tooltipYFormatter = $"function(value, {{ seriesIndex, dataPointIndex }}) {{ var t = {releaseTitlesJson}; var s = t[seriesIndex]; return (s && s[dataPointIndex]) ? s[dataPointIndex] : value; }}";
+
 		var opts = new ApexChartOptions<AlbumDTO> {
 			Debug = true,
 			Theme = new Theme { Mode = Mode.Dark },
@@ -135,13 +142,7 @@
 				Height = "80%",
 				Background = "#ffffff16"
 			},
-			Grid = new Grid {
-				BorderColor = "#1aa14b",
-				//Row = new GridRow {
-				//	Colors = AlternatingLabelColors.ToList(),
-				//	Opacity = 0.2
-				//}
-			},
+			Grid = new Grid { BorderColor = "#1aa14b" },
 			PlotOptions = new PlotOptions {
 				Bubble = new PlotOptionsBubble { MinBubbleRadius = 4, MaxBubbleRadius = 16 }
 			},
@@ -150,7 +151,7 @@
 				X = new TooltipX { Format = @"MMMM \ yyyy", Show = true },
 				Y = new TooltipY {
 					Title = new TooltipYTitle { Formatter = @"function(name) { return name + ':' }" },
-					Formatter = @"function(value, { series, seriesIndex, dataPointIndex, w }) { return '$' + value }"
+					Formatter = tooltipYFormatter
 				}
 			},
 			Xaxis = new XAxis {
