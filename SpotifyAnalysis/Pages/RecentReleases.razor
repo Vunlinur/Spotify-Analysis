@@ -1,23 +1,24 @@
-﻿@page "/recentreleases"
+@page "/recentreleases"
 
 @using SpotifyAnalysis.Data.SpotifyAPI
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.Database
 @using System.Threading
-@using MudBlazor
 @using Microsoft.EntityFrameworkCore;
+@using MudBlazor
+@using ApexCharts;
 
 @inject SpotifyModuleFactory spotifyModuleFactory;
 @inject IDialogService dialogService;
 @inject ScopedData data;
 
 
-<MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
+<MudAppBar Color="MudBlazor.Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
 	<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 100%">
 		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
-			<MudText Align=Align.Right>All Artists From User's Playlists</MudText>
-			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="Color.Tertiary" UncheckedColor="Color.Primary" Size=Size.Large />
+			<MudText Align=MudBlazor.Align.Right>All Artists From User's Playlists</MudText>
+			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="MudBlazor.Color.Tertiary" UncheckedColor="MudBlazor.Color.Primary" Size=MudBlazor.Size.Large />
 			<MudText>Your Top Artists</MudText>
 		</MudStack>
 		<MudText Typo=Typo.subtitle1>Legend:</MudText>
@@ -38,20 +39,43 @@
 	</MudStack>
 </MudAppBar>
 @if (loaded) {
+	<ApexChart TItem="AlbumDTO" Title="Orders Value"
+               XAxisType="XAxisType.Datetime"
+               Options="options">
+
+		@foreach (var (artist, index) in ArtistsWithReleases.Select((awr, i) => (awr, i))) {
+			//var releasesWithDate = artist.RecentReleases?.Where(r => !string.IsNullOrEmpty(r.ReleaseDate)).ToList() ?? new List<AlbumDTO>();
+			//if (releasesWithDate.Count == 0) { continue; }
+			<ApexBubbleSeries TItem="AlbumDTO"
+			@key="artist.Artist?.Name"
+			Items=@artist.RecentReleases
+            Name=@(artist.Artist?.Name ?? "Unknown")
+            XValue=@(e => e.ReleaseDate)
+			YAggregate=@(e => index)
+			ZAggregate=@(e => e.Select(a => a.Popularity).Sum())
+			PointColor=@(e => e.Type.ToColor())
+			/>
+		}
+    </ApexChart>
+
+
+
+
+
 	<MudDataGrid T="ArtistWithReleases" Items="@ArtistsWithReleases" FixedHeader
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
 			<MudText Typo="Typo.h6">Recent Releases</MudText>
 			<MudSpacer />
 			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="MudBlazor.Size.Medium" Class="mt-0"></MudTextField>
 		</ToolBarContent>
 		<Columns>
 			<PropertyColumn Title="Artist" Property="x => x.Artist.Name" />
 
 			<PropertyColumn Title="Popularity" Property="x => x.Artist.Popularity" Groupable=false HeaderStyle="width: 8%">
 				<CellTemplate>
-					<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Artist.Popularity ?? 0) />
+					<MudProgressLinear Color="MudBlazor.Color.Primary" Value=@(context.Item.Artist.Popularity ?? 0) />
 				</CellTemplate>
 			</PropertyColumn>
 
@@ -61,7 +85,7 @@
 						@foreach (var release in context.Item.RecentReleases) {
 							<MudPaper Class="pa-2" Style=@CardStyle(release.Type)>
 								<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
-									<MudLink Typo="Typo.body1" Color=@Color.Default Href=@("spotify:album:" + release.ID)><b>@release.Name</b></MudLink>
+									<MudLink Typo="Typo.body1" Color=@MudBlazor.Color.Default Href=@("spotify:album:" + release.ID)><b>@release.Name</b></MudLink>
 									<MudDivider Vertical="true" FlexItem="true" />
 									<MudText Typo="Typo.subtitle2">@release.ReleaseDate</MudText>
 								</MudStack>
@@ -86,6 +110,59 @@
 
 
 @code {
+	private ApexChartOptions<AlbumDTO> options = new();
+	protected override void OnInitialized() {
+
+		options.Debug = true;
+		options.Chart = new Chart {
+                Height = "80%",
+				Animations = new Animations { Enabled = true, Easing = Easing.Easeinout, Speed = 800, AnimateGradually = new AnimateGradually { Enabled = true, Delay = 150 } },
+				Zoom = new Zoom { Enabled = true, Type = AxisType.Y, AutoScaleYaxis = true, AllowMouseWheelZoom=true }
+            };
+		options.PlotOptions = new PlotOptions {
+				Bubble = new PlotOptionsBubble {
+                    MinBubbleRadius = 4,
+                    MaxBubbleRadius = 20
+                }
+            };
+		options.Subtitle = new Subtitle { OffsetY = 15, Text = "DateTime sample with options" };
+		options.Tooltip = new ApexCharts.Tooltip { X = new TooltipX { Format = @"MMMM \ yyyy", Show=true } };
+		options.Tooltip = new ApexCharts.Tooltip {
+				Y = new TooltipY {
+					Title = new TooltipYTitle { Formatter = @"function(name) { return name + ':' }" },
+					Formatter = @"function(value, { series, seriesIndex, dataPointIndex, w }) { return '$' + value }"
+				},
+			};
+		options.Xaxis = new XAxis {
+				Title = new AxisTitle {
+					OffsetY = 5,
+					Text = "Month",
+					Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" }
+				},
+				Labels = new XAxisLabels {
+					Style = new AxisLabelStyle { FontSize = "10px", Colors = "#aaaaaa" }
+				},
+				AxisBorder = new AxisBorder {
+					Height = 0
+				}
+			};
+		options.Yaxis = new List<YAxis>();
+		options.Yaxis.Add(new YAxis {
+				Labels = new YAxisLabels { Style = new AxisLabelStyle { FontSize = "10px", Colors = "#aaaaaa" } },
+				Title = new AxisTitle { Text = "Artist", Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" } }
+			});
+
+		options.Annotations = new Annotations { Yaxis = new List<AnnotationsYAxis>() };
+		options.Annotations.Yaxis.Add(new AnnotationsYAxis {
+				BorderWidth = 2,
+				StrokeDashArray = 5,
+				BorderColor = "red",
+				Label = new Label { Text = "Monthly Target" }
+			});
+	}
+
+
+
 	bool loaded;
 	string searchString;
 	List<string> topArtistIds;
@@ -147,7 +224,7 @@
 		var artists = await (value ? GetTopArtistsAsync() : GetAllPlaylistsArtistsAsync());
 		CalculateReleases(artists);
 		StateHasChanged();
-    }
+	}
 
 	bool Filter(ArtistWithReleases p) {
 		if (string.IsNullOrWhiteSpace(searchString))
