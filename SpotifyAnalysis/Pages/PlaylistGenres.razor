@@ -14,10 +14,14 @@
 
 
 @if (loaded) {
-	<MudDataGrid T="Playlist" Items="@Playlists" FixedHeader Class="full-height-table" Groupable
+	<MudDataGrid T="Playlist" @ref=dataGrid Items="@Playlists" FixedHeader Class="full-height-table" Groupable
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
 			<MudText Typo="Typo.h6">Top 3 playlist genres</MudText>
+			<MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
+				<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
+				<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+			</MudButtonGroup>
 			<MudSpacer />
 			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
 						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -73,7 +77,7 @@
 	IEnumerable<Playlist> Playlists { get; set; }
 	bool loaded;
 	string searchString;
-	private PlaylistTable playlistTable;
+	MudDataGrid<Playlist> dataGrid;
 
 	protected override async Task OnInitializedAsync() {
 		await base.OnInitializedAsync();
@@ -110,6 +114,9 @@
 			playlist.topGenres.Color(genreColors);
 	}
 
+	void ExpandAll() => dataGrid?.ExpandAllGroups();
+
+	void CollapseAll() => dataGrid?.CollapseAllGroups();
 
 	bool Filter(Playlist p) {
 		if (string.IsNullOrWhiteSpace(searchString))
