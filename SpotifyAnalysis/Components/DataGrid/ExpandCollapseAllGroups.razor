@@ -1,0 +1,15 @@
+﻿@namespace SpotifyAnalysis.Components
+@typeparam T
+
+<MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
+	<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
+	<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+</MudButtonGroup>
+
+@code {
+	[Parameter, EditorRequired]
+	public MudDataGrid<T> DataGrid { get; set; }
+
+	void ExpandAll() => DataGrid?.ExpandAllGroups();
+	void CollapseAll() => DataGrid?.CollapseAllGroups();
+}

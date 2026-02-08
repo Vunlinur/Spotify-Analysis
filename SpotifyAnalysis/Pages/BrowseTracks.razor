@@ -17,10 +17,7 @@
     <ToolBarContent>
         <HelpButton Title="What is this for?"><HelpSearchPlaylist /></HelpButton>
         <MudText Typo="Typo.h6">Browse tracks</MudText>
-        <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
-            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
-            <MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
-        </MudButtonGroup>
+        <ExpandCollapseAllGroups DataGrid="@dataGrid" />
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -145,10 +142,6 @@
             p => p.Tracks.Select(t => new TrackPlaylist(t, p))
         ).ToList();
     }
-
-    void ExpandAll() => dataGrid?.ExpandAllGroups();
-
-    void CollapseAll() => dataGrid?.CollapseAllGroups();
 
     bool Filter(TrackPlaylist p) {
         if (string.IsNullOrWhiteSpace(_searchString))

@@ -18,10 +18,7 @@
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
 		<ToolBarContent>
 			<MudText Typo="Typo.h6">Top 3 playlist genres</MudText>
-			<MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
-				<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
-				<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
-			</MudButtonGroup>
+			<ExpandCollapseAllGroups DataGrid=@dataGrid />
 			<MudSpacer />
 			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
 						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
@@ -113,10 +110,6 @@
 		foreach (var playlist in playlists)
 			playlist.topGenres.Color(genreColors);
 	}
-
-	void ExpandAll() => dataGrid?.ExpandAllGroups();
-
-	void CollapseAll() => dataGrid?.CollapseAllGroups();
 
 	bool Filter(Playlist p) {
 		if (string.IsNullOrWhiteSpace(searchString))
