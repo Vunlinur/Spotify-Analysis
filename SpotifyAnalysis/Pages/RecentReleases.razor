@@ -121,9 +121,20 @@
 		var namesJson = JsonSerializer.Serialize(artistNames);
 		var yAxisFormatter = $"function(val) {{ var n = {namesJson}; return n[val] !== undefined ? n[val] : val; }}";
 
+		// Alternating colors: one per series (artist) and one per Y-axis label index
+		string[] AlternatingLabelColors = ["#1aa14b", "#cccccc"];
+		var seriesColors = Enumerable.Range(0, count).Select(i => AlternatingLabelColors[i % AlternatingLabelColors.Length]).ToList();
+
 		var opts = new ApexChartOptions<AlbumDTO> {
 			Debug = true,
 			Chart = new Chart { Height = "80%" },
+			Grid = new Grid {
+				BorderColor = "#00000000",
+				Row = new GridRow {
+					Colors = AlternatingLabelColors.ToList(),
+					Opacity = 0.2
+				}
+			},
 			PlotOptions = new PlotOptions {
 				Bubble = new PlotOptionsBubble { MinBubbleRadius = 4, MaxBubbleRadius = 16 }
 			},
@@ -153,7 +164,10 @@
 					ForceNiceScale = false,
 					Title = new AxisTitle { Text = "Artist", Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" } },
 					Labels = new YAxisLabels {
-						Style = new AxisLabelStyle { FontSize = "10px", Colors = "#aaaaaa" },
+						Style = new AxisLabelStyle {
+							FontSize = "12px",
+							Colors = new ApexCharts.Color(seriesColors)
+						},
 						Formatter = yAxisFormatter
 					}
 				}
@@ -216,7 +230,7 @@
 
 	async void OnAllArtistsSwitchChanged(bool value) {
 		var artists = await (value ? GetTopArtistsAsync() : GetAllPlaylistsArtistsAsync());
-		CalculateReleases(artists);
+		artistsWithReleases = CalculateReleases(artists);
 		StateHasChanged();
 	}
 
