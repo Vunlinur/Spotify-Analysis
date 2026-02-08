@@ -4,18 +4,29 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using static SpotifyAnalysis.Pages.PlaylistGenres;
+using System.Diagnostics;
 
 namespace SpotifyAnalysis.Pages {
 	public partial class PlaylistGenres {
+		[DebuggerDisplay("{playlistDTO.Name}|{genre1.name}|{genre2.name}|{genre3.name}")]
 		public class Playlist(PlaylistDTO playlistDTO, List<Genre> topGenres) {
 			public PlaylistDTO playlistDTO = playlistDTO;
-			public List<Genre> topGenres = topGenres;
+			public List<Genre> topGenres = topGenres ??= [];
+			public Genre genre1 = topGenres.ElementAtOrDefault(0) ?? Genre.empty;
+			public Genre genre2 = topGenres.ElementAtOrDefault(1) ?? Genre.empty;
+			public Genre genre3 = topGenres.ElementAtOrDefault(2) ?? Genre.empty;
 		}
 
 		public class Genre(string name, int count) {
 			public string name = name;
 			public int count = count;
-			public string color;
+			// Not calculated initially for performance, run Color():
+			public string color = "";
+			public string root = "";  // e.g. "metal" from "power metal"
+
+			public static readonly Genre empty = new("", 0);
+		}
+	}
 
 	public static class GenreExtensions {
 		public static readonly char[] splitOn = [' ', '-'];
