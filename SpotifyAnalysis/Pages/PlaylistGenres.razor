@@ -33,17 +33,17 @@
 			<PropertyColumn Property="x => x.playlistDTO.TracksTotal" Title="Tracks" HeaderStyle="width:60px" />
 			<TemplateColumn Title="#1">
 				<CellTemplate>
-					<GenreRatio Context="context" Index="0"/>
+					<GenreRatio Context="context" Genre="context.Item.genre1"/>
 				</CellTemplate>
 			</TemplateColumn>
 			<TemplateColumn Title="#2">
 				<CellTemplate>
-					<GenreRatio Context="context" Index="1" />
+					<GenreRatio Context="context" Genre="context.Item.genre2" />
 				</CellTemplate>
 			</TemplateColumn>
 			<TemplateColumn Title="#3">
 				<CellTemplate>
-					<GenreRatio Context="context" Index="2" />
+					<GenreRatio Context="context" Genre="context.Item.genre3" />
 				</CellTemplate>
 			</TemplateColumn>
 		</Columns>

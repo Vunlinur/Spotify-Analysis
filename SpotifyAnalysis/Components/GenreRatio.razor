@@ -4,7 +4,7 @@
 
 <MudStack Row Spacing="0" >
 	<MudChip T="string" Class="genreLabel" Label="true" Style="@LabelStyle()">
-		@genre.name
+		@Genre.name
 	</MudChip>
 	<MudChip T="string" Class="genreRatio" Label="true" Style="@RatioStyle()">
 		@((int)(ratio * 100))%
@@ -16,12 +16,9 @@
 	[Parameter, EditorRequired]
 	public CellContext<Playlist> Context { get; set; }
 	[Parameter, EditorRequired]
-	public int Index { get; set; }
-
-	static readonly Genre empty = new("", 0) { color = "" };
+	public Genre? Genre { get; set; }
 
 	Playlist playlist;
-	Genre genre;
 	float ratio;
 
 	static readonly Vector3 colorA, colorB;
@@ -46,11 +43,11 @@
 		base.OnInitialized();
 
 		playlist = Context.Item;
-		genre = Index < playlist.topGenres.Count ? playlist.topGenres[Index] : empty;
-		ratio = genre.count / (float)playlist.playlistDTO.TracksTotal;
+		Genre ??= Genre.empty;
+		ratio = Genre.count / (float)playlist.playlistDTO.TracksTotal;
 	}
 
-	public string LabelStyle() => $"background: {genre.color}";
+	public string LabelStyle() => $"background: {Genre.color}";
 
 	public string RatioStyle() {
 		var product = Vector3.Lerp(colorA, colorB, Math.Min(ratio, 1));
