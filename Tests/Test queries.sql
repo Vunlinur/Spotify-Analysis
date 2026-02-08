@@ -1,14 +1,18 @@
-﻿SELECT * FROM Users
+SELECT * FROM Users
 SELECT * FROM Playlists ORDER BY Name
 SELECT * FROM Playlists WHERE ID = '5FoPxjjtCCNSZZ2VimQlxF'
 SELECT * FROM PlaylistDTOUserDTO where PlaylistsID = '2v0lSxBGuHZPOhPllLelSM'
 SELECT * FROM Tracks
 SELECT * FROM PlaylistDTOTrackDTO
 SELECT * FROM Albums
-SELECT * FROM Artists WHERE Name in ('Orden Ogan', 'Nightwish', 'Iron Maiden', 'Russell Brower')
+SELECT * FROM Artists WHERE Name in ('Eluveitie', 'Moron Police', 'Ghost', 'Pendulum')
 SELECT * FROM ArtistDTOTrackDTO
 SELECT * FROM AlbumDTOArtistDTO WHERE AlbumsID = '36Dk0lgHLB8nfpaC8EvGiy'
 
+
+-- All Artists & their Albums
+SELECT ar.ID, ar.Name, ar.Genres, al.Name, al.ReleaseDate, al.TotalTracks, al.Label FROM Albums al
+Join AlbumDTOArtistDTO aa on aa.AlbumsID = al.ID join Artists ar on ar.ID = aa.ArtistsID order by ar.Name
 -- All Tracks & their Albums
 SELECT t.ID TrackID, t.Name TrackName, a.Name AlbumName, a.ID AlbumID FROM Tracks t LEFT JOIN Albums a ON a.ID = t.AlbumID ORDER BY a.Name
 -- Playlist's Tracks, their Album & Artists
@@ -20,9 +24,20 @@ JOIN AlbumDTOArtistDTO adt ON adt.AlbumsID = al.ID
 JOIN Artists ar ON adt.ArtistsID = ar.ID
 --WHERE p.Name LIKE '%test%'
 ORDER BY ar.Name, al.Name
+-- Albums with duplicate names
+SELECT a.* FROM Albums a
+JOIN (
+    SELECT Name, COUNT(*) AS DuplicateCount 
+    FROM Albums 
+    GROUP BY Name 
+    HAVING COUNT(*) > 1
+) b ON a.Name = b.Name
+ORDER BY a.Name
 
-UPDATE Users SET Updated = '2020' --WHERE Name = 'Vunlinur'
+
+UPDATE Users SET Updated = '2020' WHERE Name = 'Vunlinur'
 UPDATE Playlists SET SnapshotID = '' WHERE ID = '7D8pgfx10524cS2i6kuKgo'
+UPDATE albums set LastUpdated= '2022' where Name = 'Divinity: Original Sin 2 (Original Soundtrack)'
 
 
 --DELETE FROM Playlists
