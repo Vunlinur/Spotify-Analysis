@@ -118,6 +118,9 @@
 		if (p.playlistDTO.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
 			return true;
 
+		if (p.playlistDTO.OwnerName.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+			return true;
+
 		foreach (var genre in p.topGenres)
 			if (genre.name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
 				return true;
