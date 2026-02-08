@@ -80,7 +80,7 @@
                     </CellTemplate>
                 </PropertyColumn>
 
-                @* Remove entry *@
+                @* Mark for deletion *@
                 <TemplateColumn Title="Mark for deletion" HeaderStyle="width: 0; padding: 0">
                     <HeaderTemplate>
                         <HelpButton Title="Mark for deletion">
@@ -142,7 +142,7 @@
                     </CellTemplate>
                     <GroupTemplate>
                         <span style="font-weight:bold">
-                            Original Title: @context.Grouping.Key
+                            Playlist: @context.Grouping.Key
                             <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
                         </span>
                     </GroupTemplate>
@@ -154,7 +154,7 @@
                     </CellTemplate>
                     <GroupTemplate>
                         <span style="font-weight:bold">
-                            Original Title: @context.Grouping.Key
+                            Title: @context.Grouping.Key
                             <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
                         </span>
                     </GroupTemplate>
@@ -168,7 +168,7 @@
                     </CellTemplate>
                 </PropertyColumn>
 
-                <PropertyColumn Title="Original Album" Property="x => x.original.Album.Name">
+                <PropertyColumn Title="Album" Property="x => x.original.Album.Name">
                     <CellTemplate>
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:album:" + context.Item.original.Album.ID)>@(context.Item.original.Album.Name)</MudLink>
                     </CellTemplate>
