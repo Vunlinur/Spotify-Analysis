@@ -119,7 +119,7 @@
 		var count = artistsWithReleases?.Count ?? 0;
 		var artistNames = artistsWithReleases.Select(a => a.Artist?.Name ?? "Unknown").ToList();
 		var namesJson = JsonSerializer.Serialize(artistNames);
-		var yAxisFormatter = $"function(val) {{ var n = {namesJson}; return n[val] !== undefined ? n[val] : val; }}";
+		var yAxisFormatter = $"function(val) {{ var n = {namesJson}; return n[val] !== undefined ? n[val] : ''; }}";
 
 		// Alternating colors: one per series (artist) and one per Y-axis label index
 		string[] AlternatingLabelColors = ["#1aa14b", "#cccccc"];
@@ -158,9 +158,9 @@
 			Annotations = new Annotations { Yaxis = new List<AnnotationsYAxis>() },
 			Yaxis = new List<YAxis>() {
 				new YAxis {
-					Min = 0,
-					Max = count - 1,
-					TickAmount = count - 1,
+					Min = -1,
+					Max = count,
+					TickAmount = count + 1,
 					ForceNiceScale = false,
 					Title = new AxisTitle { Text = "Artist", Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" } },
 					Labels = new YAxisLabels {
