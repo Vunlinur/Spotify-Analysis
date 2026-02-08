@@ -4,6 +4,7 @@
 @using SpotifyAnalysis.Data.SpotifyAPI
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
+@using SpotifyAnalysis.Components
 @using System.Threading
 @using System.Collections.Concurrent
 @using System.Linq.Expressions
@@ -59,10 +60,7 @@
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
                     </CellTemplate>
                     <GroupTemplate>
-                        <span style="font-weight:bold">
-                            Original Title: @context.Grouping.Key
-                            <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
-                        </span>
+                        <GroupTemplateCounted Name="Original Title" Context=@context />
                     </GroupTemplate>
                 </PropertyColumn>
 
@@ -141,10 +139,7 @@
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:playlist:" + context.Item.playlist.ID)>@(context.Item.playlist.Name)</MudLink>
                     </CellTemplate>
                     <GroupTemplate>
-                        <span style="font-weight:bold">
-                            Playlist: @context.Grouping.Key
-                            <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
-                        </span>
+                        <GroupTemplateCounted Name="Playlist" Context=@context />
                     </GroupTemplate>
                 </PropertyColumn>
 
@@ -153,10 +148,7 @@
                         <MudLink Typo="Typo.body2" Color=@Color.Default Href=@("spotify:track:" + context.Item.original.ID)>@(context.Item.original.Name)</MudLink>
                     </CellTemplate>
                     <GroupTemplate>
-                        <span style="font-weight:bold">
-                            Title: @context.Grouping.Key
-                            <MudChip Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small">total @context.Grouping.Count()</MudChip>
-                        </span>
+                        <GroupTemplateCounted Name="Title" Context=@context />
                     </GroupTemplate>
                 </PropertyColumn>
 

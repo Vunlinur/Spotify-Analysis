@@ -1,0 +1,15 @@
+﻿@namespace SpotifyAnalysis.Components
+@typeparam T;
+
+<span style="font-weight:bold">
+    <MudChip T=@T Color=@Color.Primary Variant="Variant.Text" Size="Size.Small">@Context.Grouping.Count() TOTAL</MudChip>
+    @Name: @Context.Grouping.Key
+</span>
+
+@code {
+    [Parameter, EditorRequired]
+    public string Name { get; set; }
+
+    [Parameter, EditorRequired]
+    public GroupDefinition<T> Context { get; set; }
+}
