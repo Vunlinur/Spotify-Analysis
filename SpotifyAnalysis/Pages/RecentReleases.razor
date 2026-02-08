@@ -41,21 +41,21 @@
 </MudAppBar>
 @if (loaded) {
 	<ApexChart TItem="AlbumDTO" Title="Artists' Latest Releases"
-               XAxisType="XAxisType.Datetime"
-               Options="chartOptions">
+	            XAxisType="XAxisType.Datetime"
+	            Options="chartOptions">
 
 		@foreach (var (artist, index) in artistsWithReleases.Select((awr, i) => (awr, i))) {
 			<ApexBubbleSeries TItem="AlbumDTO"
 			@key="artist.Artist?.Name"
 			Items=@artist.RecentReleases
-            Name=@(artist.Artist?.Name ?? "Unknown")
-            XValue=@(e => e.ReleaseDate)
+	        Name=@(artist.Artist?.Name ?? "Unknown")
+	        XValue=@(e => e.ReleaseDate)
 			YAggregate=@(e => index)
 			ZAggregate=@(e => e.Select(a => a.Popularity).Sum())
 			PointColor=@(e => e.Type.ToColor())
 			/>
 		}
-    </ApexChart>
+	</ApexChart>
 
 
 
@@ -105,6 +105,11 @@
 	.mud-table .mud-table-container {
 		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
 	}
+
+	// Alternating Y-axis grid line colors hack as ApexCharts has no per-line coloring
+	.apexcharts-canvas *> .apexcharts-grid .apexcharts-gridlines-horizontal line:nth-child(odd) {
+		stroke: #cccccc;
+	}
 </style>
 
 
@@ -116,14 +121,12 @@
 	ApexChartOptions<AlbumDTO> chartOptions => BuildChartOptions(artistsWithReleases);
 
 	private ApexChartOptions<AlbumDTO> BuildChartOptions(List<ArtistWithReleases> artistsWithReleases) {
+		string[] alternatingLabelColors = ["#1aa14b", "#cccccc"];
 		var count = artistsWithReleases?.Count ?? 0;
+
 		var artistNames = artistsWithReleases.Select(a => a.Artist?.Name ?? "Unknown").ToList();
 		var namesJson = JsonSerializer.Serialize(artistNames);
 		var yAxisFormatter = $"function(val) {{ var n = {namesJson}; return n[val] !== undefined ? n[val] : ''; }}";
-
-		// Alternating colors: one per series (artist) and one per Y-axis label index
-		string[] AlternatingLabelColors = ["#1aa14b", "#cccccc"];
-		var seriesColors = Enumerable.Range(0, count).Select(i => AlternatingLabelColors[i % AlternatingLabelColors.Length]).ToList();
 
 		var opts = new ApexChartOptions<AlbumDTO> {
 			Debug = true,
@@ -166,7 +169,7 @@
 					Labels = new YAxisLabels {
 						Style = new AxisLabelStyle {
 							FontSize = "12px",
-							Colors = new ApexCharts.Color(seriesColors)
+							Colors = new ApexCharts.Color(alternatingLabelColors)
 						},
 						Formatter = yAxisFormatter
 					}
