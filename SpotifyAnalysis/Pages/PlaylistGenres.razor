@@ -105,26 +105,11 @@
 	}
 
 	void Color(IEnumerable<Playlist> playlists) {
-		Dictionary<string, string> genreColors = new(StringComparer.OrdinalIgnoreCase);
-
+		Dictionary<string, Genre> genreColors = new(StringComparer.OrdinalIgnoreCase);
 		foreach (var playlist in playlists)
-			foreach (var genre in playlist.topGenres) {
-				if (!genreColors.ContainsKey(genre.name))
-					genreColors[genre.name] = GenreToColor(genre.name);
-				genre.color = genreColors[genre.name];
-			}
+			playlist.topGenres.Color(genreColors);
 	}
 
-	static readonly char[] splitOn = [ ' ', '-' ];
-	public static string GenreToColor(string genre) {
-		var tokens = genre
-			.ToLower()
-			.Replace("music", "")
-			.Split(splitOn, StringSplitOptions.RemoveEmptyEntries);
-		string root = tokens.Last(); // e.g. "rock" from "classic rock"
-		var colorHash = new ColorHash();
-		return '#' + colorHash.Hex(root);
-	}
 
 	bool Filter(Playlist p) {
 		if (string.IsNullOrWhiteSpace(searchString))
