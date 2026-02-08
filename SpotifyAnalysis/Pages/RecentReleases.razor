@@ -130,9 +130,13 @@
 
 		var opts = new ApexChartOptions<AlbumDTO> {
 			Debug = true,
-			Chart = new Chart { Height = "80%" },
+			Theme = new Theme { Mode = Mode.Dark },
+			Chart = new Chart { 
+				Height = "80%",
+				Background = "#ffffff16"
+			},
 			Grid = new Grid {
-					BorderColor = "#1aa14b",
+				BorderColor = "#1aa14b",
 				//Row = new GridRow {
 				//	Colors = AlternatingLabelColors.ToList(),
 				//	Opacity = 0.2
@@ -142,6 +146,7 @@
 				Bubble = new PlotOptionsBubble { MinBubbleRadius = 4, MaxBubbleRadius = 16 }
 			},
 			Tooltip = new ApexCharts.Tooltip {
+				Theme = Mode.Dark,
 				X = new TooltipX { Format = @"MMMM \ yyyy", Show = true },
 				Y = new TooltipY {
 					Title = new TooltipYTitle { Formatter = @"function(name) { return name + ':' }" },
@@ -154,7 +159,7 @@
 					Text = "Month",
 					Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" }
 				},
-				Labels = new XAxisLabels { Style = new AxisLabelStyle { FontSize = "10px", Colors = "#aaaaaa" } },
+				Labels = new XAxisLabels { Style = new AxisLabelStyle { FontSize = "14px", Colors = "#aaaaaa" } },
 				AxisBorder = new AxisBorder { Height = 0 }
 			},
 			Legend = new Legend { Show = false },
