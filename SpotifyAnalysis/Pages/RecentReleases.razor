@@ -4,10 +4,10 @@
 @using SpotifyAnalysis.Data
 @using SpotifyAnalysis.Data.DTO
 @using SpotifyAnalysis.Data.Database
+@using SpotifyAnalysis.Components
 @using System.Threading
 @using Microsoft.EntityFrameworkCore;
 @using MudBlazor
-@using ApexCharts;
 @using System.Text.Json;
 
 @inject SpotifyModuleFactory spotifyModuleFactory;
@@ -40,26 +40,7 @@
 	</MudStack>
 </MudAppBar>
 @if (loaded) {
-	<ApexChart TItem="AlbumDTO" Title="Artists' Latest Releases"
-	            XAxisType="XAxisType.Datetime"
-	            Options="chartOptions">
-
-		@foreach (var (artist, index) in artistsWithReleases.Select((awr, i) => (awr, i))) {
-			<ApexBubbleSeries TItem="AlbumDTO"
-			@key="artist.Artist?.Name"
-			Items=@artist.RecentReleases
-	        Name=@(artist.Artist?.Name ?? "Unknown")
-	        XValue=@(e => e.ReleaseDate)
-			YAggregate=@(e => index)
-			ZAggregate=@(e => e.FirstOrDefault().Popularity)
-			PointColor=@(e => e.Type.ToColor())
-			/>
-		}
-	</ApexChart>
-
-
-
-
+	<ReleaseTimelineChart ArtistsWithReleases=@artistsWithReleases />
 
 	<MudDataGrid T="ArtistWithReleases" Items="@artistsWithReleases" FixedHeader
 				 SortMode="SortMode.Multiple" QuickFilter=@Filter >
@@ -105,16 +86,6 @@
 	.mud-table .mud-table-container {
 		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
 	}
-
-	/* Alternating Y-axis grid line colors hack as ApexCharts has no per-line coloring */
-	.apexcharts-canvas *> .apexcharts-grid .apexcharts-gridlines-horizontal line:nth-child(odd) {
-		stroke: #cccccc;
-	}
-
-	/* Workaround for Apexcharts coloring leaving an empty strip sometimes */
-	div:has(> .apexcharts-canvas) {
-		background: #ffffff16
-	}
 </style>
 
 
@@ -123,80 +94,6 @@
 	string searchString;
 	List<string> topArtistIds;
 	List<ArtistWithReleases> artistsWithReleases;
-	ApexChartOptions<AlbumDTO> chartOptions => BuildChartOptions(artistsWithReleases);
-
-	private ApexChartOptions<AlbumDTO> BuildChartOptions(List<ArtistWithReleases> artistsWithReleases) {
-		string[] alternatingLabelColors = ["#1aa14b", "#cccccc"];
-		var count = artistsWithReleases?.Count ?? 0;
-
-		var artistNames = artistsWithReleases.Select(a => a.Artist?.Name ?? "Unknown").ToList();
-		var namesJson = JsonSerializer.Serialize(artistNames);
-		var yAxisFormatter = $"function(val) {{ var n = {namesJson}; return n[val] !== undefined ? n[val] : ''; }}";
-
-		// display the release name in the tooltip for each bubble
-		var releaseTitlesBySeries = artistsWithReleases?
-			.Select(a => a.RecentReleases.Select(r => r.Name).ToList())
-			.ToList() ?? [[]];
-		var releaseTitlesJson = JsonSerializer.Serialize(releaseTitlesBySeries);
-		var tooltipYFormatter = $"function(value, {{ seriesIndex, dataPointIndex }}) {{ var t = {releaseTitlesJson}; var s = t[seriesIndex]; return (s && s[dataPointIndex]) ? s[dataPointIndex] : value; }}";
-
-		// minimum 11px, ideally 27px per artist, +56 px for header & footer
-		// this reaches 11px at 115 artists: y=27-x/15*log(x+1)
-		var heightPerArtist = 27 - (count / 15f) * Math.Log10(count+1);
-		var heightTotal = 56 + (count+2) * Math.Max(heightPerArtist, 11);
-
-		var opts = new ApexChartOptions<AlbumDTO> {
-			Debug = true,
-			Theme = new Theme { Mode = Mode.Dark },
-			Chart = new Chart { 
-				Height = heightTotal,
-				Background = "#ffffff00",
-				Zoom = new Zoom { AllowMouseWheelZoom = false }
-			},
-			Grid = new Grid { BorderColor = "#1aa14b" },
-			PlotOptions = new PlotOptions {
-				Bubble = new PlotOptionsBubble { MinBubbleRadius = 4, MaxBubbleRadius = 16 }
-			},
-			Tooltip = new ApexCharts.Tooltip {
-				Theme = Mode.Dark,
-				X = new TooltipX { Format = @"MMMM \ yyyy", Show = true },
-				Y = new TooltipY {
-					Title = new TooltipYTitle { Formatter = @"function(name) { return name + ':' }" },
-					Formatter = tooltipYFormatter
-				},
-				Z = new TooltipZ { Title = "Popularity:" }
-			},
-			Xaxis = new XAxis {
-				Title = new AxisTitle {
-					OffsetY = 5,
-					Text = "Month",
-					Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" }
-				},
-				Labels = new XAxisLabels { Style = new AxisLabelStyle { FontSize = "14px", Colors = "#aaaaaa" } },
-				AxisBorder = new AxisBorder { Height = 0 }
-			},
-			Legend = new Legend { Show = false },
-			Annotations = new Annotations { Yaxis = new List<AnnotationsYAxis>() },
-			Yaxis = new List<YAxis>() {
-				new YAxis {
-					Min = -1,
-					Max = count,
-					TickAmount = count + 1,
-					ForceNiceScale = false,
-					Title = new AxisTitle { Text = "Artist", Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" } },
-					Labels = new YAxisLabels {
-						Style = new AxisLabelStyle {
-							FontSize = "12px",
-							Colors = new ApexCharts.Color(alternatingLabelColors)
-						},
-						Formatter = yAxisFormatter
-					}
-				}
-			}
-		};
-
-		return opts;
-	}
 
 	protected override async Task OnInitializedAsync() {
 		await base.OnInitializedAsync();
@@ -278,10 +175,5 @@
 
 	private string CardStyle(AlbumType type)
 		=> $"background: {type.ToColor()}";
-
-	private class ArtistWithReleases {
-		public ArtistDTO Artist { get; set; }
-		public List<AlbumDTO> RecentReleases { get; set; } = [];
-	}
 }
 

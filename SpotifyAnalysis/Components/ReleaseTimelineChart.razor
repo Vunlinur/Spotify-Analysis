@@ -1,0 +1,39 @@
+﻿@namespace SpotifyAnalysis.Components
+
+@using SpotifyAnalysis.Data.DTO
+@using ApexCharts;
+
+
+<ApexChart TItem="AlbumDTO" Title="Artists' Latest Releases"
+	        XAxisType="XAxisType.Datetime"
+	        Options="chartOptions">
+
+	@foreach (var (artist, index) in ArtistsWithReleases.Select((awr, i) => (awr, i))) {
+		<ApexBubbleSeries TItem="AlbumDTO"
+		@key="artist.Artist?.Name"
+		Items=@artist.RecentReleases
+	    Name=@(artist.Artist?.Name ?? "Unknown")
+	    XValue=@(e => e.ReleaseDate)
+		YAggregate=@(e => index)
+		ZAggregate=@(e => e.FirstOrDefault().Popularity)
+		PointColor=@(e => e.Type.ToColor())
+		/>
+	}
+</ApexChart>
+
+<style>
+	/* Alternating Y-axis grid line colors hack as ApexCharts has no per-line coloring */
+	.apexcharts-canvas * > .apexcharts-grid .apexcharts-gridlines-horizontal line:nth-child(odd) {
+		stroke: #cccccc;
+	}
+
+	/* Workaround for Apexcharts coloring leaving an empty strip sometimes */
+	div:has(> .apexcharts-canvas) {
+		background: #ffffff16
+	}
+</style>
+
+@code {
+	[Parameter, EditorRequired]
+	public IEnumerable<ArtistWithReleases> ArtistsWithReleases { get; set; }
+}
