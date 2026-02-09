@@ -47,7 +47,7 @@ namespace SpotifyAnalysis.Components {
 				PlotOptions = new PlotOptions {
 					Bubble = new PlotOptionsBubble { MinBubbleRadius = 4, MaxBubbleRadius = 16 }
 				},
-				Tooltip = new ApexCharts.Tooltip {
+				Tooltip = new Tooltip {
 					Theme = Mode.Dark,
 					X = new TooltipX { Format = @"MMMM \ yyyy", Show = true },
 					Y = new TooltipY {
@@ -77,7 +77,7 @@ namespace SpotifyAnalysis.Components {
 					Labels = new YAxisLabels {
 						Style = new AxisLabelStyle {
 							FontSize = "12px",
-							Colors = new ApexCharts.Color(alternatingLabelColors)
+							Colors = new Color(alternatingLabelColors)
 						},
 						Formatter = yAxisFormatter
 					}

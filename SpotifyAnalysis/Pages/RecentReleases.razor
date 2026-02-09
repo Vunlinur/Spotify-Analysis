@@ -15,11 +15,11 @@
 @inject ScopedData data;
 
 
-<MudAppBar Color="MudBlazor.Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
+<MudAppBar Color="Color.Surface" Fixed="false" Style="width: -webkit-fill-available; width: -moz-available;">
 	<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 100%">
 		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
-			<MudText Align=MudBlazor.Align.Right>All Artists From User's Playlists</MudText>
-			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="MudBlazor.Color.Tertiary" UncheckedColor="MudBlazor.Color.Primary" Size=MudBlazor.Size.Large />
+			<MudText Align=Align.Right>All Artists From User's Playlists</MudText>
+			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="Color.Tertiary" UncheckedColor="Color.Primary" Size=Size.Large />
 			<MudText>Your Top Artists</MudText>
 		</MudStack>
 		<MudText Typo=Typo.subtitle1>Legend:</MudText>
@@ -48,14 +48,14 @@
 			<MudText Typo="Typo.h6">Recent Releases</MudText>
 			<MudSpacer />
 			<MudTextField @bind-Value="searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="MudBlazor.Size.Medium" Class="mt-0"></MudTextField>
+						  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
 		</ToolBarContent>
 		<Columns>
 			<PropertyColumn Title="Artist" Property="x => x.Artist.Name" />
 
 			<PropertyColumn Title="Artist Popularity" Property="x => x.Artist.Popularity" Groupable=false HeaderStyle="width: 8%">
 				<CellTemplate>
-					<MudProgressLinear Color="MudBlazor.Color.Primary" Value=@(context.Item.Artist.Popularity ?? 0) />
+					<MudProgressLinear Color="Color.Primary" Value=@(context.Item.Artist.Popularity ?? 0) />
 				</CellTemplate>
 			</PropertyColumn>
 
@@ -65,7 +65,7 @@
 						@foreach (var release in context.Item.RecentReleases) {
 							<MudPaper Class="pa-2" Style=@CardStyle(release.Type)>
 								<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
-									<MudLink Typo="Typo.body1" Color=@MudBlazor.Color.Default Href=@("spotify:album:" + release.ID)><b>@release.Name</b></MudLink>
+									<MudLink Typo="Typo.body1" Color=@Color.Default Href=@("spotify:album:" + release.ID)><b>@release.Name</b></MudLink>
 									<MudDivider Vertical="true" FlexItem="true" />
 									<MudText Typo="Typo.subtitle2">@release.ReleaseDate</MudText>
 								</MudStack>
