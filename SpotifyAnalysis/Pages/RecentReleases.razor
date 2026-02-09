@@ -110,11 +110,6 @@
 	.apexcharts-canvas *> .apexcharts-grid .apexcharts-gridlines-horizontal line:nth-child(odd) {
 		stroke: #cccccc;
 	}
-
-	/* Workaround for Apexcharts coloring leaving an empty strip sometimes */
-	div:has(> .apexcharts-canvas) {
-		background: #ffffff16
-	}
 </style>
 
 
@@ -140,18 +135,12 @@
 		var releaseTitlesJson = JsonSerializer.Serialize(releaseTitlesBySeries);
 		var tooltipYFormatter = $"function(value, {{ seriesIndex, dataPointIndex }}) {{ var t = {releaseTitlesJson}; var s = t[seriesIndex]; return (s && s[dataPointIndex]) ? s[dataPointIndex] : value; }}";
 
-		// minimum 11px, ideally 27px per artist, +56 px for header & footer
-		// this reaches 11px at 115 artists: y=27-x/15*log(x+1)
-		var heightPerArtist = 27 - (count / 15f) * Math.Log10(count+1);
-		var heightTotal = 56 + (count+2) * Math.Max(heightPerArtist, 11);
-
 		var opts = new ApexChartOptions<AlbumDTO> {
 			Debug = true,
 			Theme = new Theme { Mode = Mode.Dark },
 			Chart = new Chart { 
-				Height = heightTotal,
-				Background = "#ffffff00",
-				Zoom = new Zoom { AllowMouseWheelZoom = false }
+				Height = "80%",
+				Background = "#ffffff16"
 			},
 			Grid = new Grid { BorderColor = "#1aa14b" },
 			PlotOptions = new PlotOptions {
