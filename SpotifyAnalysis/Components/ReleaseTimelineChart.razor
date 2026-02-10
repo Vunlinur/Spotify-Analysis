@@ -46,9 +46,6 @@
 	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender) {
-		if (chart?.Options?.Chart?.Id is null)
-			return;
-
 		if (awaitingUpdate) {
 			awaitingUpdate = false;
 			await chart.UpdateSeriesAsync(false);

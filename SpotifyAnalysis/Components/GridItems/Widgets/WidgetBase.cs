@@ -12,23 +12,14 @@ namespace SpotifyAnalysis.Components {
         protected ChartBase chart;
         protected Action<Element> onClickCallback;
 
-        public void ProcessData() {
-            elements = BuildElements();
-        }
-
-        public async Task ProcessDataAsync() {
-            elements = await Task.Run(BuildElements);
-        }
-
-        public async Task RefreshChartAsync() {
-            if (chart is null)
-                return;
-            await InvokeAsync(StateHasChanged);
-            await chart.RefreshChartAsync();
-            //await InvokeAsync(StateHasChanged);
-        }
-
         protected abstract Elements BuildElements();
+
+        public void FlagForUpdate() => chart?.FlagForUpdate();
+
+        protected override async Task OnParametersSetAsync() {
+			elements = await Task.Run(BuildElements);
+		}
+
 
         protected RenderFragment CreateChart(Type chartType) => builder => {
             builder.OpenComponent(0, chartType);

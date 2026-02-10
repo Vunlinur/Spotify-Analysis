@@ -17,25 +17,30 @@ namespace SpotifyAnalysis.Components {
         public virtual Type HelpType { get; set; }
 
         protected ApexChart<Element> chart;
+        private bool flaggedForUpdate = true; // true for initial render
+        private bool parameterSet = false;
 
+        protected abstract void ProcessElements();
 
-        public virtual async Task RefreshChartAsync() {
-            if (chart is null)
-                return;
+        protected override Task OnParametersSetAsync() {
             ProcessElements();
-            await chart.UpdateSeriesAsync(false);
-            await chart.UpdateOptionsAsync(false, false, true);
+            parameterSet = true;
+            return Task.CompletedTask;
         }
 
-        protected override void OnInitialized() {
-            ProcessElements();
+        public void FlagForUpdate() => flaggedForUpdate = true;
+
+        protected override async Task OnAfterRenderAsync(bool firstRender) {
+            if (flaggedForUpdate && parameterSet) {
+                flaggedForUpdate = parameterSet = false;
+                await chart.UpdateSeriesAsync(false);
+                await chart.UpdateOptionsAsync(false, false, true);
+            }
         }
 
         protected RenderFragment BuildHelp() => builder => {
             builder.OpenComponent(0, HelpType);
             builder.CloseComponent();
         };
-
-        protected abstract void ProcessElements();
     }
 }
