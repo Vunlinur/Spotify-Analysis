@@ -15,9 +15,9 @@
             </HelpButton>
         }
         <MudSpacer />
-        <MudMenu Icon="@Icons.Material.Outlined.Settings" Size=@MudBlazor.Size.Small AnchorOrigin=Origin.BottomCenter Dense="true" AriaLabel="Options">
-            <MudMenuItem OnClick="ShowAllSlices">Show all slices</MudMenuItem>
-        </MudMenu>
+        <MudMenu Icon="@Icons.Material.Outlined.Settings" Disabled=@(!series.Any(s => s.Quantity == 0)) Size=@MudBlazor.Size.Small AnchorOrigin=Origin.BottomCenter Dense="true" AriaLabel="Options">
+                <MudMenuItem OnClick="ShowAllSlices">Show all slices</MudMenuItem>
+            </MudMenu>
     </MudToolBar>
     <ApexChart TItem="Element"
                 Options="options"
