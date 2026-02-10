@@ -1,12 +1,12 @@
-﻿@namespace SpotifyAnalysis.Components
+@namespace SpotifyAnalysis.Components
 
 @using SpotifyAnalysis.Data.DTO
 @using ApexCharts;
 
 
-<ApexChart TItem="AlbumDTO" Title="Artists' Latest Releases"
+<ApexChart TItem="AlbumDTO" Title="Artists' Latest Releases" @ref=chart
 	        XAxisType="XAxisType.Datetime"
-	        Options="chartOptions">
+	        Options="ChartOptions">
 
 	@foreach (var (artist, index) in ArtistsWithReleases.Select((awr, i) => (awr, i))) {
 		<ApexBubbleSeries TItem="AlbumDTO"
@@ -36,4 +36,23 @@
 @code {
 	[Parameter, EditorRequired]
 	public IEnumerable<ArtistWithReleases> ArtistsWithReleases { get; set; }
+
+	ApexChart<AlbumDTO> chart;
+	private bool awaitingUpdate;
+
+	protected override Task OnParametersSetAsync() {
+		awaitingUpdate = true;
+		return Task.CompletedTask;
+	}
+
+	protected override async Task OnAfterRenderAsync(bool firstRender) {
+		if (chart?.Options?.Chart?.Id is null)
+			return;
+
+		if (awaitingUpdate) {
+			awaitingUpdate = false;
+			await chart.UpdateSeriesAsync(false);
+			await chart.UpdateOptionsAsync(false, false, true);
+		}
+	}
 }

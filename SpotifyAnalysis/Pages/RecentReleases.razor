@@ -146,7 +146,7 @@
 		return artistsWithReleases;
 	}
 
-	async void OnAllArtistsSwitchChanged(bool value) {
+	async Task OnAllArtistsSwitchChanged(bool value) {
 		var artists = await (value ? GetTopArtistsAsync() : GetAllPlaylistsArtistsAsync());
 		artistsWithReleases = CalculateReleases(artists);
 		StateHasChanged();
