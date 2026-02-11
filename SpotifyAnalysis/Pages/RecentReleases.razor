@@ -91,8 +91,20 @@
 		padding: 0;
 	}
 
+	/* Mirror MudBlazor grid breakpoints
+	Screens >1920 get horizontal view - limit grid item height
+	Smaller screens get vertical view - limit just the table height */
+	@@media(min-width: 1920px) {
+		.mud-grid,
+		.mud-grid-item {
+			max-height: calc(100vh - (var(--mud-appbar-height) * 7 / 4));
+			overflow-y: auto;
+			overflow-x: hidden;
+		}
+	}
+
 	.mud-table .mud-table-container {
-		max-height: calc(100vh - (var(--mud-appbar-height) * 11 / 4));
+		max-height: calc(100vh - (var(--mud-appbar-height) * 9.5 / 4));
 	}
 </style>
 
