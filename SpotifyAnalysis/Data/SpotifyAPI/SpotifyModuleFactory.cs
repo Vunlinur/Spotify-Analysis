@@ -12,8 +12,10 @@
         readonly SpotifyClientStatic spotifyClientStatic = clientStatic;
         readonly SpotifyClientScoped spotifyClientScoped = clientScoped;
 
+        public bool IsLoggedIn()
+            => spotifyClientScoped.SpotifyClient is not null;
+
         public SpotifyModule GetModule()
-            => new(spotifyClientScoped.SpotifyClient ?? spotifyClientStatic.SpotifyClient,
-                spotifyClientScoped.SpotifyClient is not null);
+            => new(spotifyClientScoped.SpotifyClient ?? spotifyClientStatic.SpotifyClient);
     }
 }

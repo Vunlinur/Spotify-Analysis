@@ -348,9 +348,7 @@
         if (activatedPanelIndex != 3)
             return;
 
-        var spotifyModule = spotifyModuleFactory.GetModule();
-        loggedIn = spotifyModule.LoggedIn;
-        if (!loggedIn)
+        if (spotifyModuleFactory.IsLoggedIn())
             return;
 
         playlistSummaries = duplicates

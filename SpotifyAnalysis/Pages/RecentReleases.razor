@@ -19,7 +19,7 @@
 	<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center Style="width: 100%">
 		<MudStack Row Justify=Justify.SpaceBetween AlignItems=AlignItems.Center>
 			<MudText Align=Align.Right>All Artists From User's Playlists</MudText>
-			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="Color.Tertiary" UncheckedColor="Color.Primary" Size=Size.Large />
+			<MudSwitch T=bool ValueChanged=OnAllArtistsSwitchChanged Color="Color.Tertiary" UncheckedColor="Color.Primary" Size=Size.Large Disabled=!spotifyModuleFactory.IsLoggedIn() />
 			<MudText>Your Top Artists</MudText>
 		</MudStack>
 		<MudText Typo=Typo.subtitle1>Legend:</MudText>
@@ -167,6 +167,8 @@
 	}
 
 	async Task OnAllArtistsSwitchChanged(bool value) {
+		if (!spotifyModuleFactory.IsLoggedIn())
+			return;
 		var artists = await (value ? GetTopArtistsAsync() : GetAllPlaylistsArtistsAsync());
 		artistsWithReleases = CalculateReleases(artists);
 		StateHasChanged();
