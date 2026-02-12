@@ -71,7 +71,7 @@
 
 	public IEnumerable<PlaylistDTO> GetSelectedPlaylists() => selectedPlaylists;
 
-	async void SelectedItemsChanged(HashSet<PlaylistDTO> items) {
+	async Task SelectedItemsChanged(HashSet<PlaylistDTO> items) {
 		selectedPlaylists = items;
 		await selectionStorage.Set(items.Select(p => p.ID));
 		SelectionChanged?.Invoke(items.Count);

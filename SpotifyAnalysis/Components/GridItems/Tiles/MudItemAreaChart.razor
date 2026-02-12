@@ -45,7 +45,7 @@
         series = Elements.ToArray();
     }
 
-    protected async void OnDataPointSelection(SelectedData<Element> selection) {
+    protected async Task OnDataPointSelection(SelectedData<Element> selection) {
         OnClickCallback?.Invoke(selection.DataPoint.Items.First());
     }
 }

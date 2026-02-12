@@ -40,7 +40,7 @@
 @code {
     Storage<bool> openStorage;
     private bool open = true;
-    private async void ToggleDrawer() => await openStorage.Set(open = !open);
+    private async Task ToggleDrawer() => await openStorage.Set(open = !open);
 
     protected override async Task OnInitializedAsync() {
         bool UserNotLoaded = string.IsNullOrEmpty(appState?.UserDTO?.ID);
