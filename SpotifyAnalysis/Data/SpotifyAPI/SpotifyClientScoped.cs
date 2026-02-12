@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using static SpotifyAPI.Web.Scopes;
 using SpotifyAnalysis.Data.Common;
 using Microsoft.AspNetCore.Components;
+using System.Threading;
 
 
 namespace SpotifyAnalysis.Data.SpotifyAPI {
@@ -31,6 +32,7 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
 
         public SpotifyClient SpotifyClient { get; set; }
 
+        private Timer refreshTimer;
         private UserDTO user;
         public event Action<UserDTO> UserChanged;
 
@@ -45,8 +47,8 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
         public async Task<bool> CheckClientInitialized() {
             var accessToken = await accessTokenStorage.Get();
             bool validTokenFound = accessToken?.IsExpired == false;
-            if (validTokenFound) 
-                    await CreateClient(accessToken);
+            if (validTokenFound)
+                await CreateClient(accessToken);
             return validTokenFound;
         }
 
@@ -72,8 +74,14 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
             var authorizationCode = queryParams["code"];
             if (authorizationCode is null)
-                return;
+                return;  // Logging
+            else
+                await RequestTokenAsync(authorizationCode);
+        }
 
+        private async Task RequestTokenAsync(string authorizationCode) {
+            int refreshTime;
+            string refreshToken = null;
             try {
                 var token = await new OAuthClient().RequestToken(new AuthorizationCodeTokenRequest(
                 Program.Config.GetValue<string>("ClientId"),
@@ -83,17 +91,18 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
             );
                 await accessTokenStorage.Set(token);
                 await CreateClient(token);
+
+                refreshTime = token.ExpiresIn - 30; // Refresh 30 seconds before expiry
+                refreshToken = token.RefreshToken;
             }
             catch (APIException e) {
-                if (e.Message != "invalid_grant") // invalid_grant is OK, happens when we request token with an already used code
+                if (e.Message != "invalid_grant")  // invalid_grant is OK, happens when we request token with an already used code
                     throw;
+                refreshTime = 30;  // retry in 30 sec
             }
-        }
 
-        private async Task DestroyClient() {
-            SpotifyClient = null;
-            UserDTO = null;
-            await accessTokenStorage.Set(null);
+            refreshTimer?.Dispose();
+            refreshTimer = new Timer(async _ => await RequestTokenAsync(refreshToken), null, TimeSpan.FromSeconds(refreshTime), Timeout.InfiniteTimeSpan);
         }
 
         private async Task CreateClient(AuthorizationCodeTokenResponse token) {
@@ -102,6 +111,12 @@ namespace SpotifyAnalysis.Data.SpotifyAPI {
                 .WithToken(token.AccessToken, token.TokenType);
             SpotifyClient = new SpotifyClient(config);
             UserDTO = (await SpotifyClient.UserProfile.Current()).ToUserDTO();
+        }
+
+        private async Task DestroyClient() {
+            SpotifyClient = null;
+            UserDTO = null;
+            await accessTokenStorage.Set(null);
         }
     }
 }
