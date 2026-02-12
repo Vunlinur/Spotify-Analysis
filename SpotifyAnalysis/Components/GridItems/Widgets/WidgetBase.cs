@@ -21,8 +21,8 @@ namespace SpotifyAnalysis.Components {
 		}
 
 
-        protected RenderFragment CreateChart(Type chartType) => builder => {
-            builder.OpenComponent(0, chartType);
+        protected RenderFragment CreateChart<ChartType>() where ChartType : ChartBase => builder => {
+            builder.OpenComponent(0, typeof(ChartType));
             builder.AddAttribute(1, nameof(ChartBase.Title), Title);
             builder.AddAttribute(2, nameof(ChartBase.Elements), elements);
             builder.AddAttribute(3, nameof(ChartBase.OnClickCallback), onClickCallback);

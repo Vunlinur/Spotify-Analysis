@@ -7,7 +7,7 @@
 @using static SpotifyAnalysis.Components.MudItemTracksPane.Column
 
 @if (elements is not null) {
-    @CreateChart(typeof(MudItemPieChart))
+    @(CreateChart<MudItemPieChart>())
     <MudItemTracksPane Tracks=@selectedTracks TitleSuffix=@genreName ShowColumns="Name|Artists|Genres" />
 }
 

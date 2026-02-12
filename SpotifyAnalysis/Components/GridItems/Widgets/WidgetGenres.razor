@@ -6,7 +6,7 @@
 @using SpotifyAnalysis.Data
 
 @if (elements is not null) {
-    @CreateChart(typeof(MudItemPieChart))
+    @(CreateChart<MudItemPieChart>())
     <MudItemTracksPane Tracks=@genreTracks TitleSuffix=@genreName />
 }
 
