@@ -53,6 +53,11 @@ svg > foreignObject { /* pie chart legend */
     padding: 0;
 }
 
+.help-btn {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
 .marker-table > * td:nth-child(4) { /* The Mark for deletion column */
     background: rgba(155, 155, 255, 0.1);
     text-align: center;
@@ -64,7 +69,7 @@ svg > foreignObject { /* pie chart legend */
     background: rgba(255, 0, 0, 0.1);
 }
 
-.mud-data-grid * > td > span * > .mud-chip {
+.mud-data-grid * > td > span * > .mud-chip { /* GroupTemplateCounted */
     border-radius: 3px;
     margin: 2px 12px 2px 0;
 }
