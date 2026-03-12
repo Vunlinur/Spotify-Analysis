@@ -1,0 +1,54 @@
+﻿@namespace SpotifyAnalysis.Components
+
+@inherits WidgetBase
+
+@using Data.DTO
+@using SpotifyAnalysis.Data
+@using ApexCharts
+
+@if (elements is not null) {
+    @(CreateChart<MudItemAreaChart>())
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IEnumerable<TrackDTO> Tracks { get; set; }
+    public override string Title { get; } = "Tracks Time Distribution";
+
+    protected override Elements BuildElements() {
+        if (Tracks is null) return new Elements();
+
+        int durationInTens;
+        List<int> timeList = [];
+        foreach (var track in Tracks) {
+            durationInTens = (int)Math.Round((double)track.DurationMs / 10000); // round to nearest 10 seconds but don't multiply back by 10 to pack into the list indices tighter
+            if (timeList.Count < durationInTens)
+                timeList.AddRange(Enumerable.Repeat(0, durationInTens - timeList.Count + 1));
+            timeList[durationInTens]++;
+        }
+
+        var times = new Elements();
+        times.Increase(new Element { Label = "0:00", Quantity = 1 });
+        string label;
+        for (int i = 0; i < timeList.Count; i++) {
+            label = TimeSpan.FromSeconds(i * 10).ToString(@"m\:ss");
+            int? quantity = timeList[i] == 0 ? null : timeList[i]; // don't show labels for 0 quantity
+            times.Increase(new Element { Label = label, Quantity = quantity });
+        }
+        return times;
+    }
+
+
+    protected override void ConfigureOptions(ApexChartOptions<Element> options) {
+        options.Xaxis = new XAxis {
+                Title = new AxisTitle {
+                    OffsetY = 5,
+                    Text = "Duration",
+                    Style = new AxisTitleStyle { FontSize = "14px", Color = "#aaaaaa" }
+                },
+                Labels = new XAxisLabels { Style = new AxisLabelStyle { FontSize = "14px", Colors = "#aaaaaa" } },
+                AxisBorder = new AxisBorder { Height = 0 }
+            };
+        options.Stroke = new Stroke { Curve = new CurveSelections { Curve.Smooth } };
+    }
+}
