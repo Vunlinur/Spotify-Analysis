@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using ApexCharts;
+using Microsoft.AspNetCore.Components;
 using SpotifyAnalysis.Data;
 using System;
 using System.Threading.Tasks;
@@ -13,13 +14,13 @@ namespace SpotifyAnalysis.Components {
         protected Action<Element> onClickCallback;
 
         protected abstract Elements BuildElements();
-
+        
+        protected virtual void ConfigureOptions(ApexChartOptions<Element> options) { }
         public void FlagForUpdate() => chart?.FlagForUpdate();
 
         protected override async Task OnParametersSetAsync() {
 			elements = await Task.Run(BuildElements);
 		}
-
 
         protected RenderFragment CreateChart<ChartType>() where ChartType : ChartBase => builder => {
             builder.OpenComponent(0, typeof(ChartType));
@@ -27,6 +28,7 @@ namespace SpotifyAnalysis.Components {
             builder.AddAttribute(2, nameof(ChartBase.Elements), elements);
             builder.AddAttribute(3, nameof(ChartBase.OnClickCallback), onClickCallback);
             builder.AddAttribute(4, nameof(ChartBase.HelpType), HelpType);
+            builder.AddAttribute(5, nameof(ChartBase.ConfigureOptions), ConfigureOptions);
             builder.AddComponentReferenceCapture(5, o => chart = o as ChartBase);
             builder.CloseComponent();
         };

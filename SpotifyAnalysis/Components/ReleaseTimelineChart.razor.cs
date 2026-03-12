@@ -83,8 +83,8 @@ namespace SpotifyAnalysis.Components {
 				AxisBorder = new AxisBorder { Height = 0 }
 			},
 			Legend = new Legend { Show = false },
-			Annotations = new Annotations { Yaxis = new List<AnnotationsYAxis>() },
-			Yaxis = new List<YAxis>() {
+			Annotations = new Annotations { Yaxis = [] },
+			Yaxis = [
 				new YAxis {
 					Min = -1,
 					Max = 10,  // overwritten
@@ -99,7 +99,7 @@ namespace SpotifyAnalysis.Components {
 						Formatter = "",  // overwritten
 					}
 				}
-			}
+			]
 		};
 	}
 }

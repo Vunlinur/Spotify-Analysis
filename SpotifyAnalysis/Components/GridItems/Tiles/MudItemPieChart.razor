@@ -20,7 +20,7 @@
             </MudMenu>
     </MudToolBar>
     <ApexChart TItem="Element"
-                Options="options"
+                Options="Options"
                 OnDataPointSelection=OnDataPointSelection
                 OnLegendClicked=OnLegendClicked
                 @ref="chart">
@@ -39,7 +39,7 @@
     protected int[] quantities;
     protected const string other = "Other";
 
-    private ApexChartOptions<Element> options { get; } = new ApexChartOptions<Element> {
+    public override ApexChartOptions<Element> Options { get; } = new ApexChartOptions<Element> {
         Theme = new Theme {
             Palette = PaletteType.Palette5
         },
