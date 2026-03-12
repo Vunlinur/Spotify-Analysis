@@ -38,7 +38,7 @@ namespace SpotifyAnalysis.Data {
 
     public class Element {
 		public string Label { get; set; }
-		public int Quantity { get; set; }
+		public int? Quantity { get; set; }
 		public string Color { get; set; }
 	}
 }

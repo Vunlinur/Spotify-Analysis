@@ -1,5 +1,4 @@
 ﻿@namespace SpotifyAnalysis.Components
-@using ApexCharts
 
 @inherits WidgetBase
 
@@ -31,8 +30,10 @@
         trackList[0].Clear();  // Some albums have 0000 as release year - remove these
 
         int minYear = Math.Min(trackList.Select((e, index) => (e, index)).FirstOrDefault(t => t.e.Count > 0).index, 2000);
-        for (int i = minYear; i < trackList.Count; i++)
-            elements.Increase(new() { Label = i.ToString(), Quantity = trackList[i].Count });
+        for (int i = minYear; i < trackList.Count; i++) {
+            int? count = trackList[i].Count > 0 ? trackList[i].Count : null;
+            elements.Increase(new() { Label = i.ToString(), Quantity = count });
+        }
 
         return elements;
     }
