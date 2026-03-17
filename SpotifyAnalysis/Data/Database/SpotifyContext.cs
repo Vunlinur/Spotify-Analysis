@@ -4,8 +4,7 @@ using Microsoft.Extensions.Logging;
 using SpotifyAnalysis.Data.DTO;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
+using Serilog;
 
 
 namespace SpotifyAnalysis.Data.Database {
@@ -51,7 +50,7 @@ namespace SpotifyAnalysis.Data.Database {
         protected static void ConfigureSqlServer(DbContextOptionsBuilder options) {
             IConfigurationRoot configuration = Program.PrepareConfig();
             options.UseSqlServer(configuration.GetConnectionString("SpotifyDB"));
-            options.LogTo(Console.WriteLine, LogLevel.Information);
+            options.UseLoggerFactory(LoggerFactory.Create(builder => builder.AddSerilog()));
 #if DEBUG
             options.EnableSensitiveDataLogging();
 #endif
