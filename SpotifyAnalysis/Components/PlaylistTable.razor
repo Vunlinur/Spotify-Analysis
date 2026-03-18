@@ -60,7 +60,7 @@
 		var selectedIDs = await selectionStorage.Get();
 		if (selectedIDs is not null && selectedIDs.Any()) {
 			selectedPlaylists = Playlists.Where(i => selectedIDs.Contains(i.ID)).ToHashSet();
-			StateHasChanged();
+			SelectionChanged?.Invoke(selectedPlaylists.Count);
 		}
 	}
 
@@ -73,8 +73,8 @@
 
 	async Task SelectedItemsChanged(HashSet<PlaylistDTO> items) {
 		selectedPlaylists = items;
-		await selectionStorage.Set(items.Select(p => p.ID));
-		SelectionChanged?.Invoke(items.Count);
+		SelectionChanged?.Invoke(selectedPlaylists.Count);
+		await selectionStorage.Set(selectedPlaylists.Select(p => p.ID));
 	}
 
 	bool Filter(PlaylistDTO p) {
