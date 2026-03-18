@@ -122,7 +122,7 @@
 
     async Task TrySwitchUserAsync() {
         // TODO return if new user the same as the old one
-        await form.Validate();
+        await form.ValidateAsync();
         if (!form.IsValid)
             return;
 
