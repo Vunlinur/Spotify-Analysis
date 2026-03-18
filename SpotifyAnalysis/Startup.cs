@@ -10,6 +10,7 @@ using SpotifyAnalysis.Data.SpotifyAPI;
 using SpotifyAnalysis.Components;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Serilog;
+using Serilog.Core;
 
 namespace SpotifyAnalysis {
     public class Startup(IConfiguration configuration) {
@@ -27,15 +28,16 @@ namespace SpotifyAnalysis {
 				.Enrich.FromLogContext());
             services.AddSpotifyAPI();
             services.AddSingleton<SpotifyMudTheme>();
-            services.AddScoped<ScopedData>();
+            services.AddSingleton<ILogEventEnricher, IDLogEnricher>();
+			services.AddScoped<ScopedData>();
             services.AddScoped<ProtectedLocalStorage>();
             services.AddTransient<SpotifyContext>();
 		}
 
 		// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
 		public void Configure(IApplicationBuilder app, IWebHostEnvironment env) {
-            app.UseSerilogRequestLogging();  // Logs HTTP requests, status codes, execution times, etc.
-
+			app.UseSerilogRequestLogging();  // Logs HTTP requests, status codes, execution times, etc.
+			
             if (!env.IsProduction()) {
 				app.UseDeveloperExceptionPage();
 			}
