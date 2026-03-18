@@ -2,8 +2,8 @@
 @typeparam T
 
 <MudButtonGroup Variant="Variant.Outlined" Class="pl-6">
-	<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" OnClick=CollapseAll />
-	<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" OnClick="ExpandAll" />
+	<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowUp" aria-label="Collapse all" Disabled=!DataGrid.IsGrouped OnClick=CollapseAll />
+	<MudIconButton Icon="@Icons.Material.Filled.KeyboardDoubleArrowDown" aria-label="Expand all" Disabled=!DataGrid.IsGrouped OnClick=ExpandAll />
 </MudButtonGroup>
 
 @code {
