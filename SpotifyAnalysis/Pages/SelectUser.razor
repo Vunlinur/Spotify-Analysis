@@ -115,9 +115,9 @@
         return null;
     }
 
-    void GetMyUserID() {
+    async Task GetMyUserID() {
         userInput = clientScoped.UserDTO.ID;
-        form.ResetValidation();
+        await form.ResetValidationAsync();
     }
 
     async Task TrySwitchUserAsync() {

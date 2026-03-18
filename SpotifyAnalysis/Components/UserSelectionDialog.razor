@@ -30,7 +30,7 @@
     public UserDTO User { get; set; }
 
     [CascadingParameter]
-    MudDialogInstance MudDialog { get; set; }
+    IMudDialogInstance MudDialog { get; set; }
 
     string GetImage() => User.ImageL ?? StaticResourceMap.UnknownUser;
 

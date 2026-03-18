@@ -309,7 +309,7 @@
         title = $"Duplicates from: {originalPlaylist.Name}";
         loading = false;
         StateHasChanged();
-        tabs.ActivatePanel(1);
+        await tabs.ActivatePanelAsync(1);
     }
 
     private void SearchPlaylist(PlaylistDTO original, PlaylistDTO duplicate, ConcurrentBag<Duplicate> concurrentBag) {

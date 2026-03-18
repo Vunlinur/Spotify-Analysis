@@ -10,6 +10,6 @@
 	[Parameter, EditorRequired]
 	public MudDataGrid<T> DataGrid { get; set; }
 
-	void ExpandAll() => DataGrid?.ExpandAllGroups();
-	void CollapseAll() => DataGrid?.CollapseAllGroups();
+	async Task ExpandAll() => await DataGrid?.ExpandAllGroupsAsync();
+	async Task CollapseAll() => await DataGrid?.CollapseAllGroupsAsync();
 }
